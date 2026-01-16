@@ -267,7 +267,7 @@ function collectPiece(pieceId) {
       colPos = index - 4;
     }
     
-    const posX = isLeft ? 2 : 82; // 2% Left, 82% Right
+    const posX = isLeft ? 2 : 86; // 2% Left, 86% Right
     const posY = 20 + (colPos * 140); // 140px vertical step
     
     piece.style.position = "absolute";
@@ -533,7 +533,7 @@ function initJigsaw() {
     // Left: 2%, Right: 82%
     // Top: Fixed pixels to avoid collapse
     
-    const posX = isLeft ? 2 : 82;
+    const posX = isLeft ? 2 : 86;
     const posY = 20 + (colIndex * 140); // 140px step (120 piece + 20 gap)
     
     p.style.left = `${posX}%`;

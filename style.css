@@ -161,6 +161,7 @@ h1 {
 #main-board {
   position: relative;
   z-index: 10; /* Ensure board stays above side pools */
+  margin-bottom: 40px;
 }
 
 .drop-zone {
@@ -453,7 +454,7 @@ h1 {
 .memory-layout {
   display: flex;
   flex-direction: column; /* Stack vertically */
-  gap: 30px;
+  gap: 60px;
   justify-content: center;
   align-items: center;
 }
@@ -506,8 +507,8 @@ h1 {
 }
 
 .memory-card {
-  width: 70px;
-  height: 70px;
+  width: 90px;
+  height: 90px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.5s;
@@ -529,8 +530,8 @@ h1 {
 .memory-card .jigsaw-cell {
   width: auto; /* Allow flex/grid to sizing */
   height: auto;
-  font-size: 8px;
-  border-width: 0.5px;
+  font-size: 16px; /* Larger font for visibility */
+  border-width: 1px;
 }
 
 .memory-card.flipped {

@@ -794,7 +794,7 @@ function checkSudokuSolution() {
 // --- Transition 2->3 ---
 function transitionToPeaks() {
   gameState.currentStage = 3;
-  instructionText.innerText = "¡Picos y Valles! Encuentra los números mayores o menores que TODOS sus vecinos.";
+  instructionText.innerText = "¡Picos y Valles! Encuentra los números mayores o menores que sus vecinos. (Solo horizontales y verticales)";
   instructionText.style.color = "#fff";
 
   sudokuStage.classList.add("hidden");

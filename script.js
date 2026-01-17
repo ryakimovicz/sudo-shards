@@ -246,6 +246,24 @@ function collectPiece(pieceId) {
     // Center Piece -> Center Slot (Slot 4)
     const centerSlot = mainBoard.children[4];
     piece.style.position = "static";
+    
+    // NUCLEAR LOCK (Moved from initJigsaw to Memory Collection Logic)
+    piece.id = "center-fixed-piece"; 
+    piece.classList.add("fixed-piece"); 
+    piece.classList.add("locked-unique-piece");
+    
+    piece.style.pointerEvents = "none";
+    piece.style.userSelect = "none";
+    // piece.style.border = "4px solid #ff0000"; // disable or keep for debug? User said "no border seen"
+    // Let's keep a subtle indicator or none if standard usage.
+    // User complained about "not seeing distinct border". 
+    // I previously added red border to debug. 
+    // I will use a subtle lock indicator now that logic is fixed.
+    piece.style.boxShadow = "inset 0 0 10px rgba(0,0,0,0.5)"; 
+    
+    piece.setAttribute("draggable", "false"); 
+    piece.draggable = false; 
+    
     centerSlot.appendChild(piece);
   } else {
     // Side Pool
@@ -454,6 +472,12 @@ function transitionToJigsawAnimated() {
   // Unlock Jigsaw Pieces (Enable Drag)
   const pieces = document.querySelectorAll(".jigsaw-piece");
   pieces.forEach(p => {
+    // Skip the fixed center piece
+    if (p.id === "center-fixed-piece" || p.classList.contains("fixed-piece") || p.dataset.blockId === "4") {
+        p.style.cursor = "default";
+        return; 
+    }
+    
     p.draggable = true;
     p.addEventListener("dragstart", handleDragStart);
     // Visual cue they are now active?
@@ -522,9 +546,20 @@ function initJigsaw() {
 
     if (block === 4) {
       // Center piece fixed in slot
-      piece.style.position = "static"; // Reset for slot
+      piece.id = "center-fixed-piece"; 
+      piece.style.position = "static"; 
+      piece.classList.add("locked-unique-piece"); // New unique class
+      
+      // NUCLEAR OPTION: INLINE STYLES to bypass cache/CSS issues
+      piece.style.pointerEvents = "none";
+      piece.style.userSelect = "none";
+      piece.style.border = "4px solid #ff0000"; // Red border for verification
+      piece.style.boxShadow = "0 0 20px rgba(255,0,0,0.5)";
+      
+      piece.setAttribute("draggable", "false"); 
+      piece.draggable = false; 
+      
       slot.appendChild(piece);
-      piece.addEventListener("dragstart", handleDragStart);
     } else {
       piece.addEventListener("dragstart", handleDragStart);
       pieces.push(piece);
@@ -563,6 +598,11 @@ let draggedPiece = null;
 let grabOffset = { x: 0, y: 0 }; // To track mouse offset
 
 function handleDragStart(e) {
+  if (this.classList.contains("fixed-piece")) {
+    e.preventDefault();
+    return;
+  }
+  
   draggedPiece = this;
   e.dataTransfer.effectAllowed = "move";
   this.classList.add("dragging");
@@ -576,6 +616,19 @@ function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = "move";
 }
+
+// Global Drag Blocker for Fixed Pieces
+document.addEventListener("dragstart", (e) => {
+  const isLocked = e.target.id === "center-fixed-piece" || 
+                   e.target.classList.contains("locked-unique-piece") ||
+                   e.target.classList.contains("fixed-piece");
+                   
+  if (isLocked) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+}, true);
 
 function handleDrop(e) {
   e.preventDefault();
@@ -599,7 +652,15 @@ function handleDrop(e) {
   if (targetSlot) {
     // Dropping into a slot
     if (targetSlot.children.length > 0) {
-      const existing = targetSlot.firstChild;
+      // Use firstElementChild to ensure we get the DIV, not a text node
+      const existing = targetSlot.firstElementChild;
+      
+      // CRITICAL: Check if existing piece is locked (center piece)
+      if (existing) {
+         const isLocked = existing.id === "center-fixed-piece" || existing.classList.contains("locked-unique-piece");
+         if (isLocked) return;
+      }
+      
       if (existing !== draggedPiece) {
         // SWAP LOGIC
         // 1. Move existing piece to where dragged piece came from

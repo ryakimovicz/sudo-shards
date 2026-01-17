@@ -326,6 +326,20 @@ h1 {
   font-size: 1.2rem; /* Match sudoku font */
 }
 
+/* ID based override to be 100% sure */
+#center-fixed-piece {
+  pointer-events: none !important;
+  user-select: none !important;
+  border: 2px solid rgba(255, 255, 255, 0.5); /* Visual indicator */
+}
+
+.jigsaw-piece.fixed-piece {
+  cursor: default; /* Not draggable */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5); /* Visual visual anchor */
+  pointer-events: none !important; /* FORCE DISABLE INTERACTION */
+  user-select: none !important;
+}
+
 .jigsaw-piece.dragging {
   opacity: 0.5;
   transform: scale(1.05);

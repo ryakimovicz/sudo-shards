@@ -590,20 +590,45 @@ function handleDrop(e) {
      return; // Invalid drop area on grid
   }
 
+  // Capture Origin Info BEFORE moving anything
+  const originParent = draggedPiece.parentNode;
+  const originIsSlot = originParent.classList.contains("jigsaw-slot");
+  const originLeft = draggedPiece.style.left;
+  const originTop = draggedPiece.style.top;
+
   if (targetSlot) {
     // Dropping into a slot
     if (targetSlot.children.length > 0) {
       const existing = targetSlot.firstChild;
       if (existing !== draggedPiece) {
-        // Swap: Move existing to wrapper (near slot? or random?)
-        // Let's put it back to wrapper at some default pos
-        moveToWrapper(existing);
+        // SWAP LOGIC
+        // 1. Move existing piece to where dragged piece came from
+        originParent.appendChild(existing);
+        
+        if (originIsSlot) {
+            // Swapped with another slot -> Become static
+            existing.style.position = "static";
+            existing.style.transform = "none";
+            existing.style.left = "";
+            existing.style.top = "";
+        } else {
+            // Swapped with pool -> Become absolute at dragged piece's old pos
+            existing.style.position = "absolute";
+            existing.style.left = originLeft;
+            existing.style.top = originTop;
+        }
       }
     }
+    
+    // 2. Move dragged piece to target slot
+    targetSlot.appendChild(draggedPiece);
     draggedPiece.style.position = "static";
     draggedPiece.style.transform = "none";
-    targetSlot.appendChild(draggedPiece);
+    draggedPiece.style.left = "";
+    draggedPiece.style.top = "";
+    
     checkJigsawCompletion();
+    
   } else if (targetWrapper) {
     // Dropping freely on background
     targetWrapper.appendChild(draggedPiece); // Re-append to be child of wrapper

@@ -523,11 +523,40 @@ function collectPiece(pieceId) {
       colPos = index - 4;
     }
 
-    const posX = isLeft ? 2 : 86; // 2% Left, 86% Right
-    const posY = 20 + colPos * 140; // 140px vertical step
+    // Responsive Positioning: Desktop (hugging board) vs Mobile (edges)
+    const isDesktop = window.matchMedia("(min-width: 600px)").matches;
+    let leftStyle;
+
+    if (isDesktop) {
+      const centerX = window.innerWidth / 2;
+
+      if (isLeft) {
+        // Target: Center - 440px. Clamp so it never goes below 20px (left wall)
+        const target = centerX - 440;
+        leftStyle = Math.max(20, target) + "px";
+      } else {
+        // Target: Center + 320px. Clamp so it never exceeds Right Wall - 140px (piece width)
+        const target = centerX + 320;
+        const maxRight = window.innerWidth - 140;
+        leftStyle = Math.min(maxRight, target) + "px";
+      }
+    } else {
+      leftStyle = isLeft ? "2%" : "86%";
+    }
+
+    // Adjust Vertical Step based on Piece Size
+    // If intermediate (768-1023), pieces are 90px -> Step 110px
+    // If full desktop (>1023), pieces are 120px -> Step 140px
+    const isIntermediate = window.matchMedia(
+      "(min-width: 768px) and (max-width: 1023px)",
+    ).matches;
+    const verticalStep = isIntermediate ? 110 : 140;
+
+    const posY = 20 + colPos * verticalStep;
 
     piece.style.position = "absolute";
-    piece.style.left = `${posX}%`;
+    /* piece.style.left = `${posX}%`; replaced by: */
+    piece.style.left = leftStyle;
     piece.style.top = `${posY}px`;
 
     // Animate Enter

@@ -34,84 +34,84 @@
             </div>
           </div>
 
-          <!-- Persistent Board (Transforming Object) -->
-          <div id="main-board" class="board-common"></div>
+          <!-- NEW: Central Content Wrapper -->
+          <!-- Absorbs available space and centers content vertically -->
+          <div class="game-content-wrapper">
+            <!-- Persistent Board (Transforming Object) -->
+            <div id="main-board" class="board-common hidden"></div>
 
-          <!-- Start Menu -->
-          <div id="start-menu" class="stage active">
-            <!-- Top Section: Description (Title moved out) -->
-            <div class="start-header">
-              <!-- Title removed from here -->
-              <p>
-                Cinco desafíos, un solo tablero.<br />
-                Supera el Juego de Memoria, arma el Rompecabezas, resuelve el
-                Sudoku, domina Picos y Valles, y halla la Sopa de Números.
-              </p>
+            <!-- Start Menu -->
+            <div id="start-menu" class="stage active">
+              <!-- Top Section: Description (Title moved out) -->
+              <div class="start-header">
+                <!-- Title removed from here -->
+                <p>
+                  Cinco desafíos, un solo tablero.<br />
+                  Supera el Juego de Memoria, arma el Rompecabezas, resuelve el
+                  Sudoku, domina Picos y Valles, y halla la Sopa de Números.
+                </p>
+              </div>
+
+              <!-- Middle Section: Centered Button -->
+              <div class="start-action">
+                <button id="start-btn" class="btn-primary">Empezar</button>
+              </div>
             </div>
 
-            <!-- Middle Section: Centered Button -->
-            <div class="start-action">
-              <button id="start-btn" class="btn-primary">Empezar</button>
+            <!-- Stage 1: Memory Game -->
+            <div id="memory-stage" class="stage hidden">
+              <div class="memory-layout">
+                <div class="memory-board" id="memory-board"></div>
+              </div>
             </div>
-          </div>
 
-          <!-- Stage 1: Memory Game -->
-          <div id="memory-stage" class="stage hidden">
-            <div class="memory-layout">
-              <div class="memory-board" id="memory-board"></div>
-              <!-- Collected container replaced by main-board -->
+            <!-- Stage 2: Jigsaw -->
+            <div id="jigsaw-stage" class="stage hidden">
+              <div class="jigsaw-pools-wrapper">
+                <div id="pool-left" class="side-pool"></div>
+                <div id="pool-right" class="side-pool"></div>
+              </div>
             </div>
-          </div>
 
-          <!-- Stage 2: Jigsaw -->
-          <div id="jigsaw-stage" class="stage hidden">
-            <div class="jigsaw-pools-wrapper">
-              <div id="pool-left" class="side-pool"></div>
-              <div id="pool-right" class="side-pool"></div>
+            <!-- Stage 3: Sudoku -->
+            <div id="sudoku-stage" class="stage hidden">
+              <div class="sudoku-controls">
+                <button id="check-sudoku" class="btn-primary">
+                  Verificar Sudoku
+                </button>
+                <div class="number-pad" id="numpad"></div>
+              </div>
             </div>
-          </div>
 
-          <!-- Stage 3: Sudoku -->
-          <div id="sudoku-stage" class="stage hidden">
-            <!-- Board replaced by main-board -->
-            <div class="sudoku-controls">
-              <button id="check-sudoku" class="btn-primary">
-                Verificar Sudoku
+            <!-- Stage 4: Peaks and Valleys -->
+            <div id="peaks-stage" class="stage hidden">
+              <div class="peaks-info">
+                <p>
+                  <b>No cuentan 1 ni 9.</b>
+                </p>
+                <p>Restantes: <span id="peaks-remaining">0</span></p>
+              </div>
+            </div>
+
+            <!-- Stage 5: Number Search -->
+            <div id="search-stage" class="stage hidden">
+              <div class="search-info">
+                <p>Encuentra estas secuencias:</p>
+                <div id="search-targets" class="targets-container"></div>
+              </div>
+              <div class="search-wrapper"></div>
+            </div>
+
+            <!-- Win Screen -->
+            <div id="win-screen" class="stage hidden">
+              <h2>¡Felicidades!</h2>
+              <p>Has completado los 5 desafíos.</p>
+              <button onclick="location.reload()" class="btn-primary">
+                Jugar de nuevo
               </button>
-              <div class="number-pad" id="numpad"></div>
             </div>
           </div>
-
-          <!-- Stage 4: Peaks and Valleys -->
-          <div id="peaks-stage" class="stage hidden">
-            <div class="peaks-info">
-              <p>
-                <b>No cuentan 1 ni 9.</b>
-              </p>
-              <p>Restantes: <span id="peaks-remaining">0</span></p>
-            </div>
-            <!-- Board replaced by main-board -->
-          </div>
-
-          <!-- Stage 5: Number Search -->
-          <div id="search-stage" class="stage hidden">
-            <div class="search-info">
-              <p>Encuentra estas secuencias:</p>
-              <div id="search-targets" class="targets-container"></div>
-            </div>
-            <div class="search-wrapper">
-              <!-- Board replaced by main-board -->
-            </div>
-          </div>
-
-          <!-- Win Screen -->
-          <div id="win-screen" class="stage hidden">
-            <h2>¡Felicidades!</h2>
-            <p>Has completado los 5 desafíos.</p>
-            <button onclick="location.reload()" class="btn-primary">
-              Jugar de nuevo
-            </button>
-          </div>
+          <!-- End Wrapper -->
         </div>
       </div>
     </div>

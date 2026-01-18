@@ -165,6 +165,7 @@ h1 {
   padding: 20px;
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   transition: all 0.5s ease;
+  overflow: hidden; /* THE WALL: Strict Containment */
 
   /* Dimensions: Full Screen with minimal margins */
   width: calc(100vw - 30px);
@@ -210,8 +211,8 @@ h1 {
    Let's ensure outer header doesn't take space if possible. */
 
 /* Mobile override not needed as much if global is fluid, 
-   but specific adjustments can remain */
-@media (max-width: 850px) {
+   but specific adjustments can remain. Align with main breakpoint (767px). */
+@media (max-width: 767px) {
   .glass-panel {
     /* Just ensure margins are slightly smaller on mobile */
     width: calc(100vw - 20px);
@@ -258,15 +259,41 @@ h1 {
 }
 
 /* Shared Board Dimensions */
+/* Shared Board Dimensions */
 :root {
-  --cell-size: 40px;
-  --board-size: calc(var(--cell-size) * 9); /* 360px */
+  /* Responsive Scaling: Width OR Height constrained */
+  /* 5vh ensures board (9 cells height) < 50% of screen height */
+  --cell-size: min(40px, 10.5vmin, 4.5vh);
+  --board-size: calc(var(--cell-size) * 9);
+
+  /* Card Size: Constrain by height too */
+  --card-size: min(75px, 14vmin, 9vh);
 }
 
 #main-board {
   position: relative;
-  z-index: 10; /* Ensure board stays above side pools */
-  margin-bottom: 40px;
+  z-index: 10;
+  margin: 0 auto 10px auto;
+  /* Enforce Square Shape */
+  width: var(--board-size);
+  height: var(--board-size);
+  min-height: var(--board-size); /* Prevent collapsing */
+  aspect-ratio: 1 / 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Visual Definition: 3x3 Grid Simulation */
+  background-color: rgba(0, 0, 0, 0.2);
+  background-image:
+    linear-gradient(#555 1px, transparent 1px),
+    linear-gradient(90deg, #555 1px, transparent 1px);
+  background-size: 33.33% 33.33%; /* 3x3 Grid */
+
+  border: 3px solid #333;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-sizing: content-box; /* Match drop-zone behavior */
 }
 
 .drop-zone {
@@ -283,8 +310,9 @@ h1 {
 
 /* Jigsaw Styles */
 
-/* On mobile, revert to stacked */
-@media (max-width: 850px) {
+/* On mobile, revert to stacked. 
+   User request: 768px (Tablets) should be DESKTOP. */
+@media (max-width: 767px) {
   #jigsaw-stage {
     position: relative;
     top: auto;
@@ -729,8 +757,8 @@ h1 {
 
 @media (max-width: 600px) {
   .drop-zone {
-    width: 306px;
-    height: 306px;
+    width: calc(var(--board-size) + 6px);
+    height: calc(var(--board-size) + 6px);
   }
   .sudoku-cell {
     width: 32px;
@@ -747,7 +775,7 @@ h1 {
 .memory-layout {
   display: flex;
   flex-direction: column; /* Stack vertically */
-  gap: 60px;
+  gap: 10px; /* Reduced from 60px to fix overflow */
   justify-content: center;
   align-items: center;
 }
@@ -800,8 +828,8 @@ h1 {
 }
 
 .memory-card {
-  width: 90px;
-  height: 90px;
+  width: var(--card-size);
+  height: var(--card-size);
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.5s;
@@ -1281,70 +1309,130 @@ h1 {
   z-index: 100; /* Above everything */
   width: 100%;
   text-align: center;
-  pointer-events: none; /* Let clicks pass through */
 }
 
 /* State 1: Start Menu Mode (Centered, Large) */
 .app-title.start-mode {
-  top: 30%; /* Visually centered above description */
+  top: 25%; /* Explicit Position 1 */
   font-size: 4rem;
 }
 
 /* State 2: Game Mode (Header Position, Smaller) */
 .app-title.game-mode {
-  top: 10px; /* Top header position */
-  font-size: 2.5rem; /* Smaller size */
+  top: 10px;
+  font-size: 2.5rem;
 }
 
-/* Description positioned below the title */
+/* --- NEW LAYOUT ARCHITECTURE --- */
+.game-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 20px;
+  position: relative; /* Anchor for absolute children if needed */
+}
+
+/* --- COMPONENT CLEANUP --- */
+
+/* Description follows normal flow INSIDE the absolute container */
 .start-header {
-  position: absolute;
-  top: 10px; /* Reduced from 120px to move closer to title */
+  position: static;
+  margin: 0 0 100px 0; /* Increased gap to button (was 20px) */
   width: 100%;
   text-align: center;
   pointer-events: none;
 }
 
-/* Ensure button stays centered but shifted up */
+/* Button container NO LONGER follows flow. It is ABSOLUTE. */
 #start-menu {
-  position: relative;
+  position: absolute; /* Independent positioning */
+  top: 25%; /* Restore user intended position */
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Centers button */
+  justify-content: flex-start;
   align-items: center;
-  padding-bottom: 10%; /* Shift button upwards visually */
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0;
 }
 
-/* Initial state for Start Menu Content (to allow fade out) */
-#start-menu {
-  transition:
-    opacity 0.5s ease,
-    transform 0.5s ease;
-}
-
-#start-menu.fade-out {
-  opacity: 0;
-  transform: scale(0.9);
-  pointer-events: none;
-}
-
-/* Mobile Adjustments for Title */
+/* Mobile Adjustments */
 @media (max-width: 600px) {
   .app-title.start-mode {
-    top: 25%; /* Move back to center-ish like desktop */
+    top: 25%;
     font-size: 3rem;
-  }
-  .start-header {
-    top: 1%; /* Position below the percentage-based title */
   }
   .app-title.game-mode {
     top: 5px;
     font-size: 1.8rem;
   }
-  /* Shift button higher on mobile */
+
+  /* Match Desktop Logic but Scaled */
   #start-menu {
-    padding-bottom: 80%;
+    top: 25%; /* Align start point with desktop */
+    margin-top: 0;
+    padding-top: 0px !important; /* Push text below Title */
+  }
+
+  .start-header {
+    top: auto;
+    margin-bottom: 80px; /* Scaled down from 100px */
+  }
+}
+
+/* Very Small Mobile Adjustments (320px) */
+@media (max-width: 350px) {
+  .game-subtitle {
+    font-size: 1.2rem; /* Reduce subtitle size */
+  }
+}
+
+/* Adjust Subtitle Position for Mobile (425px) */
+@media (max-width: 426px) {
+  .panel-header {
+    margin-top: 25px;
+  }
+
+  /* TIGHTER SPACING FOR GAME ELEMENTS */
+  .game-content-wrapper {
+    gap: 5px; /* Reduced from 20px */
+  }
+
+  #main-board {
+    margin-bottom: 5px;
+  }
+
+  .collected-container {
+    margin-bottom: 0px; /* Reduced to ZERO */
+  }
+
+  /* Extra tight gap for the layout container itself */
+  .memory-layout {
+    gap: 2px;
+  }
+
+  /* Force lift cards */
+  .memory-board {
+    margin-top: -30px;
+  }
+}
+
+/* Intermediate Desktop (Tablets/Small Laptops) 768px - 1024px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .jigsaw-piece {
+    width: 90px; /* Reduced from 120px */
+    height: 90px;
+  }
+
+  .jigsaw-cell {
+    width: 30px; /* Reduced from 40px */
+    height: 30px;
+    font-size: 1rem;
   }
 }

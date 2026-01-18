@@ -441,7 +441,7 @@ function updateGameSubtitle(text) {
 // --- Stage 0: Memory Game ---
 function initMemoryGame() {
   const subtitle = document.getElementById("game-subtitle");
-  if (subtitle) subtitle.innerText = "Memotest";
+  if (subtitle) subtitle.innerText = "Juego de memoria";
   instructionText.innerText =
     "Encuentra los pares para recolectar las piezas del rompecabezas.";
 

@@ -9,7 +9,10 @@
 
   /* UI Utilities */
   --header-height: 55px; /* Shorter header as requested */
-  --font-family: "Outfit", sans-serif;
+
+  /* Typography */
+  --font-main: "Outfit", sans-serif;
+  --font-paper: "Lora", serif;
 
   /* Paper Effects */
   --paper-shadow:
@@ -47,7 +50,7 @@ body.dark-mode .glass-panel {
 }
 
 body {
-  font-family: var(--font-family);
+  font-family: var(--font-main);
   color: var(--text-main);
   background-color: var(--bg-paper);
   /* Optional: Subtle paper texture pattern could happen here */

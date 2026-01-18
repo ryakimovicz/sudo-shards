@@ -138,7 +138,7 @@
 /* Footer */
 .main-footer {
   text-align: center;
-  padding: 20px;
+  padding: 10px; /* Reduced specific padding */
   font-size: 0.9rem;
   color: var(--text-muted);
   width: 100%;

@@ -184,6 +184,14 @@
   background: var(--bg-paper);
 }
 
+.version-tag {
+  color: var(--accent-color);
+  font-weight: 700;
+  font-size: 0.65rem; /* Smaller as requested */
+  opacity: 0.8;
+  margin-left: 5px;
+}
+
 .main-footer a {
   color: var(--primary-color);
   text-decoration: none;

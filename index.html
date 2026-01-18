@@ -4,7 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jigsudo</title>
-    <link rel="stylesheet" href="style.css" />
+
+    <!-- Global Styles -->
+    <link rel="stylesheet" href="css/global.css" />
+
+    <!-- Module Styles -->
+    <link rel="stylesheet" href="css/menu.css" />
+    <link rel="stylesheet" href="css/memory.css" />
+    <link rel="stylesheet" href="css/jigsaw.css" />
+    <link rel="stylesheet" href="css/sudoku.css" />
+    <link rel="stylesheet" href="css/peaks.css" />
+    <link rel="stylesheet" href="css/search.css" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,112 +24,27 @@
     />
   </head>
   <body>
-    <div class="background-animation"></div>
-
-    <div id="game-scaler">
-      <div class="game-container">
-        <!-- Unified App Title (Animates from Menu to Header) -->
-        <h1 id="app-title" class="app-title start-mode">Jigsudo</h1>
-
-        <div id="game-area" class="glass-panel">
-          <!-- New Internal Header with Subtitle & Info -->
-          <div class="panel-header">
-            <h2 id="game-subtitle" class="game-subtitle">Juego de memoria</h2>
-            <div id="info-trigger" class="info-icon">i</div>
-
-            <!-- Tooltip Container (Hidden by default) -->
-            <div id="info-tooltip" class="info-tooltip hidden-tooltip">
-              <p id="instruction-text">
-                Arma el rompecabezas para revelar el tablero.
-              </p>
-            </div>
-          </div>
-
-          <!-- NEW: Central Content Wrapper -->
-          <!-- Absorbs available space and centers content vertically -->
-          <div class="game-content-wrapper">
-            <!-- Persistent Board (Transforming Object) -->
-            <div id="main-board" class="board-common hidden"></div>
-
-            <!-- Start Menu -->
-            <div id="start-menu" class="stage active">
-              <!-- Top Section: Description (Title moved out) -->
-              <div class="start-header">
-                <!-- Title removed from here -->
-                <p>
-                  Cinco desafíos, un solo tablero.<br />
-                  Supera el Juego de Memoria, arma el Rompecabezas, resuelve el
-                  Sudoku, domina Picos y Valles, y halla la Sopa de Números.
-                </p>
-              </div>
-
-              <!-- Middle Section: Centered Button -->
-              <div class="start-action">
-                <button id="start-btn" class="btn-primary">Empezar</button>
-              </div>
-            </div>
-
-            <!-- Stage 1: Memory Game -->
-            <div id="memory-stage" class="stage hidden">
-              <div class="memory-layout">
-                <div class="memory-board" id="memory-board"></div>
-              </div>
-            </div>
-
-            <!-- Stage 2: Jigsaw -->
-            <div id="jigsaw-stage" class="stage hidden">
-              <div class="jigsaw-pools-wrapper">
-                <div id="pool-left" class="side-pool"></div>
-                <div id="pool-right" class="side-pool"></div>
-              </div>
-            </div>
-
-            <!-- Stage 3: Sudoku -->
-            <div id="sudoku-stage" class="stage hidden">
-              <div class="sudoku-controls">
-                <button id="check-sudoku" class="btn-primary">
-                  Verificar Sudoku
-                </button>
-                <div class="number-pad" id="numpad"></div>
-              </div>
-            </div>
-
-            <!-- Stage 4: Peaks and Valleys -->
-            <div id="peaks-stage" class="stage hidden">
-              <div class="peaks-info">
-                <p>
-                  <b>No cuentan 1 ni 9.</b>
-                </p>
-                <p>Restantes: <span id="peaks-remaining">0</span></p>
-              </div>
-            </div>
-
-            <!-- Stage 5: Number Search -->
-            <div id="search-stage" class="stage hidden">
-              <div class="search-info">
-                <p>Encuentra estas secuencias:</p>
-                <div id="search-targets" class="targets-container"></div>
-              </div>
-              <div class="search-wrapper"></div>
-            </div>
-
-            <!-- Win Screen -->
-            <div id="win-screen" class="stage hidden">
-              <h2>¡Felicidades!</h2>
-              <p>Has completado los 5 desafíos.</p>
-              <button onclick="location.reload()" class="btn-primary">
-                Jugar de nuevo
-              </button>
-            </div>
-          </div>
-          <!-- End Wrapper -->
-        </div>
-      </div>
+    <!-- Main Application Container -->
+    <div id="app">
+      <!-- Content will be injected/managed by JS modules -->
     </div>
 
-    <button id="hint-btn" class="btn-primary btn-hint debug-floating-btn">
-      💡 Ayuda
-    </button>
-    <script src="script.js"></script>
+    <!-- Global Scripts -->
+    <script src="js/game-manager.js" type="module"></script>
+
+    <!-- Module Scripts (loaded by game-manager or individually if needed, but using modules is best) -->
+    <!-- We'll treat game-manager as the entry point importing others, or list them if not using ES modules fully yet. 
+         Let's stick to standard script tags for simplicity if we are not bundling, 
+         OR use type="module" for modern support. User didn't specify bundler.
+         I'll put separate tags for now to match the "file structure" request strictly.
+    -->
+    <script src="js/menu.js"></script>
+    <script src="js/memory.js"></script>
+    <script src="js/jigsaw.js"></script>
+    <script src="js/sudoku.js"></script>
+    <script src="js/peaks.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/main.js"></script>
+    <!-- Entry Point -->
   </body>
 </html>

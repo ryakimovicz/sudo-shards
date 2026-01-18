@@ -1026,6 +1026,7 @@ h1 {
   gap: 10px;
   margin-bottom: 10px; /* Space before hint button/board */
   position: relative; /* For tooltip positioning */
+  z-index: 30; /* Fix: Higher than btn-hint (20) to show tooltip on top */
 }
 
 /* Ensure subtitle has no bottom margin to align with icon */
@@ -1124,6 +1125,8 @@ h1 {
   display: block;
   padding: 8px 16px; /* Slightly smaller than main actions */
   font-size: 0.9rem;
+  position: relative; /* Fix: Needed for z-index */
+  z-index: 20; /* Fix: Ensure it stays above Jigsaw overlay */
 }
 
 /* Adjusted Instruction Text */

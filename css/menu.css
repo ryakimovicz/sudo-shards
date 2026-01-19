@@ -20,6 +20,8 @@
   ); /* Paper color with slight transparency */
   border-bottom: 1px solid var(--glass-border);
   backdrop-filter: blur(5px);
+  /* Top corners straight, bottom corners rounded */
+  border-radius: 0 0 12px 12px;
   /* Ensure header acts as a reference for absolute centering */
 }
 

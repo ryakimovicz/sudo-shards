@@ -190,20 +190,22 @@ export function initHome() {
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      const target = tab.dataset.tab;
+      const target = tab.dataset.tab; // 'daily' or 'custom'
 
-      // Update Tabs styling
+      // 1. Update Tabs styling
       tabs.forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
 
-      // Update Panels
+      // 2. Update Panels (Deck Logic)
+      // Toggle 'active' class: Active panel gets it, others lose it.
       if (target === "daily") {
         currentMode = "daily";
+        panelDaily.classList.add("active");
         panelCustom.classList.remove("active");
-        // panelDaily is always there, underneath
       } else {
         currentMode = "custom";
         panelCustom.classList.add("active");
+        panelDaily.classList.remove("active");
       }
     });
   });

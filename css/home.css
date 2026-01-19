@@ -3,7 +3,9 @@
 /* Header */
 .main-header {
   height: var(--header-height);
-  width: 100%;
+  width: 100% !important;
+  max-width: none !important; /* Ensure no constraints */
+  display: flexbox; /* Fallback */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -11,6 +13,8 @@
   position: fixed;
   top: 0;
   left: 0;
+  right: 0; /* Ensure spanning */
+  margin: 0 !important; /* No gaps */
   z-index: 1000;
   background: rgba(
     253,
@@ -22,7 +26,17 @@
   backdrop-filter: blur(5px);
   /* Top corners straight, bottom corners rounded */
   border-radius: 0 0 12px 12px;
+  box-sizing: border-box; /* Include padding in width */
   /* Ensure header acts as a reference for absolute centering */
+}
+
+/* Dark Mode Header */
+body.dark-mode .main-header {
+  background: rgba(30, 35, 41, 0.95) !important; /* Force override */
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-main); /* Ensure text color is inherited/set */
+  display: flex !important; /* Ensure visibility */
+  opacity: 1 !important;
 }
 
 /* Header Alignment */
@@ -154,15 +168,16 @@
   font-weight: 700;
   font-size: 1rem;
   color: var(--text-muted);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Exact match with panel timing */
   position: relative;
-  z-index: 1; /* Inactive tabs sit behind panel (z-10) */
+  z-index: 5; /* Interleaved: Above Inactive Panel (2), Below Active Panel (15) */
   /* Visual depth for inactive tabs */
   box-shadow: inset 0 -5px 10px rgba(0, 0, 0, 0.05);
 
   /* Close the gap - INCREASED overlap */
   margin-right: -4px;
-  /* bottom: 0;  No offset needed if container margins are right */
+  /* Sync with Panel Deck Animation: Inactive tabs sit lower */
+  transform: translateY(10px);
 }
 
 .tab-btn:hover {
@@ -189,44 +204,63 @@ body.dark-mode .tab-btn:not(.active):hover {
   padding-bottom: 13px; /* Precise height adjustment */
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.02);
   margin-top: 0; /* Reset vertical push */
+
+  /* Rise up to meet the active panel */
+  transform: translateY(0);
 }
 
-/* Panel Container */
+/* Panel Container - Deck Layout */
 .home-panels {
   position: relative;
-  z-index: 10; /* Above inactive tabs (1), below active tab (20) */
+  /* z-index: 10; REMOVED to allow interleaving with tabs */
   width: 100%;
   max-width: 600px;
-  margin-top: 0; /* Reset force overlap, standard flow now */
-  /* overflow: hidden;  <-- Crucial for "coming from above" without overlap outside */
+  grid-template-areas: "stack";
+  display: grid; /* Stack children */
+  margin-top: 0;
 }
 
-/* Custom Panel Overlay */
-.custom-panel {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
+/* Base Panel Styles (Shared) */
+.glass-panel {
+  /* Both panels share this class */
+  grid-area: stack; /* Occupy same space */
+  background: var(--bg-paper);
   width: 100%;
-  background: var(--bg-paper); /* Must be opaque to cover daily */
-  z-index: 5;
+  height: auto; /* Fit content */
+  align-self: start; /* Align to top */
 
-  /* Start State: Hidden Above */
-  transform: translateY(-110%);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* The Deck Animation */
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-origin: top center;
+
+  /* Default State (Inactive/Behind) */
   opacity: 0;
+  transform: scale(0.95) translateY(10px);
+  z-index: 2; /* Bottom Layer */
   pointer-events: none;
+  /* border: 1px solid var(--glass-border);  Already in global */
+}
 
-  /* Reset padding to match description card if needed */
+/* Active State (Front) */
+.glass-panel.active {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  z-index: 15; /* Front Layer (Below Active Tab 20) */
+  pointer-events: all;
+  position: relative; /* Default context */
+}
+
+/* Dark Mode Background Override */
+body.dark-mode .glass-panel {
+  background: #2d333b;
+}
+
+/* Custom Panel Helper */
+.custom-panel {
+  /* No more absolute positioning needed due to grid */
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.custom-panel.active {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: all;
 }
 
 /* Segmented Control (Difficulty) */
@@ -477,6 +511,8 @@ body.dark-mode .btn-primary:hover {
 .settings-dropdown:not(.hidden) {
   opacity: 1;
   transform: scale(1) translateY(0);
+  pointer-events: auto; /* Force enable interaction */
+  cursor: default;
 }
 
 .dropdown-header {

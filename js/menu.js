@@ -7,28 +7,11 @@ export function initMenu() {
 
   // ... (existing constants) ...
 
-  const menuToggle = document.getElementById("menu-toggle");
-  const sidebar = document.getElementById("sidebar");
-  const closeSidebar = document.getElementById("close-sidebar");
+  // Sidebar elements removed
   const startBtn = document.getElementById("start-btn");
 
-  // Sidebar Interactions
-  if (menuToggle && sidebar && closeSidebar) {
-    menuToggle.addEventListener("click", () => {
-      sidebar.classList.remove("hidden");
-    });
-
-    closeSidebar.addEventListener("click", () => {
-      sidebar.classList.add("hidden");
-    });
-
-    // Close on backdrop click
-    sidebar.addEventListener("click", (e) => {
-      if (e.target === sidebar) {
-        sidebar.classList.add("hidden");
-      }
-    });
-  }
+  // Sidebar Interactions - REMOVED per user request
+  // (Sidebar and menu-toggle elements have been removed from HTML)
 
   // Start Game
   if (startBtn) {

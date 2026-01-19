@@ -69,6 +69,10 @@ export function initMemoryGame() {
   // 5. Setup Cards
   const puzzleChunks = getChunksFromBoard(state.data.initialPuzzle);
   setupCards(puzzleChunks);
+
+  // Initialize Resizing
+  fitCollectedPieces();
+  window.addEventListener("resize", fitCollectedPieces);
 }
 
 function getChunksFromBoard(board) {
@@ -200,9 +204,15 @@ function unflipCards() {
   isLocked = true;
   setTimeout(() => {
     flippedCards.forEach((card) => card.classList.remove("flipped"));
+    // 4. Update Stats
+    updateStats();
     flippedCards = [];
     isLocked = false;
-  }, 1000);
+  }, 600);
+}
+
+function updateStats() {
+  // Placeholder for stats update
 }
 
 function checkForMatch() {
@@ -273,6 +283,100 @@ function placeInBoard(chunkIndex) {
   }
 }
 
+// Mobile Responsive Sizing Logic (Moved to Module Scope)
+function getCollectedPieceSize() {
+  if (window.innerWidth > 768) return null;
+
+  const zoneHeight = window.innerHeight * 0.13;
+  const containerWidth = window.innerWidth;
+  const gap = 4;
+  const padding = 10;
+
+  // OPTION A: 2 Rows
+  const hSizeA = zoneHeight / 2 - 2 * gap;
+  const wSizeA = (containerWidth - padding - 5 * gap) / 4;
+  const sizeA = Math.min(hSizeA, wSizeA);
+
+  // OPTION B: 1 Row
+  const hSizeB = zoneHeight - 2 * gap;
+  const wSizeB = (containerWidth / 2 - padding - 5 * gap) / 4;
+  const sizeB = Math.min(hSizeB, wSizeB);
+
+  // Pick Winner
+  let finalSize, isOneRow;
+  if (sizeB >= sizeA) {
+    finalSize = sizeB;
+    isOneRow = true;
+  } else {
+    finalSize = sizeA;
+    isOneRow = false;
+  }
+
+  return { size: finalSize, isOneRow, gap };
+}
+
+function fitCollectedPieces() {
+  const config = getCollectedPieceSize();
+  if (!config) return;
+
+  const { size, isOneRow, gap } = config;
+
+  // Apply Element Styles
+  const pieces = document.querySelectorAll(".collected-piece");
+  pieces.forEach((p) => {
+    p.style.width = `${size}px`;
+    p.style.height = `${size}px`;
+    p.style.fontSize = `${size * 0.5}px`;
+    p.style.margin = `${gap / 2}px`;
+  });
+
+  // Apply Container Styles via Wrapper
+  const wrapper = document.querySelector(".collected-wrapper");
+  const left = document.getElementById("collected-left");
+  const right = document.getElementById("collected-right");
+
+  if (wrapper && left && right) {
+    const zoneHeight = window.innerHeight * 0.13;
+
+    // Calculate Fixed Width for containers to ensure pieces don't shift
+    // Each piece has margin gap/2 left and right. Total space per piece = size + gap.
+    // Row holds 4 pieces.
+    const rowWidth = (size + gap) * 4;
+
+    if (isOneRow) {
+      // 1 Row
+      wrapper.style.flexDirection = "row";
+      wrapper.style.height = `${zoneHeight}px`;
+      wrapper.style.justifyContent = "center"; // Center the pair of containers
+
+      left.style.width = `${rowWidth}px`; // Fixed width
+      left.style.height = "100%";
+      left.style.flexWrap = "nowrap";
+      left.style.justifyContent = "flex-start"; // Fill from start
+
+      right.style.width = `${rowWidth}px`; // Fixed width
+      right.style.height = "100%";
+      right.style.flexWrap = "nowrap";
+      right.style.justifyContent = "flex-start"; // Fill from start
+    } else {
+      // 2 Rows
+      wrapper.style.flexDirection = "column";
+      wrapper.style.height = `${zoneHeight}px`;
+      wrapper.style.alignItems = "center"; // Center the stack
+
+      left.style.width = `${rowWidth}px`; // Fixed width
+      left.style.height = "50%";
+      left.style.flexWrap = "nowrap";
+      left.style.justifyContent = "flex-start";
+
+      right.style.width = `${rowWidth}px`; // Fixed width
+      right.style.height = "50%";
+      right.style.flexWrap = "nowrap";
+      right.style.justifyContent = "flex-start";
+    }
+  }
+}
+
 function placeInPanel(chunkIndex) {
   panelCount++;
   // 1-4 -> Left, 5-8 -> Right
@@ -286,7 +390,19 @@ function placeInPanel(chunkIndex) {
   piece.classList.add("collected-piece");
   piece.appendChild(createMiniGrid(chunkData));
 
+  // PRE-APPLY SIZE
+  const config = getCollectedPieceSize();
+  if (config) {
+    piece.style.width = `${config.size}px`;
+    piece.style.height = `${config.size}px`;
+    piece.style.fontSize = `${config.size * 0.5}px`;
+    piece.style.margin = `${config.gap / 2}px`;
+  }
+
   targetContainer.appendChild(piece);
+
+  // Recalc layout
+  fitCollectedPieces();
 }
 
 function shuffleArray(array) {

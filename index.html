@@ -242,6 +242,13 @@
 
       <!-- Memory Game Section -->
       <section id="memory-game" class="game-section hidden">
+        <!-- TEST PANELS FOR MOBILE -->
+        <div class="test-mobile-panels">
+          <div class="test-panel red"></div>
+          <div class="test-panel yellow"></div>
+          <div class="test-panel green"></div>
+        </div>
+
         <header class="game-header">
           <div class="header-title-container">
             <h2 data-i18n="game_memory">Juego de Memoria</h2>
@@ -264,11 +271,11 @@
             <div id="memory-board" class="memory-board"></div>
           </div>
 
-          <!-- Left Panel (Collected 1-4) -->
-          <div id="collected-left" class="collected-zone left"></div>
-
-          <!-- Right Panel (Collected 5-8) -->
-          <div id="collected-right" class="collected-zone right"></div>
+          <!-- Collected Pieces Wrapper -->
+          <div class="collected-wrapper">
+            <div id="collected-left" class="collected-zone left"></div>
+            <div id="collected-right" class="collected-zone right"></div>
+          </div>
 
           <!-- Cards Area -->
           <div id="memory-cards" class="cards-area"></div>

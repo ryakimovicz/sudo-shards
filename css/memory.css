@@ -16,16 +16,20 @@ body.dark-mode {
 
 #memory-game {
   width: 100%;
-  height: 100%;
+  width: 100%;
+  flex: 1; /* Take remaining space */
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 1rem;
-  padding-top: calc(var(--header-height) + 1rem); /* Clear fixed header */
+  padding-top: calc(
+    var(--header-height) + 0.5rem
+  ); /* Slightly less top padding */
   box-sizing: border-box;
   animation: fadeIn 0.5s ease-in-out;
-  user-select: none; /* Global disable for game area */
+  user-select: none;
   -webkit-user-select: none;
+  overflow: hidden; /* Prevent scroll */
 }
 
 @keyframes fadeIn {
@@ -367,31 +371,110 @@ body.dark-mode {
   }
 }
 
-/* Mobile Responsive */
+/* Test Panels (Mobile Only) */
+.test-mobile-panels {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  .test-mobile-panels {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: var(--header-height); /* Start below header */
+    left: 0;
+    width: 100%;
+    /* Stop before footer - adjusted to close gap */
+    height: calc(100vh - var(--header-height) - var(--footer-height) + 7px);
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.8;
+  }
+
+  .test-panel {
+    width: 100%;
+  }
+
+  .test-panel.red {
+    background: red;
+    height: calc(43.5vh - var(--header-height));
+    flex: none;
+  }
+  .test-panel.yellow {
+    background: yellow;
+    height: 15vh;
+    flex: none;
+  }
+  .test-panel.green {
+    background: green;
+    flex: 1;
+  }
+
   .memory-grid-layout {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: 0.5rem; /* Reduce gap */
     padding-bottom: 2rem;
+    position: relative;
+    z-index: 10000; /* Bring grid content above test panels */
+  }
+
+  /* Bring Header above test panels too */
+  .game-header {
+    position: relative;
+    z-index: 10000;
   }
 
   /* Order: Board -> Collected -> Cards */
   .board-wrapper {
     order: 1;
     width: 100%;
+    /* Constrain height to fit in Red Panel (43.5vh) minus Game Header (~3rem) */
+    /* Red Panel = 43.5vh - AppHeader */
+    /* Available for Board = (43.5vh - AppHeader) - GameHeader */
+    height: calc(43.5vh - var(--header-height) - 3rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  /* We need to visually merge left and right zones on mobile */
+  .memory-board {
+    /* Make board responsive to HEIGHT as well as width */
+    max-width: 90vw;
+    max-height: 100%; /* Fit within wrapper */
+    aspect-ratio: 1/1; /* Keep square */
+    width: auto; /* Let height drive width if needed */
+    height: 100%; /* Try to fill height */
+    /* Removed width constraint to allow growing larger than 300px */
+  }
+
+  /* Wrapper for Collected Zones */
+  .collected-wrapper {
+    order: 2;
+    width: 100%;
+    display: flex;
+    flex-direction: column; /* Default to stacked (2 rows) */
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 10000;
+  }
+
+  /* Reset children to simple flex items */
   #collected-left,
   #collected-right {
-    order: 2;
-    flex-direction: row; /* Horizontal row */
+    display: flex;
+    flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
     width: 100%;
-    min-height: 0; /* Remove fixed height constraint */
+    /* Height controlled by JS */
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+    gap: 4px;
   }
   /* Maybe make them appear as one block visually? */
 

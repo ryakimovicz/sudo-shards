@@ -2,8 +2,8 @@
 import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
 
-export function initMenu() {
-  console.log("Jigsudo Menu Module Loaded");
+export function initHome() {
+  console.log("Jigsudo Home Module Loaded");
 
   // ... (existing constants) ...
 

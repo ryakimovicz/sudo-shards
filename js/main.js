@@ -1,12 +1,18 @@
 /* Main Entry Point */
-import { initMenu } from "./menu.js";
+import { initHome } from "./home.js";
 import { initLanguage } from "./i18n.js";
 import { gameManager } from "./game-manager.js";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "./config.js"; // Keep CONFIG for displayVersion
 
-// Initialize Modules
-initLanguage(); // Set up languages first to translate static text
-initMenu(); // Set up menu interactions
+// Boot Sequence
+function startApp() {
+  console.log("Jigsudo App Starting...");
+  // gameManager initializes itself on import
+  initLanguage(); // Initialize i18n
+  initHome(); // Initialize Home Screen logic
+}
+
+startApp(); // Call the new boot sequence
 
 console.log("Main Loaded. Daily Seed:", gameManager.currentSeed);
 

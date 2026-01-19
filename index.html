@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/global.css" />
 
     <!-- Module Styles -->
-    <link rel="stylesheet" href="css/menu.css" />
+    <link rel="stylesheet" href="css/home.css" />
     <link rel="stylesheet" href="css/memory.css" />
     <link rel="stylesheet" href="css/jigsaw.css" />
     <link rel="stylesheet" href="css/sudoku.css" />
@@ -60,14 +60,20 @@
               id="profile-dropdown"
               class="settings-dropdown glass-panel hidden"
             >
-              <h3 class="dropdown-header">Mí perfil</h3>
+              <h3 class="dropdown-header" data-i18n="profile_header">
+                Mí perfil
+              </h3>
               <div class="dropdown-divider"></div>
 
-              <h3 class="dropdown-header">Modo Oscuro</h3>
+              <h3 class="dropdown-header" data-i18n="profile_dark_mode">
+                Modo Oscuro
+              </h3>
 
               <!-- Auto Theme Option -->
               <div class="setting-item">
-                <span class="setting-label">Automático</span>
+                <span class="setting-label" data-i18n="profile_auto"
+                  >Automático</span
+                >
                 <label class="switch-small">
                   <input type="checkbox" id="auto-theme-toggle" />
                   <span class="slider-small round"></span>
@@ -147,7 +153,6 @@
          OR use type="module" for modern support. User didn't specify bundler.
          I'll put separate tags for now to match the "file structure" request strictly.
     -->
-    <script src="js/menu.js"></script>
     <script src="js/memory.js"></script>
     <script src="js/jigsaw.js"></script>
     <script src="js/sudoku.js"></script>

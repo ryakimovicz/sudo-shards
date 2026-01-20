@@ -434,8 +434,18 @@ function handleMatchSuccess(chunkIndex) {
   // Check Win
   if (matchesFound === TOTAL_PAIRS) {
     setTimeout(() => {
-      alert("¡Juego Completado! Próximamente: Jigsaw Stage");
-    }, 1000);
+      // 1. Hide Cards
+      if (cardsContainer) cardsContainer.classList.add("cards-hidden");
+
+      // 2. Pulse Board
+      if (boardContainer) boardContainer.classList.add("board-complete");
+
+      // 3. Official Alert
+      setTimeout(() => {
+        if (boardContainer) boardContainer.classList.remove("board-complete"); // Revert border
+        alert("¡Juego Completado! Próximamente: Jigsaw Stage");
+      }, 800); // Wait just enough for the 0.6s pulse to finish
+    }, 500); // Small delay after last piece to start finale
   }
 }
 

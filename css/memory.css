@@ -397,6 +397,36 @@ body.dark-mode .memory-card-back {
   }
 }
 
+/* Level Completion Animations */
+@keyframes boardPulseGreen {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+    transform: scale(1);
+    border-color: rgba(76, 175, 80, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px 10px rgba(76, 175, 80, 0.6);
+    transform: scale(1.05); /* Slight grow */
+    border-color: #4caf50;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    transform: scale(1);
+    border-color: rgba(76, 175, 80, 0);
+  }
+}
+
+.board-complete {
+  animation: boardPulseGreen 0.6s ease-out 1; /* Single fast pulse */
+  border: 2px solid #4caf50; /* Green border during pulse */
+}
+
+.cards-hidden {
+  opacity: 0;
+  transition: opacity 1s ease-out;
+  pointer-events: none;
+}
+
 /* Test Panels (Mobile Only) */
 .test-mobile-panels {
   display: none;

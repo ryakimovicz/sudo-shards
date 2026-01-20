@@ -556,12 +556,12 @@ body.dark-mode .memory-card-back {
   }
   .test-panel.red {
     background: transparent;
-    height: calc(43.5vh - var(--header-height));
+    height: calc(43.5dvh - var(--header-height));
     flex: none;
   }
   .test-panel.yellow {
     background: transparent;
-    height: 13vh;
+    height: 13dvh;
     flex: none;
   }
   .test-panel.green {
@@ -605,9 +605,9 @@ body.dark-mode .memory-card-back {
   .board-wrapper {
     order: 1;
     width: 100%;
-    /* Maximize height within Red Panel (43.5vh) minus Title (~45px) */
+    /* Maximize height within Red Panel (43.5dvh) minus Title (~45px) */
     /* Formula: RedPanelHeight - TitleHeight */
-    height: calc(43.5vh - var(--header-height) - 45px);
+    height: calc(43.5dvh - var(--header-height) - 45px);
     display: flex;
     align-items: flex-start; /* Start below title */
     justify-content: center;

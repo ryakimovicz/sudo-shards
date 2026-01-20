@@ -154,7 +154,10 @@ function fitMemoryCards() {
   }
 
   // Mobile Logic
-  const vh = window.innerHeight;
+  // Use visualViewport if available to account for virtual keybord/footer overlays
+  const vh = window.visualViewport
+    ? window.visualViewport.height
+    : window.innerHeight;
 
   // Available Height Strategy:
   // 1. Measure the container itself (best if flex works)
@@ -165,34 +168,33 @@ function fitMemoryCards() {
   let h1 = cardsContainer.clientHeight;
   if (h1 < 50) h1 = 9999;
 
-  // Strategy 2: Green Panel
-  let h2 = 9999;
+  // Strategy 2: Green Panel (Preferred Source of Truth)
+  let h2 = 0;
   const greenPanel = document.querySelector(".test-panel.green");
   if (greenPanel) {
     h2 = greenPanel.clientHeight;
   }
 
-  // Strategy 3: Math Fallback
-  // Total Height - (Header 60 + Red (calc) + Yellow 13vh) - Footer ~30-40
-  // Red is calc(43.5vh - header), Yellow 13vh.
-  // Top of Green = 60 + (43.5vh - 60) + 13vh = 56.5vh.
-  // Height = (100vh - 40px) - 56.5vh = 43.5vh - 40px.
-  const h3 = vh * 0.435 - 40;
+  // Strategy 3: Math Fallback (Only used if Green Panel is missing)
+  // Approximate remaining space if we can't measure DOM
+  const h3 = vh * 0.4;
 
-  // Pick the SAFEST (smallest valid) height
-  let availableHeight = Math.min(h1, h2, h3);
+  // Selection Logic:
+  // If we found the Green Panel, trust it explicitly (User wants to maximize usage of this zone).
+  // Otherwise, use fallback.
+  let availableHeight = h2 > 0 ? h2 : h3;
 
-  // If measured heights are invalid (e.g. 0), fall back to math
-  if (availableHeight < 50) availableHeight = h3;
+  // Apply Minimal Safety Buffer to avoid edge touching
+  // Reduced to almost zero to maximize usage as requested
+  availableHeight -= 5;
 
-  // Apply Safety Buffer (40px total for padding/margins)
-  availableHeight -= 40;
+  if (availableHeight < 50) availableHeight = 100; // Sanity check
 
   const availableWidth = cardsContainer.clientWidth || window.innerWidth;
 
-  // Padding/Gap settings
-  const gap = 6;
-  const padding = 10;
+  // Padding/Gap settings - Minimal
+  const gap = 4;
+  const padding = 15; /* Increased to prevent touching screen edges */
 
   const totalCards = 18;
 
@@ -201,8 +203,12 @@ function fitMemoryCards() {
   // Iterate to find best fit
   for (let cols = 3; cols <= 6; cols++) {
     const rows = Math.ceil(totalCards / cols);
+    // Calc max width per card
     const wSize = (availableWidth - padding * 2 - (cols - 1) * gap) / cols;
+    // Calc max height per card
     const hSize = (availableHeight - padding * 2 - (rows - 1) * gap) / rows;
+
+    // The limiting factor is the smaller of the two dimensions
     const size = Math.min(wSize, hSize);
 
     if (size > bestConfig.size) {
@@ -217,10 +223,13 @@ function fitMemoryCards() {
   cardsContainer.style.display = "flex";
   cardsContainer.style.flexWrap = "wrap";
   cardsContainer.style.justifyContent = "center";
-  cardsContainer.style.alignContent = "center";
+  cardsContainer.style.alignContent = "center"; // Center the grid in the available space
   cardsContainer.style.width = "100%";
-  // Force height to match what we calculated to prevent overflow if flex expanded too much
+
+  // Force height to Match Green Panel EXACTLY
   cardsContainer.style.height = `${availableHeight}px`;
+  cardsContainer.style.maxHeight = "none";
+
   cardsContainer.style.gap = `${gap}px`;
   cardsContainer.style.padding = `${padding}px`;
   cardsContainer.style.boxSizing = "border-box";
@@ -474,18 +483,21 @@ function placeInBoard(chunkIndex) {
 function getCollectedPieceSize() {
   if (window.innerWidth > 768) return null;
 
-  const zoneHeight = window.innerHeight * 0.13;
+  const zoneHeight =
+    (window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight) * 0.13;
   const containerWidth = window.innerWidth;
   const gap = 4;
   const padding = 10;
 
-  // OPTION A: 2 Rows
-  const hSizeA = zoneHeight / 2 - 2 * gap;
+  // OPTION A: 2 Rows -> Add safety buffer (-4px)
+  const hSizeA = zoneHeight / 2 - 2 * gap - 2;
   const wSizeA = (containerWidth - padding - 5 * gap) / 4;
   const sizeA = Math.min(hSizeA, wSizeA);
 
-  // OPTION B: 1 Row
-  const hSizeB = zoneHeight - 2 * gap;
+  // OPTION B: 1 Row -> Add safety buffer (-4px)
+  const hSizeB = zoneHeight - 2 * gap - 4;
   const wSizeB = (containerWidth / 2 - padding - 5 * gap) / 4;
   const sizeB = Math.min(hSizeB, wSizeB);
 
@@ -503,13 +515,30 @@ function getCollectedPieceSize() {
 }
 
 function fitCollectedPieces() {
+  const wrapper = document.querySelector(".collected-wrapper");
+  const left = document.getElementById("collected-left");
+  const right = document.getElementById("collected-right");
+  const pieces = document.querySelectorAll(".collected-piece");
+
+  if (!wrapper || !left || !right) return;
+
+  // DESKTOP RESET
+  if (window.innerWidth > 768) {
+    // Clear all inline styles so CSS takes over
+    wrapper.style = "";
+    left.style = "";
+    right.style = "";
+    pieces.forEach((p) => (p.style = "")); // Revert to CSS class sizing (70px)
+    return;
+  }
+
+  // MOBILE LOGIC
   const config = getCollectedPieceSize();
   if (!config) return;
 
   const { size, isOneRow, gap } = config;
 
   // Apply Element Styles
-  const pieces = document.querySelectorAll(".collected-piece");
   pieces.forEach((p) => {
     p.style.width = `${size}px`;
     p.style.height = `${size}px`;
@@ -517,50 +546,50 @@ function fitCollectedPieces() {
     p.style.margin = `${gap / 2}px`;
   });
 
-  // Apply Container Styles via Wrapper
-  const wrapper = document.querySelector(".collected-wrapper");
-  const left = document.getElementById("collected-left");
-  const right = document.getElementById("collected-right");
+  // Apply Container Layout
+  const zoneHeight = window.innerHeight * 0.13;
 
-  if (wrapper && left && right) {
-    const zoneHeight = window.innerHeight * 0.13;
+  // Calculate Fixed Width for containers to ensure pieces don't shift
+  // Each piece has margin gap/2 left and right. Total space per piece = size + gap.
+  // Row holds 4 pieces.
+  const rowWidth = (size + gap) * 4;
 
-    // Calculate Fixed Width for containers to ensure pieces don't shift
-    // Each piece has margin gap/2 left and right. Total space per piece = size + gap.
-    // Row holds 4 pieces.
-    const rowWidth = (size + gap) * 4;
+  if (isOneRow) {
+    // 1 Row
+    wrapper.style.flexDirection = "row";
+    wrapper.style.height = `${zoneHeight}px`;
+    wrapper.style.justifyContent = "center"; // Center the pair of containers
+    wrapper.style.alignItems = "center";
 
-    if (isOneRow) {
-      // 1 Row
-      wrapper.style.flexDirection = "row";
-      wrapper.style.height = `${zoneHeight}px`;
-      wrapper.style.justifyContent = "center"; // Center the pair of containers
+    left.style.width = `${rowWidth}px`; // Fixed width
+    left.style.height = "100%";
+    left.style.flexWrap = "nowrap";
+    left.style.justifyContent = "flex-start"; // Fill from start
+    left.style.display = "flex";
 
-      left.style.width = `${rowWidth}px`; // Fixed width
-      left.style.height = "100%";
-      left.style.flexWrap = "nowrap";
-      left.style.justifyContent = "flex-start"; // Fill from start
+    right.style.width = `${rowWidth}px`; // Fixed width
+    right.style.height = "100%";
+    right.style.flexWrap = "nowrap";
+    right.style.justifyContent = "flex-start"; // Fill from start
+    right.style.display = "flex";
+  } else {
+    // 2 Rows
+    wrapper.style.flexDirection = "column";
+    wrapper.style.height = `${zoneHeight}px`;
+    wrapper.style.justifyContent = "center";
+    wrapper.style.alignItems = "center"; // Center the stack
 
-      right.style.width = `${rowWidth}px`; // Fixed width
-      right.style.height = "100%";
-      right.style.flexWrap = "nowrap";
-      right.style.justifyContent = "flex-start"; // Fill from start
-    } else {
-      // 2 Rows
-      wrapper.style.flexDirection = "column";
-      wrapper.style.height = `${zoneHeight}px`;
-      wrapper.style.alignItems = "center"; // Center the stack
+    left.style.width = `${rowWidth}px`; // Fixed width
+    left.style.height = "50%";
+    left.style.flexWrap = "nowrap";
+    left.style.justifyContent = "flex-start";
+    left.style.display = "flex";
 
-      left.style.width = `${rowWidth}px`; // Fixed width
-      left.style.height = "50%";
-      left.style.flexWrap = "nowrap";
-      left.style.justifyContent = "flex-start";
-
-      right.style.width = `${rowWidth}px`; // Fixed width
-      right.style.height = "50%";
-      right.style.flexWrap = "nowrap";
-      right.style.justifyContent = "flex-start";
-    }
+    right.style.width = `${rowWidth}px`; // Fixed width
+    right.style.height = "50%";
+    right.style.flexWrap = "nowrap";
+    right.style.justifyContent = "flex-start";
+    right.style.display = "flex";
   }
 }
 
@@ -591,6 +620,17 @@ function placeInPanel(chunkIndex) {
   // Recalc layout
   fitCollectedPieces();
 }
+
+// Global Resize Listener with Debounce
+let resizeTimeout;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    // Re-run sizing logic when window changes
+    fitMemoryCards();
+    fitCollectedPieces();
+  }, 100);
+});
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {

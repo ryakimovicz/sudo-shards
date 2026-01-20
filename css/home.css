@@ -15,7 +15,7 @@
   left: 0;
   right: 0; /* Ensure spanning */
   margin: 0 !important; /* No gaps */
-  z-index: 1000;
+  z-index: 30000; /* Boost above Game Layers (20000+) */
   background: rgba(
     253,
     251,

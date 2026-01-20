@@ -313,7 +313,9 @@ body.dark-mode {
   background: var(--bg-secondary);
   transform: rotateY(180deg);
   border: 2px solid #1e293b; /* Dark Grey/Black for Light Mode per user request */
-  padding: 1px;
+  padding: 0; /* Flush grid per user request */
+  border-radius: 6px; /* Match card radius explicitly */
+  overflow: hidden; /* Clip grid corners to radius */
   /* Fix ghost text selection: Hide content when not flipped */
   visibility: hidden;
   transition: visibility 0s linear 0.1s; /* Delay hiding until almost flipped back */
@@ -340,12 +342,14 @@ body.dark-mode .memory-card-back {
 /* Mini Sudoku Grid Content */
 .mini-sudoku-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  /* Use minmax(0, 1fr) to force equal sizing regardless of content/empty cells */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   width: 100%;
   height: 100%;
   gap: 1px;
   background: #ccc; /* Grid lines color */
+  container-type: size; /* Enable relative typography */
 }
 
 .mini-cell {
@@ -353,21 +357,25 @@ body.dark-mode .memory-card-back {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 14px; /* Larger font for legibility */
-  font-weight: 600;
+  /* Responsive Font Size: ~18% of the total 3x3 grid width */
+  font-size: 18cqw;
+  font-weight: 700;
   font-family: "Outfit", sans-serif;
   color: #333;
   user-select: none;
   -webkit-user-select: none;
+  line-height: 1; /* Tight line height */
 }
 .dark-mode .mini-cell {
   background: #2a2a2a;
   color: #eee;
 }
 
-/* Specific: Larger numbers on the main board */
+/* Specific: Larger numbers on the main board can match relative sizing too, 
+   or keep an override if needed. 18cqw works everywhere mostly. */
 .memory-board .mini-cell {
-  font-size: 16px;
+  /* No specific override needed if using cqw, but maybe slightly adjusted for visibility */
+  font-size: 20cqw;
 }
 
 /* Collected Piece Styling */
@@ -484,6 +492,21 @@ body.dark-mode .memory-card-back {
 
 /* Mobile Layout */
 @media (max-width: 768px) {
+  /* Override global container padding to regain vertical space */
+  #memory-game {
+    padding: 0;
+    padding-top: var(--header-height); /* Only pad for the fixed header */
+    justify-content: flex-start; /* Force content to top */
+  }
+
+  /* Compact header to fit board in red zone */
+  .game-header {
+    margin: 0; /* Zero margins */
+    padding: 5px 0; /* Minimal padding */
+    z-index: 20002;
+    flex: 0 0 auto; /* Don't grow */
+  }
+
   .test-mobile-panels {
     display: flex;
     flex-direction: column;
@@ -498,10 +521,10 @@ body.dark-mode .memory-card-back {
     opacity: 0.8;
   }
 
+  /* ... test-panel styles ... */
   .test-panel {
     width: 100%;
   }
-
   .test-panel.red {
     background: transparent;
     height: calc(43.5vh - var(--header-height));
@@ -532,7 +555,8 @@ body.dark-mode .memory-card-back {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: flex-start; /* Force top alignment */
+    gap: 0; /* Remove gap to tighten layout */
     padding-top: 0; /* consistent with existing padding-bottom: 0 logic */
     padding-bottom: 0; /* Remove padding to use full green zone */
     position: relative;
@@ -552,23 +576,23 @@ body.dark-mode .memory-card-back {
   .board-wrapper {
     order: 1;
     width: 100%;
-    /* Constrain height to fit in Red Panel (43.5vh) minus Game Header (~3rem) */
-    /* Red Panel = 43.5vh - AppHeader */
-    /* Available for Board = (43.5vh - AppHeader) - GameHeader */
-    height: calc(43.5vh - var(--header-height) - 3rem);
+    /* Maximize height within Red Panel (43.5vh) minus Title (~45px) */
+    /* Formula: RedPanelHeight - TitleHeight */
+    height: calc(43.5vh - var(--header-height) - 45px);
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Start below title */
     justify-content: center;
+    padding-top: 0;
+    margin-top: 0; /* Align tight to title */
   }
 
   .memory-board {
-    /* Make board responsive to HEIGHT as well as width */
-    max-width: 90vw;
-    max-height: 100%; /* Fit within wrapper */
-    aspect-ratio: 1/1; /* Keep square */
-    width: auto; /* Let height drive width if needed */
-    height: 100%; /* Try to fill height */
-    /* Removed width constraint to allow growing larger than 300px */
+    /* Maximize Size Strategy: Fill Height, matching Aspect Ratio */
+    height: 100%; /* Fill the available vertical space */
+    width: auto; /* Width adjusts to keep square */
+    aspect-ratio: 1/1; /* Ensure squareness */
+    max-width: 95vw; /* Prevent horizontal overflow */
+    max-height: 100%; /* Strict safety */
   }
 
   /* Wrapper for Collected Zones */

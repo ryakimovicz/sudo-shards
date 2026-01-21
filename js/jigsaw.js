@@ -116,21 +116,38 @@ export function fitCollectedPieces() {
     return;
   }
 
-  const config = getCollectedPieceSize();
+  const isJigsaw =
+    memorySection && memorySection.classList.contains("jigsaw-mode");
+  const config = getCollectedPieceSize(isJigsaw);
   if (!config) return;
 
   const { size, isOneRow, gap } = config;
 
-  // Apply Element Styles
-  pieces.forEach((p) => {
-    p.style.width = `${size}px`;
-    p.style.height = `${size}px`;
-    p.style.fontSize = `${size * 0.5}px`;
-    p.style.margin = `${gap / 2}px`;
-  });
+  // Apply Element Styles in a micro-task or next frame to ensure layout stabilizes
+  // This prevents pieces from "flying in" from the container origin (0,0)
+  const applyStyles = () => {
+    pieces.forEach((p) => {
+      p.style.width = `${size}px`;
+      p.style.height = `${size}px`;
+      p.style.fontSize = `${size * 0.5}px`;
+      p.style.margin = `${gap / 2}px`;
+    });
+  };
+
+  // If entering jigsaw mode, wait one frame for cards to hide and layout to reflow
+  if (isJigsaw) {
+    requestAnimationFrame(applyStyles);
+  } else {
+    applyStyles();
+  }
 
   // Apply Container Layout
-  const zoneHeight = window.innerHeight * 0.13;
+  // Use the same height factor as getCollectedPieceSize for layout consistency
+  const hFactor = isJigsaw ? 0.45 : 0.13;
+  const zoneHeight =
+    (window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight) * hFactor;
   const rowWidth = (size + gap) * 4;
 
   if (isOneRow) {
@@ -141,12 +158,14 @@ export function fitCollectedPieces() {
 
     collectedLeft.style.width = `${rowWidth}px`;
     collectedLeft.style.height = "100%";
+    collectedLeft.style.flexDirection = "row"; // FORCE horizontal
     collectedLeft.style.flexWrap = "nowrap";
     collectedLeft.style.justifyContent = "flex-start";
     collectedLeft.style.display = "flex";
 
     collectedRight.style.width = `${rowWidth}px`;
     collectedRight.style.height = "100%";
+    collectedRight.style.flexDirection = "row"; // FORCE horizontal
     collectedRight.style.flexWrap = "nowrap";
     collectedRight.style.justifyContent = "flex-start";
     collectedRight.style.display = "flex";
@@ -155,28 +174,33 @@ export function fitCollectedPieces() {
     wrapper.style.height = `${zoneHeight}px`;
     wrapper.style.justifyContent = "center";
     wrapper.style.alignItems = "center";
+    wrapper.style.gap = "2px"; // Keep rows close
 
     collectedLeft.style.width = `${rowWidth}px`;
-    collectedLeft.style.height = "50%";
+    collectedLeft.style.height = "auto";
+    collectedLeft.style.flexDirection = "row"; // FORCE horizontal
     collectedLeft.style.flexWrap = "nowrap";
     collectedLeft.style.justifyContent = "flex-start";
     collectedLeft.style.display = "flex";
 
     collectedRight.style.width = `${rowWidth}px`;
-    collectedRight.style.height = "50%";
+    collectedRight.style.height = "auto";
+    collectedRight.style.flexDirection = "row"; // FORCE horizontal
     collectedRight.style.flexWrap = "nowrap";
     collectedRight.style.justifyContent = "flex-start";
     collectedRight.style.display = "flex";
   }
 }
 
-function getCollectedPieceSize() {
+function getCollectedPieceSize(isJigsaw = false) {
   if (window.innerWidth > 768) return null;
 
+  // Increase height factor in Jigsaw mode to use card space
+  const hFactor = isJigsaw ? 0.45 : 0.13;
   const zoneHeight =
     (window.visualViewport
       ? window.visualViewport.height
-      : window.innerHeight) * 0.13;
+      : window.innerHeight) * hFactor;
   const containerWidth = window.innerWidth;
   const gap = 4;
   const padding = 10;
@@ -473,7 +497,8 @@ export function transitionToJigsaw() {
       const pieces = document.querySelectorAll(".collected-piece");
       pieces.forEach((p, i) => {
         const chunkIndex = p.dataset.chunkIndex || i;
-        if (chunkIndex) p.style.viewTransitionName = `piece-${chunkIndex}`;
+        if (chunkIndex !== undefined)
+          p.style.viewTransitionName = `piece-${chunkIndex}`;
       });
 
       const board = document.querySelector(".memory-board");
@@ -481,16 +506,18 @@ export function transitionToJigsaw() {
 
       const transition = document.startViewTransition(() => {
         memorySection.classList.add("jigsaw-mode");
+
+        // UI/Layout updates MUST happen inside the transition callback
+        // so the browser captures the NEW state as the "Target"
+        gameManager.updateProgress("progress", { currentStage: "jigsaw" });
+        deselectPiece();
+        fitCollectedPieces();
       });
 
       transition.finished.finally(() => {
+        // Clean up transition names to avoid leaks or performance issues later
         pieces.forEach((p) => (p.style.viewTransitionName = ""));
         if (board) board.style.viewTransitionName = "";
-
-        // Update State Logic
-        gameManager.updateProgress("progress", { currentStage: "jigsaw" });
-        deselectPiece(); // Ensure clear state
-        fitCollectedPieces(); // Force layout update
       });
     } else {
       memorySection.classList.add("jigsaw-mode");

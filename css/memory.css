@@ -418,6 +418,15 @@ body.dark-mode .memory-card-back {
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   user-select: none;
   -webkit-user-select: none;
+  /* Smoothly animate size/position changes (like mobile jigsaw transition) */
+  /* Using specific properties prevents "sliding from origin" artifacts often caused by transition: all */
+  transition:
+    width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    margin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    font-size 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .dark-mode .collected-piece {
@@ -615,6 +624,12 @@ body.dark-mode .memory-card-back {
     justify-content: center;
     padding-top: 0;
     margin-top: 0; /* Align tight to title */
+    transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Expand Board vertical budget when in Jigsaw Mode to allow growth */
+  .jigsaw-mode .board-wrapper {
+    height: calc(50dvh - var(--header-height) - 45px);
   }
 
   .memory-board {
@@ -636,6 +651,8 @@ body.dark-mode .memory-card-back {
     justify-content: center;
     position: relative;
     z-index: 10000;
+    /* Animate height expansion during jigsaw mode transition */
+    transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   /* Reset children to simple flex items */
@@ -677,14 +694,15 @@ body.dark-mode .memory-card-back {
    Landscape Tablet / Short Desktop Adjustment
    (Fixes cut-off cards on devices like TCL NXTPAPER 11)
    ========================================= */
-@media (min-width: 768px) and (max-height: 850px) {
+@media (min-width: 769px) and (max-height: 850px) {
   .memory-grid-layout {
     padding-top: 0.5rem;
     column-gap: 8rem; /* SEPARATE panels horizontally without pushing cards down */
-    row-gap: 1rem; /* Keep vertical spacing tight */
+    row-gap: 1rem;
     /* Columns: 130px (Left) | 220px (Board) | 130px (Right) */
     grid-template-columns: 130px 220px 130px !important;
     grid-template-rows: auto 1fr;
+    max-width: 1000px; /* Prevent over-stretch */
   }
 
   /* Hide Timer to save space */

@@ -110,8 +110,8 @@ body.dark-mode .sudoku-chunk-slot[data-slot-index="4"]::after {
   }
 }
 
-/* Desktop Jigsaw Expansion */
-@media (min-width: 769px) {
+/* Large Desktop Jigsaw Expansion (Scale Up everything) */
+@media (min-width: 1100px) {
   .jigsaw-mode .memory-board {
     width: 420px !important; /* Force larger size */
     height: 420px !important;
@@ -120,12 +120,11 @@ body.dark-mode .sudoku-chunk-slot[data-slot-index="4"]::after {
   .jigsaw-mode .collected-piece {
     width: 99px !important;
     height: 99px !important;
-    /* Move font-size with it */
+    /* Large Font for large pieces */
     font-size: 2rem;
   }
 
   .jigsaw-mode .collected-wrapper {
-    /* Provide more space for larger pieces */
     gap: 15px;
     padding: 10px;
   }
@@ -135,24 +134,6 @@ body.dark-mode .sudoku-chunk-slot[data-slot-index="4"]::after {
     gap: 2rem;
     /* Unlock the middle column to fit the 420px board */
     grid-template-columns: 110px 420px 110px;
-  }
-}
-
-@media (min-width: 769px) and (max-height: 850px) {
-  /* JIGSAW MODE OVERRIDES: 1 Column per side */
-  .jigsaw-mode .collected-zone {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    width: 75px; /* Fit single column */
-    justify-content: center;
-  }
-
-  /* Adjust proximity for the narrower single column */
-  .jigsaw-mode .collected-zone.left {
-    margin-right: -15px; /* Reset margins for single column */
-  }
-  .jigsaw-mode .collected-zone.right {
-    margin-left: -15px;
   }
 }
 

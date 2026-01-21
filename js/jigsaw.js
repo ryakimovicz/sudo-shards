@@ -205,6 +205,10 @@ function getCollectedPieceSize() {
 }
 
 export function handlePieceSelect(pieceElement) {
+  // GUARD: Only in Jigsaw Mode
+  if (!memorySection || !memorySection.classList.contains("jigsaw-mode"))
+    return;
+
   // If we click the same piece, deselect
   if (selectedPieceElement === pieceElement) {
     deselectPiece();
@@ -303,6 +307,10 @@ function deselectPiece() {
 
 // Updated V2: Handles Panel Pieces AND Board Pieces
 export function handleSlotClick_v2(slotIndex) {
+  // GUARD: Only in Jigsaw Mode
+  if (!memorySection || !memorySection.classList.contains("jigsaw-mode"))
+    return;
+
   const slot = boardContainer.querySelector(`[data-slot-index="${slotIndex}"]`);
   if (!slot) return;
 
@@ -527,6 +535,10 @@ export function initDragAndDrop() {
 
 export function handlePointerDown(e) {
   if (e.pointerType === "touch") return; // Mouse/Pen only
+
+  // GUARD: Only allow interaction in Jigsaw Mode
+  if (!memorySection || !memorySection.classList.contains("jigsaw-mode"))
+    return;
 
   const target = e.target.closest(".collected-piece, .sudoku-chunk-slot");
   if (!target) return;

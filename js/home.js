@@ -146,14 +146,15 @@ export function initHome() {
     let formattedDate = dateStr;
 
     if (lang === "es") {
-      formattedDate = dateStr.replace(/\b\w+/g, (word) => {
+      // Regex accepts accents (Latin-1 Supplement block \u00C0-\u00FF)
+      formattedDate = dateStr.replace(/[a-zA-Z\u00C0-\u00FF]+/g, (word) => {
         return word === "de" || word === "en" || word === "del"
           ? word
           : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
       });
     } else {
       // English / Generic Title Case
-      formattedDate = dateStr.replace(/\b\w+/g, (word) => {
+      formattedDate = dateStr.replace(/[a-zA-Z\u00C0-\u00FF]+/g, (word) => {
         return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
       });
     }

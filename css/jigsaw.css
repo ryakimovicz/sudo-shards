@@ -21,8 +21,14 @@
   border-color: var(--accent-color) !important;
   box-shadow: 0 0 15px var(--accent-color);
   transform: scale(1.1);
-  z-index: 1500; /* High Z-index to prevent flicker when swapping from hover (1500) */
+  z-index: 1510; /* Slightly higher than hover z-index */
   opacity: 1;
+}
+
+/* Base style for all jigsaw mode pieces to ensure they can glow outside */
+.jigsaw-mode .collected-piece,
+.jigsaw-mode .sudoku-chunk-slot {
+  overflow: visible !important;
 }
 
 /* Jigsaw Mode Transitions */

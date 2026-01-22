@@ -675,7 +675,7 @@ body.dark-mode .memory-card-back {
     width: 100%;
     /* Height controlled by JS */
     min-height: 0;
-    overflow: hidden;
+    overflow: visible; /* Changed from hidden to allow selection glow */
     padding: 0;
     gap: 4px;
   }

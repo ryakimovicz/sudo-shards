@@ -228,7 +228,7 @@ function getCollectedPieceSize(isJigsaw = false) {
       ? window.visualViewport.height
       : window.innerHeight) * hFactor;
   const containerWidth = window.innerWidth;
-  const gap = 4;
+  const gap = isJigsaw ? 12 : 4;
   const padding = 10;
 
   // OPTION A: 2 Rows -> Add safety buffer (-4px)

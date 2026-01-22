@@ -34,6 +34,19 @@ export function initJigsaw(elements) {
   window.addEventListener("resize", () => {
     fitCollectedPieces();
   });
+
+  // Global click listener for deselection
+  document.addEventListener("click", (e) => {
+    if (!selectedPieceElement) return;
+
+    // Check if we clicked "empty" space (not a piece or board slot)
+    const isGameElement = e.target.closest(
+      ".collected-piece, .sudoku-chunk-slot",
+    );
+    if (!isGameElement) {
+      deselectPiece();
+    }
+  });
 }
 
 // =========================================
@@ -271,8 +284,20 @@ export function handlePieceSelect(pieceElement) {
     const target = pieceElement;
     const isTargetEmpty = target.classList.contains("placeholder");
     const isSourceBoard = source.classList.contains("sudoku-chunk-slot");
+    const isTargetBoard = target.classList.contains("sudoku-chunk-slot");
 
-    // Get Content
+    // --- CASE: Panel to Panel -> Change Selection instead of Swap/Move ---
+    if (!isSourceBoard && !isTargetBoard) {
+      deselectPiece();
+      if (!isTargetEmpty) {
+        handlePieceSelect(target);
+      }
+      return;
+    }
+
+    // --- CASE: Board or Panel to Panel (Board Source or Empty Target) ---
+    // If it's Board to Panel, we allow it to proceed to Move/Swap logic below.
+    // If it was Panel to Panel it already returned above.
     const sourceContent = source.querySelector(".mini-sudoku-grid");
     const targetContent = target.querySelector(".mini-sudoku-grid"); // may be null
 

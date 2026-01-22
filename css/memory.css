@@ -708,7 +708,11 @@ body.dark-mode .memory-card-back {
    ========================================= */
 @media (min-width: 769px) and (max-height: 850px) {
   .memory-grid-layout {
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      grid-template-columns 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+      column-gap 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+      row-gap 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+      padding 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     padding-top: 0.5rem;
     column-gap: 8rem; /* SEPARATE panels horizontally without pushing cards down */
     row-gap: 1rem;
@@ -730,7 +734,11 @@ body.dark-mode .memory-card-back {
     aspect-ratio: 1 / 1;
     align-self: center;
     justify-self: center;
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      width 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+      height 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+      margin 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Enlarged Board (Jigsaw) */
@@ -771,7 +779,7 @@ body.dark-mode .memory-card-back {
   .jigsaw-mode .collected-zone {
     grid-template-columns: 1fr; /* Single column */
     max-width: 95px; /* Strictly force 1 column */
-    gap: 15px;
+    gap: 12px;
   }
 
   /* Override Piece Size for this view (Memory Default) */
@@ -784,8 +792,8 @@ body.dark-mode .memory-card-back {
 
   /* Enlarged Pieces (Jigsaw Mode) */
   .jigsaw-mode .collected-piece {
-    width: 85px !important;
-    height: 85px !important;
+    width: 86px !important;
+    height: 86px !important;
     font-size: 1.5rem !important;
   }
 

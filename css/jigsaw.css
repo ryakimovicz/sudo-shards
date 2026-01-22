@@ -109,6 +109,31 @@ body.dark-mode .sudoku-chunk-slot[data-slot-index="4"]::after {
   }
 }
 
+/* Standard Desktop Jigsaw Expansion (769px - 1099px, Height > 850px) */
+@media (min-width: 769px) and (max-width: 1099px) and (min-height: 851px) {
+  .jigsaw-mode .memory-board {
+    width: 400px !important;
+    height: 400px !important;
+  }
+
+  .jigsaw-mode .collected-piece {
+    width: 91px !important;
+    height: 91px !important;
+    font-size: 1.6rem !important;
+  }
+
+  /* Adjust grid columns for larger Jigsaw board */
+  .jigsaw-mode .memory-grid-layout {
+    grid-template-columns: 120px 400px 120px !important;
+    column-gap: 4rem !important;
+    max-width: 1250px !important;
+  }
+
+  .jigsaw-mode .collected-zone {
+    gap: 12px !important;
+  }
+}
+
 /* Large Desktop Jigsaw Expansion (Scale Up only if there is enough height) */
 @media (min-width: 1100px) and (min-height: 851px) {
   .jigsaw-mode .memory-board {

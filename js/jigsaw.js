@@ -139,12 +139,8 @@ export function fitCollectedPieces() {
     });
   };
 
-  // If entering jigsaw mode, wait one frame for cards to hide and layout to reflow
-  if (isJigsaw) {
-    requestAnimationFrame(applyStyles);
-  } else {
-    applyStyles();
-  }
+  // Immediate call to ensure sync with Jigsaw Mode class addition
+  applyStyles();
 
   // Apply Container Layout
   // Use the same height factor as getCollectedPieceSize for layout consistency
@@ -516,6 +512,12 @@ export function transitionToJigsaw() {
       if (gridLayout) gridLayout.style.viewTransitionName = "main-layout";
 
       const transition = document.startViewTransition(() => {
+        // CRITICAL: Disable CSS transitions during the DOM update
+        // This makes the size change instant for the "Target" snapshot,
+        // allowing the View Transition API to handle the animation exclusively.
+        if (board) board.style.transition = "none";
+        if (gridLayout) gridLayout.style.transition = "none";
+
         memorySection.classList.add("jigsaw-mode");
 
         // UI/Layout updates MUST happen inside the transition callback
@@ -526,11 +528,17 @@ export function transitionToJigsaw() {
       });
 
       transition.finished.finally(() => {
-        // Clean up transition names to avoid leaks or performance issues later
+        // Clean up transition names and restore CSS transitions
         leftPieces.forEach((p) => (p.style.viewTransitionName = ""));
         rightPieces.forEach((p) => (p.style.viewTransitionName = ""));
-        if (board) board.style.viewTransitionName = "";
-        if (gridLayout) gridLayout.style.viewTransitionName = "";
+        if (board) {
+          board.style.viewTransitionName = "";
+          board.style.transition = "";
+        }
+        if (gridLayout) {
+          gridLayout.style.viewTransitionName = "";
+          gridLayout.style.transition = "";
+        }
       });
     } else {
       memorySection.classList.add("jigsaw-mode");

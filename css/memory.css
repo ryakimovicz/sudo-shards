@@ -751,7 +751,7 @@ body.dark-mode .memory-card-back {
     min-height: 100px !important;
     max-height: 180px;
     aspect-ratio: 1 / 1;
-    align-self: center;
+    align-self: flex-start; /* Move to top */
     justify-self: center;
     object-fit: contain;
   }
@@ -760,15 +760,21 @@ body.dark-mode .memory-card-back {
     grid-area: board;
     align-self: stretch; /* Must stretch to provide a height reference to board */
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Align board to top of its zone */
     justify-content: center;
   }
 
-  /* Enlarged Board (Jigsaw & Sudoku) */
-  .jigsaw-mode .memory-board,
+  /* Enlarged Board (Jigsaw) */
+  .jigsaw-mode .memory-board {
+    min-height: 240px !important;
+    max-height: 330px !important; /* Reduced further for better clearance */
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Enlarged Board (Sudoku) */
   .sudoku-mode .memory-board {
-    min-height: 240px !important; /* User: "agrandar el tablero" */
-    max-height: 420px !important;
+    min-height: 240px !important;
+    max-height: 390px !important; /* Reduced further for better clearance */
     transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
@@ -799,11 +805,11 @@ body.dark-mode .memory-card-back {
   .sudoku-mode .collected-zone {
     display: flex !important;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-self: stretch !important; /* Stretch to match board height */
     grid-template-columns: none !important;
     max-width: 100px;
-    gap: 0; /* Handled by justify-content: space-between */
+    gap: 8px; /* Fixed grouping gap */
     padding: 1vh 0; /* Small vertical buffer */
   }
 

@@ -181,8 +181,8 @@ function fitMemoryCards() {
     ? window.visualViewport.height
     : window.innerHeight;
 
-  // Desktop Cleanup / Guard (Only purely desktop wide+tall screens stay static)
-  if (vw > 768 && vh >= 850) {
+  // Desktop Cleanup / Guard (Let CSS Grid handle these cases)
+  if (vw > 768) {
     cardsContainer.style = "";
     const cards = document.querySelectorAll(".memory-card");
     cards.forEach((card) => {
@@ -203,7 +203,7 @@ function fitMemoryCards() {
     const h2 = greenPanel ? greenPanel.clientHeight : 0;
     const h3 = vh * 0.4;
     availableHeight = h2 > 0 ? h2 : h3;
-    availableHeight -= 5; // Minimal safety buffer
+    availableHeight -= 15; // Increased safety buffer for tall screens
   } else {
     // --- Tablet/Laptop Short Logic ---
     // Target space: From Board Bottom to Footer Top

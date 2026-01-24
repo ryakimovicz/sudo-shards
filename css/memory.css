@@ -515,53 +515,6 @@ body.dark-mode .memory-card-back {
   display: none;
 }
 
-/* Laptop / Constrained Height Adjustments */
-@media (min-width: 769px) and (max-height: 850px) {
-  .memory-grid-layout {
-    padding-top: 1rem;
-    gap: 0;
-    /* Exact width for 2x2 grid (70*2 + 4 = 144px) */
-    grid-template-columns: 145px auto 145px;
-    grid-template-areas:
-      "left board right"
-      ". cards .";
-  }
-
-  .memory-board {
-    width: 240px;
-    height: 240px;
-  }
-
-  .memory-card {
-    width: 70px;
-    height: 70px;
-  }
-
-  .collected-zone {
-    padding: 0 !important; /* Force zero padding */
-    min-height: 0;
-    align-self: center; /* Vertical alignment with board center */
-
-    /* Enable 2x2 Grid Layout */
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 145px; /* Exact fit */
-    gap: 4px;
-    /* Visual Debug: background: rgba(255,0,0,0.1); */
-  }
-
-  /* Force maximum proximity */
-  .collected-zone.left {
-    justify-self: end;
-    margin-right: -65px; /* Pull EXTREMELY close */
-  }
-  .collected-zone.right {
-    justify-self: start;
-    margin-left: -65px; /* Pull EXTREMELY close */
-  }
-}
-
 /* Mobile Layout */
 @media (max-width: 768px) {
   /* Override global container padding to regain vertical space */
@@ -721,16 +674,19 @@ body.dark-mode .memory-card-back {
 
   .cards-area {
     order: 3;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex !important; /* Switch to flex on mobile to allow JS column count */
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
     width: 100%;
     gap: 8px;
+    height: auto; /* Use natural flex height */
   }
 
   .memory-card {
     width: 22vw;
     height: 22vw;
-    max-width: 90px;
-    max-height: 90px;
+    /* max-width/height removed to let JS scale up on taller screens if needed */
   }
 
   .mini-cell {
@@ -742,19 +698,41 @@ body.dark-mode .memory-card-back {
    (Fixes cut-off cards on devices like TCL NXTPAPER 11)
    ========================================= */
 @media (min-width: 769px) and (max-height: 850px) {
+  #memory-game {
+    padding-top: var(--header-height) !important;
+    padding-bottom: var(--footer-height) !important;
+  }
+
   .memory-grid-layout {
-    transition:
-      grid-template-columns 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      column-gap 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      row-gap 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    padding-top: 0.5rem;
-    column-gap: 8rem; /* SEPARATE panels horizontally without pushing cards down */
-    row-gap: 1rem;
-    /* Columns: 130px (Left) | 220px (Board) | 130px (Right) */
-    grid-template-columns: 130px 220px 130px !important;
-    grid-template-rows: auto 1fr;
-    max-width: 1000px; /* Prevent over-stretch */
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 1rem 1rem 0.8rem; /* Balanced top/bottom breathing room */
+    column-gap: 3rem;
+    row-gap: 0.5rem;
+    /* REDEFINE AREAS to ensure alignment is row-specific */
+    grid-template-areas:
+      "left board right"
+      "cards cards cards" !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    /* Cards have higher vertical priority now */
+    grid-template-rows: minmax(100px, 0.6fr) 1.4fr !important;
+    width: 100%;
+    max-width: 1200px;
+    height: 100%;
+    max-height: calc(100dvh - var(--header-height) - var(--footer-height));
+    margin: 0 auto;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* Transition to Jigsaw Mode Overrides */
+  .jigsaw-mode .memory-grid-layout,
+  .sudoku-mode .memory-grid-layout {
+    /* Give all space to board row when cards are gone */
+    grid-template-rows: 1fr 0px !important;
+    row-gap: 0;
+    column-gap: 6rem !important;
+    /* User: "un poco mas" (margen abajo) */
+    padding-bottom: 4.5rem !important;
   }
 
   /* Timer visibility hidden on short desktop to maximize space */
@@ -762,85 +740,109 @@ body.dark-mode .memory-card-back {
     display: none;
   }
 
-  /* Shrink Board Space (Memory) */
+  /* Board Area (Memory) */
   .memory-board {
-    width: 220px;
-    height: 220px;
+    grid-area: board;
+    width: auto;
+    height: 100%;
+    /* User: "tablero y piezas se achique mas" */
+    min-height: 100px !important;
+    max-height: 180px;
     aspect-ratio: 1 / 1;
     align-self: center;
     justify-self: center;
-    transition:
-      width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      margin 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    object-fit: contain;
+  }
+
+  .board-wrapper {
+    grid-area: board;
+    align-self: stretch; /* Must stretch to provide a height reference to board */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Enlarged Board (Jigsaw & Sudoku) */
   .jigsaw-mode .memory-board,
   .sudoku-mode .memory-board {
-    width: 380px !important;
-    height: 380px !important;
+    min-height: 240px !important; /* User: "agrandar el tablero" */
+    max-height: 420px !important;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* Adjust grid columns for larger Jigsaw board */
-  .jigsaw-mode.memory-grid-layout {
-    grid-template-columns: 110px 380px 110px !important;
-    column-gap: 15rem; /* UNMISTAKABLE separation */
-    max-width: 1400px; /* Expand container to allow pieces to move out */
+  /* Side Zones Alignment */
+  .collected-zone.left {
+    grid-area: left;
+    justify-self: end;
+  }
+  .collected-zone.right {
+    grid-area: right;
+    justify-self: start;
   }
 
-  .jigsaw-mode .collected-zone.left {
-    margin-right: 0 !important; /* Cancel legacy "pull close" negative margins */
-  }
-  .jigsaw-mode .collected-zone.right {
-    margin-left: 0 !important; /* Cancel legacy "pull close" negative margins */
-  }
-
-  /* 2x2 Grid for Side Panels (Using Grid for better reflow animation) */
   .collected-zone {
-    min-height: 220px;
-    gap: 12px;
-    display: grid !important;
-    grid-template-columns: 1fr 1fr; /* 2 columns in Memory */
-    align-content: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 160px; /* Room for 2 columns */
-    margin: 0 auto;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Shifting pieces to 1 column in Jigsaw Mode */
-  .jigsaw-mode .collected-zone {
-    grid-template-columns: 1fr; /* Single column */
-    max-width: 95px; /* Strictly force 1 column */
-    gap: 12px;
-  }
-
-  /* Override Piece Size for this view (Memory Default) */
-  .collected-piece {
-    width: 55px;
-    height: 55px;
-    font-size: 1rem;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Enlarged Pieces (Jigsaw Mode) */
-  .jigsaw-mode .collected-piece {
-    width: 86px !important;
-    height: 86px !important;
-    font-size: 1.5rem !important;
-  }
-
-  .cards-area {
-    order: 3;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    grid-column: 1 / 4; /* SPAN FULL WIDTH (over left, board, and right) */
-    width: 100%;
+    align-self: center !important; /* Forces center alignment with board row */
+    min-height: 0 !important;
+    height: auto;
     gap: 8px;
-    margin-top: 0;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr; /* Memory matches: 2 columns */
+    align-content: center;
+    max-width: 120px;
+    transition: all 0.5s ease-in-out;
+  }
+
+  /* User: "formando una sola columna a cada lado" */
+  .jigsaw-mode .collected-zone,
+  .sudoku-mode .collected-zone {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: space-between;
+    align-self: stretch !important; /* Stretch to match board height */
+    grid-template-columns: none !important;
+    max-width: 100px;
+    gap: 0; /* Handled by justify-content: space-between */
+    padding: 1vh 0; /* Small vertical buffer */
+  }
+
+  /* Override Piece Size (Memory Default) */
+  /* Piece Size Adjustments */
+  .collected-piece {
+    width: min(35px, 8vh);
+    height: min(35px, 8vh);
+    aspect-ratio: 1 / 1;
+    flex: 0 0 auto;
+    font-size: 0.7rem;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .jigsaw-mode .collected-piece,
+  .sudoku-mode .collected-piece {
+    /* User: "que las piezas sean mas grandes" but adjusted for ultra-short */
+    width: min(85px, 15vh);
+    height: auto; /* Let aspect-ratio handle this */
+    font-size: 1.1rem;
+  }
+
+  /* Cards Area (Bottom) */
+  .cards-area {
+    grid-area: cards;
+    display: grid !important;
+    grid-template-columns: repeat(6, auto) !important;
+    justify-content: center;
+    gap: 8px;
+    align-self: end; /* Sit at the true bottom of the row */
+    padding: 0.2rem 0; /* Minimal internal padding, grid handles the rest */
+    width: 100%;
+    margin: 0 auto;
+    max-width: 800px;
+  }
+
+  .memory-card {
+    /* User: "puedan ser mas grandes" -> Increased range */
+    width: clamp(55px, 12vh, 85px) !important;
+    height: clamp(55px, 12vh, 85px) !important;
+    flex: 0 0 auto;
+    font-size: clamp(0.9rem, 2vh, 1.4rem);
   }
 }

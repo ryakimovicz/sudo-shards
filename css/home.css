@@ -799,3 +799,145 @@ input:checked + .slider-small:before {
 .lang-select:focus {
   border-color: var(--accent-color);
 }
+
+/* Landscape Tablet / Short Desktop Adjustment (Home) */
+@media (min-width: 769px) and (max-height: 850px) {
+  .menu-container {
+    gap: 15px;
+    padding: 10px 20px;
+    justify-content: center;
+  }
+
+  .glass-panel {
+    min-height: 0 !important;
+    height: 48vh; /* Proportional to viewport height */
+    max-height: 420px; /* Cap growth on very tall monitors within range */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .game-description {
+    padding: 20px 40px !important;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .game-description h2 {
+    font-size: clamp(1.2rem, 5vh, 2.2rem) !important;
+    margin-bottom: 12px !important;
+  }
+
+  .game-description p {
+    font-size: clamp(1rem, 3vh, 1.3rem) !important;
+    line-height: 1.4 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .tagline {
+    margin-top: 5px !important;
+    font-size: clamp(0.9rem, 2.5vh, 1.1rem) !important;
+  }
+
+  .custom-panel {
+    padding: 10px 20px !important;
+    justify-content: space-evenly;
+  }
+
+  .panel-section-title {
+    font-size: 0.95rem !important;
+    margin: 8px 0 5px !important;
+  }
+
+  .difficulty-wrapper {
+    margin-bottom: 8px !important;
+  }
+
+  .seg-btn {
+    padding: 4px 12px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .game-switches-list {
+    gap: 10px !important;
+    max-height: none !important;
+  }
+
+  .switch-row {
+    padding: 8px 16px !important;
+  }
+
+  .switch-row span {
+    font-size: 0.9rem !important;
+  }
+
+  .btn-primary {
+    padding: 12px 40px !important;
+    font-size: 1.3rem !important;
+  }
+}
+
+/* Ultra Short Heights (e.g. Smart TV at 545px) */
+@media (min-width: 769px) and (max-height: 600px) {
+  .menu-container {
+    gap: 10px !important;
+    padding: 5px 20px !important;
+  }
+
+  .glass-panel {
+    height: 52vh !important; /* Slightly more relative height */
+  }
+
+  .game-description {
+    padding: 10px 30px !important;
+  }
+
+  .game-description h2 {
+    font-size: clamp(1.1rem, 4.5vh, 1.8rem) !important;
+    margin-bottom: 8px !important;
+  }
+
+  .game-description p {
+    font-size: clamp(0.9rem, 3vh, 1.1rem) !important;
+    margin-bottom: 5px !important;
+  }
+
+  .panel-section-title {
+    margin: 5px 0 3px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .difficulty-wrapper {
+    margin-bottom: 5px !important;
+  }
+
+  .game-switches-list {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    grid-template-columns: none !important; /* Disable grid */
+    gap: 6px !important;
+    max-height: none !important;
+  }
+
+  .switch-row {
+    flex: 0 1 calc(33% - 6px) !important; /* 3 per row approx */
+    min-width: 140px !important; /* Minimum width to avoid text clashing with switch */
+    margin: 0 !important;
+  }
+
+  .switch-row {
+    padding: 6px 12px !important;
+  }
+
+  .switch-row span {
+    font-size: 0.8rem !important;
+  }
+
+  .btn-primary {
+    padding: 10px 30px !important;
+    font-size: 1.1rem !important;
+  }
+}

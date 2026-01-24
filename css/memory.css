@@ -523,7 +523,7 @@ body.dark-mode .memory-card-back {
   #memory-game {
     padding: 0;
     padding-top: var(--header-height); /* Only pad for the fixed header */
-    padding-bottom: calc(var(--footer-height) + 2px); /* Tight safety zone */
+    padding-bottom: var(--footer-height); /* Zero safety, sit flush */
     justify-content: flex-start; /* Force content to top */
     overflow: hidden !important; /* Strictly contain content */
     display: flex;
@@ -639,7 +639,7 @@ body.dark-mode .memory-card-back {
   /* Added max(260px, ...) to ensure it doesn't shrink too much on small screens */
   .jigsaw-mode .memory-board,
   .sudoku-mode .memory-board {
-    width: min(95vw, max(200px, calc(50dvh - var(--header-height) - 40px)));
+    width: min(95vw, max(200px, calc(60dvh - var(--header-height) - 30px)));
     max-height: 100%; /* Relaxed to allow the 200px minimum */
   }
 

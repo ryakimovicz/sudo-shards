@@ -155,9 +155,9 @@
     justify-content: flex-start !important;
     align-items: center !important;
     gap: 8px !important;
-    padding-bottom: 5px !important; /* Minimized to reduce gap */
+    padding-bottom: 2px !important; /* Tightest gap */
     max-height: calc(
-      100dvh - var(--header-height) - var(--footer-height) - 10px
+      100dvh - var(--header-height) - var(--footer-height) - 4px
     ) !important;
     overflow: hidden !important;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -197,14 +197,14 @@
   .sudoku-controls {
     flex: 1;
     min-height: 0;
-    max-height: 35dvh; /* Budgeted: ~35% of height for keypad */
+    max-height: 28dvh; /* Budgeted: ~28% of height for keypad to allow board growth */
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     grid-template-rows: repeat(
       4,
       1fr
     ) !important; /* 1 (actions) + 3 (numbers) */
-    gap: 8px !important;
+    gap: 5px !important; /* Tighter gap */
     width: auto !important;
     aspect-ratio: 3 / 4 !important;
     margin: 0 auto !important;
@@ -237,7 +237,11 @@
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    font-size: clamp(1.1rem, 3.5vh, 1.6rem) !important;
+    font-size: clamp(
+      0.9rem,
+      3vh,
+      1.4rem
+    ) !important; /* Reduced for smaller keypad */
   }
 
   /* Specific styles for action buttons in grid */

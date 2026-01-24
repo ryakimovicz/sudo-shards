@@ -117,7 +117,7 @@
 }
 
 /* Standard Desktop Jigsaw Expansion (769px - 1099px, Height > 850px) */
-@media (min-width: 769px) and (max-width: 1099px) and (min-height: 851px) {
+@media (min-width: 769px) and (max-width: 1099px) and (min-height: 1001px) {
   .jigsaw-mode .memory-board,
   .sudoku-mode .memory-board {
     width: 400px !important;
@@ -152,7 +152,7 @@
 }
 
 /* Large Desktop Jigsaw Expansion (Scale Up only if there is enough height) */
-@media (min-width: 1100px) and (min-height: 851px) {
+@media (min-width: 1100px) and (min-height: 1001px) {
   .jigsaw-mode .memory-board,
   .sudoku-mode .memory-board {
     width: 420px !important; /* Force larger size */

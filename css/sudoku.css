@@ -179,7 +179,7 @@
 }
 
 /* 3x3 Grid & Height-based Scaling - Large Desktop */
-@media (min-width: 1100px) and (min-height: 851px) {
+@media (min-width: 1100px) and (min-height: 1001px) {
   .sudoku-mode .memory-grid-layout {
     flex: 1 !important;
     min-height: 0;
@@ -193,7 +193,7 @@
 }
 
 /* Integrated 3-column Keypad (Actions + Numbers) for Mobile/Large Desktop */
-@media (max-width: 768px), (min-width: 1100px) and (min-height: 851px) {
+@media (max-width: 768px), (min-width: 1100px) and (min-height: 1001px) {
   .sudoku-controls {
     flex: 1;
     min-height: 0;

@@ -188,18 +188,21 @@ export function transitionToSudoku() {
 }
 
 /* Keypad Feedback Helper */
+/* Keypad Feedback Helper */
 function updateKeypadHighlights(cell) {
   // 1. Reset all keys (except locked ones)
   document.querySelectorAll(".sudoku-num").forEach((btn) => {
-    btn.classList.remove("key-present");
+    btn.classList.remove("key-present", "key-disabled");
   });
 
   if (!cell) return;
 
   const presentNumbers = new Set();
+  let hasNotes = false;
 
   // 2. Check content
   if (cell.querySelector(".notes-grid")) {
+    hasNotes = true;
     const slots = cell.querySelectorAll(".note-slot");
     slots.forEach((slot) => {
       if (slot.textContent) presentNumbers.add(slot.dataset.note);
@@ -209,12 +212,43 @@ function updateKeypadHighlights(cell) {
     if (val) presentNumbers.add(val);
   }
 
-  // 3. Highlight keys
+  // 3. Highlight and Disable logic
   document.querySelectorAll(".sudoku-num").forEach((btn) => {
-    if (presentNumbers.has(btn.dataset.value)) {
+    const val = btn.dataset.value;
+
+    // Highlight if present
+    if (presentNumbers.has(val)) {
       btn.classList.add("key-present");
     }
+
+    // Disable if: Not Pencil Mode AND Has Notes AND This number is NOT in notes
+    // This enforces "Using candidates as constraints"
+    if (!pencilMode && hasNotes && !presentNumbers.has(val)) {
+      btn.classList.add("key-disabled");
+    }
   });
+}
+
+function highlightSimilarCells(val) {
+  // 1. Clear previous highlights
+  const board = document.getElementById("memory-board");
+  if (board) {
+    board
+      .querySelectorAll(".highlight-match")
+      .forEach((el) => el.classList.remove("highlight-match"));
+  }
+
+  if (!val) return;
+
+  // 2. Highlight matches
+  if (board) {
+    board.querySelectorAll(".mini-cell").forEach((cell) => {
+      // Only match main numbers, ignoring notes for now (or strictly matching main text)
+      if (cell.textContent === val && !cell.classList.contains("has-notes")) {
+        cell.classList.add("highlight-match");
+      }
+    });
+  }
 }
 
 function selectCell(cell, skipPaint = false) {
@@ -253,6 +287,15 @@ function selectCell(cell, skipPaint = false) {
   selectedCell = cell;
   selectedCell.classList.add("selected-cell");
   updateKeypadHighlights(cell);
+
+  // Highlight similar numbers
+  const val = cell.textContent.trim();
+  if (val && !cell.classList.contains("has-notes")) {
+    highlightSimilarCells(val);
+  } else {
+    // If empty or notes, clear highlights
+    highlightSimilarCells(null);
+  }
 }
 
 /* Locking Logic Helper */
@@ -271,7 +314,8 @@ function lockNumber(num) {
     if (btn.dataset.value === num) btn.classList.add("locked-num");
     else btn.classList.remove("locked-num");
   });
-  // Optional: Visual feedback "Pain Mode Active"
+  // Highlight all instances of this number
+  highlightSimilarCells(num);
 }
 
 function unlockNumber() {
@@ -279,10 +323,36 @@ function unlockNumber() {
   document.querySelectorAll(".sudoku-num").forEach((btn) => {
     btn.classList.remove("locked-num");
   });
+
+  // If we have a selected cell, revert to highlighting ITS value
+  if (selectedCell) {
+    const val = selectedCell.textContent.trim();
+    if (val && !selectedCell.classList.contains("has-notes")) {
+      highlightSimilarCells(val);
+    } else {
+      highlightSimilarCells(null);
+    }
+  } else {
+    highlightSimilarCells(null);
+  }
 }
 
 function handleNumberInput(num) {
   if (!selectedCell) return;
+
+  // NOTE CONSTRAINT CHECK:
+  // If not pencil mode, and cell has notes, and num is NOT in notes -> Block it.
+  if (!pencilMode && selectedCell.classList.contains("has-notes")) {
+    const notesGrid = selectedCell.querySelector(".notes-grid");
+    if (notesGrid) {
+      const noteSlot = notesGrid.querySelector(`[data-note="${num}"]`);
+      // If slot is empty (text content is empty), then this number is NOT a candidate
+      if (!noteSlot || !noteSlot.textContent) {
+        console.log("Input blocked by Note Constraint");
+        return;
+      }
+    }
+  }
 
   // Track History
   pushAction(selectedCell);
@@ -305,6 +375,7 @@ function handleNumberInput(num) {
     // VALIDATE BOARD AFTER FILL
     validateBoard();
     updateKeypadHighlights(selectedCell);
+    highlightSimilarCells(num);
   }
 }
 
@@ -314,6 +385,7 @@ function togglePencilMode() {
   if (btn) {
     btn.classList.toggle("active", pencilMode);
   }
+  updateKeypadHighlights(selectedCell);
 }
 
 function clearSelectedCell() {
@@ -325,6 +397,9 @@ function clearSelectedCell() {
   if (notesGrid) notesGrid.remove();
 
   updateKeypadHighlights(selectedCell);
+
+  // Clear highlighting since the cell is now empty
+  highlightSimilarCells(null);
 }
 
 // History for Undo

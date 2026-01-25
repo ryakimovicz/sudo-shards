@@ -322,6 +322,13 @@
   border-color: #64748b;
 }
 
+/* Disabled Key (Notes Constraint) */
+.sudoku-num.key-disabled {
+  opacity: 0.2;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -360,6 +367,12 @@
 .mini-cell.user-filled {
   color: var(--accent-color);
   font-weight: 900;
+}
+
+/* Matching Numbers Highlight */
+.mini-cell.highlight-match {
+  background: rgba(var(--accent-rgb), 0.15) !important;
+  font-weight: 800;
 }
 
 /* ERROR FEEDBACK */

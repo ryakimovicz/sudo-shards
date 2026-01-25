@@ -128,8 +128,8 @@ export function initSudoku() {
 
   // Global Click Listener for "Outside Unlock"
   document.addEventListener("click", (e) => {
-    // If nothing locked, ignore
-    if (!lockedNumber) return;
+    // If nothing locked, ignore - REMOVED so we can deselect cells too!
+    // if (!lockedNumber) return;
 
     // If click is inside board, controls, or specific buttons, ignore
     // (Note: we check closest on the click target)
@@ -148,7 +148,9 @@ export function initSudoku() {
       !isClear &&
       !isModal
     ) {
-      unlockNumber();
+      if (lockedNumber) unlockNumber();
+      deselectCurrentCell(); // Always deselect cell if clicking outside
+      highlightSimilarCells(null); // Clear highlights
     }
   });
 }
@@ -274,6 +276,18 @@ function highlightSimilarCells(val) {
         cell.classList.add("highlight-match");
       }
     });
+  } else {
+    highlightSimilarCells(null);
+  }
+}
+
+function deselectCurrentCell() {
+  if (selectedCell) {
+    selectedCell.classList.remove("selected-cell");
+    selectedCell = null;
+    // Clear keypad feedback (unless locked, but updateKeypadHighlights handles locked logic?)
+    // Actually updateKeypadHighlights(null) clears everything except locked-num.
+    updateKeypadHighlights(null);
   }
 }
 
@@ -289,7 +303,24 @@ function selectCell(cell, skipPaint = false) {
     cell.classList.contains("has-number") &&
     !cell.classList.contains("user-filled")
   ) {
-    updateKeypadHighlights(cell); // Still show feedback for pre-filled cells!
+    deselectCurrentCell();
+    // highlightSimilarCells(cell.textContent.trim()); // But keep board highlighting!
+    // Actually, deselectCurrentCell calls updateKeypadHighlights(null) which is fine.
+    // The previous highlightSimilarCells call was for smart highlighting.
+    // We should ensure deselectCurrentCell doesn't break smart highlighting if we want to keep it.
+
+    // User asked: "entonces al hacer click sobre un numero fijo del tablero se tiene que deseleccionar la casilla seleccionada."
+    // This implies we lose the *edit* selection.
+    // Does it imply we lose the *smart highlight*?
+    // "Al hacer click sobre numero que ya venían en el tablero, el keypad marca el nuemor en gris. Eso no tiene que pasar."
+
+    // So:
+    // 1. Deselect active cell.
+    // 2. Clear keypad highlights (handled by deselectCurrentCell -> updateKeypadHighlights(null)).
+    // 3. Highlight board similar cells? previous turn implies yes ("el tablero SÍ se ilumina").
+
+    const val = cell.textContent.trim();
+    highlightSimilarCells(val);
     return;
   }
 

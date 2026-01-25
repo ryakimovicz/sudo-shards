@@ -299,6 +299,15 @@
   transform: scale(0.95);
 }
 
+.sudoku-num.locked-num {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05); /* Slightly larger to indicate persistent state */
+  font-weight: 800;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;

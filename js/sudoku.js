@@ -4,6 +4,7 @@ import { getCurrentLang } from "./i18n.js";
 
 let selectedCell = null;
 let pencilMode = false;
+let lockedNumber = null; // New State
 
 export function initSudoku() {
   console.log("Initializing Sudoku Stage...");
@@ -11,7 +12,51 @@ export function initSudoku() {
   // Add listeners to keypad
   const numButtons = document.querySelectorAll(".sudoku-num");
   numButtons.forEach((btn) => {
-    btn.addEventListener("click", () => handleNumberInput(btn.dataset.value));
+    const val = btn.dataset.value;
+
+    // Normal Click
+    btn.addEventListener("click", (e) => {
+      if (btn.dataset.longPressed === "true") {
+        btn.dataset.longPressed = "false";
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      // If we click a number while locked:
+      // 1. If it's the SAME number, maybe unlock? or just apply?
+      // 2. If it's a DIFFERENT number, just apply normally to selected cell?
+      // Let's keep it simple: Click always attempts to apply to *selectedCell* if one exists.
+      // BUT if we are in "Lock Mode", clicking the locked number again should probably UNLOCK it.
+      if (lockedNumber === val) {
+        unlockNumber();
+      } else {
+        // If another number was locked, unlock it first?
+        // Or just apply this number momentarily?
+        // Let's strict: Click applies number to selection.
+        handleNumberInput(val);
+      }
+    });
+
+    // Long Press to Lock
+    const startPress = (e) => {
+      btn.dataset.longPressed = "false";
+      btn.dataset.pressTimer = setTimeout(() => {
+        btn.dataset.longPressed = "true";
+        toggleLockNumber(val);
+      }, 600); // 600ms for number lock
+    };
+
+    const cancelPress = (e) => {
+      const timer = btn.dataset.pressTimer;
+      if (timer) clearTimeout(timer);
+    };
+
+    btn.addEventListener("mousedown", startPress);
+    btn.addEventListener("touchstart", startPress, { passive: true });
+    btn.addEventListener("mouseup", cancelPress);
+    btn.addEventListener("mouseleave", cancelPress);
+    btn.addEventListener("touchend", cancelPress);
   });
 
   document
@@ -142,7 +187,7 @@ export function transitionToSudoku() {
   }
 }
 
-function selectCell(cell) {
+function selectCell(cell, skipPaint = false) {
   // Guard: Only allow selection in Sudoku Mode
   const gameSection = document.getElementById("memory-game");
   if (!gameSection || !gameSection.classList.contains("sudoku-mode")) {
@@ -157,12 +202,50 @@ function selectCell(cell) {
     return;
   }
 
+  // PAINT MODE: If we have a locked number, apply it immediately!
+  if (lockedNumber && !skipPaint) {
+    // Select it briefly for feedback? OR just apply.
+    // Let's set it as selectedCell temporarily so handleNumberInput works on it
+    if (selectedCell) selectedCell.classList.remove("selected-cell");
+    selectedCell = cell;
+    selectedCell.classList.add("selected-cell");
+
+    handleNumberInput(lockedNumber);
+    return;
+  }
+
   if (selectedCell) {
     selectedCell.classList.remove("selected-cell");
   }
 
   selectedCell = cell;
   selectedCell.classList.add("selected-cell");
+}
+
+/* Locking Logic Helper */
+function toggleLockNumber(num) {
+  if (lockedNumber === num) {
+    unlockNumber();
+  } else {
+    lockNumber(num);
+  }
+}
+
+function lockNumber(num) {
+  lockedNumber = num;
+  // Update UI
+  document.querySelectorAll(".sudoku-num").forEach((btn) => {
+    if (btn.dataset.value === num) btn.classList.add("locked-num");
+    else btn.classList.remove("locked-num");
+  });
+  // Optional: Visual feedback "Pain Mode Active"
+}
+
+function unlockNumber() {
+  lockedNumber = null;
+  document.querySelectorAll(".sudoku-num").forEach((btn) => {
+    btn.classList.remove("locked-num");
+  });
 }
 
 function handleNumberInput(num) {
@@ -249,8 +332,8 @@ function handleUndo() {
     cell.appendChild(action.previousNotes);
   }
 
-  // Restore selection to the undone cell for continuity
-  selectCell(cell);
+  // Restore selection to the undone cell for continuity, but properly skip Paint Mode
+  selectCell(cell, true);
 
   // Re-validate to clear any global error states potentially caused by this move
   validateBoard();

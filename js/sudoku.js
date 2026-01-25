@@ -23,17 +23,17 @@ export function initSudoku() {
         return;
       }
 
-      // If we click a number while locked:
-      // 1. If it's the SAME number, maybe unlock? or just apply?
-      // 2. If it's a DIFFERENT number, just apply normally to selected cell?
-      // Let's keep it simple: Click always attempts to apply to *selectedCell* if one exists.
-      // BUT if we are in "Lock Mode", clicking the locked number again should probably UNLOCK it.
-      if (lockedNumber === val) {
-        unlockNumber();
+      // If we are in "Lock Mode" (Paint Mode)
+      if (lockedNumber) {
+        if (lockedNumber === val) {
+          // Click active lock -> Unlock
+          unlockNumber();
+        } else {
+          // Click different number -> Switch Lock
+          lockNumber(val);
+        }
       } else {
-        // If another number was locked, unlock it first?
-        // Or just apply this number momentarily?
-        // Let's strict: Click applies number to selection.
+        // Normal Mode -> Apply number to selected cell
         handleNumberInput(val);
       }
     });
@@ -125,6 +125,32 @@ export function initSudoku() {
       }
     });
   }
+
+  // Global Click Listener for "Outside Unlock"
+  document.addEventListener("click", (e) => {
+    // If nothing locked, ignore
+    if (!lockedNumber) return;
+
+    // If click is inside board, controls, or specific buttons, ignore
+    // (Note: we check closest on the click target)
+    const isControl = e.target.closest(".sudoku-controls");
+    const isBoard = e.target.closest("#memory-board");
+    const isPencil = e.target.closest("#sudoku-pencil");
+    const isUndo = e.target.closest("#sudoku-back");
+    const isClear = e.target.closest("#sudoku-clear");
+    const isModal = e.target.closest(".modal"); // Don't unlock if interacting with modals
+
+    if (
+      !isControl &&
+      !isBoard &&
+      !isPencil &&
+      !isUndo &&
+      !isClear &&
+      !isModal
+    ) {
+      unlockNumber();
+    }
+  });
 }
 
 export function transitionToSudoku() {
@@ -316,6 +342,17 @@ function lockNumber(num) {
   });
   // Highlight all instances of this number
   highlightSimilarCells(num);
+
+  // UX Improvement: If a cell is currently selected, apply the locked number to it!
+  if (selectedCell) {
+    // Only if editable (not pre-filled)
+    if (
+      !selectedCell.classList.contains("has-number") ||
+      selectedCell.classList.contains("user-filled")
+    ) {
+      handleNumberInput(num);
+    }
+  }
 }
 
 function unlockNumber() {

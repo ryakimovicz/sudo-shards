@@ -12,10 +12,10 @@ export class GameManager {
     this.storageKey = `jigsudo_state_${this.currentSeed}`;
     this.state = null;
 
-    this.init();
+    this.ready = this.init(); // Promise that resolves when state is loaded
   }
 
-  init() {
+  async init() {
     // 1. Check LocalStorage
     const savedState = localStorage.getItem(this.storageKey);
 
@@ -25,35 +25,107 @@ export class GameManager {
       // Ensure Search exists (Migration for old saves)
       this.ensureSearchGenerated();
 
-      // Beta Mode Cleanups
-      if (CONFIG.betaMode) {
-        // Reset Search "Found" state on reload
-        if (this.state.search && this.state.search.found.length > 0) {
-          console.log("[GameManager] Beta Mode: Resetting found sequences.");
-          this.state.search.found = [];
-          this.save();
-        }
-      }
-
+      // Debug
       if (CONFIG.debugMode) {
         console.log(
           `[GameManager] Loading existing game for seed ${this.currentSeed}`,
         );
       }
     } else {
-      if (CONFIG.debugMode) {
-        console.log(
-          `[GameManager] Generating NEW game for seed ${this.currentSeed}`,
+      // 2. Try Fetching Static Puzzle (Network)
+      try {
+        if (CONFIG.debugMode)
+          console.log("[GameManager] Fetching daily puzzle...");
+        const dailyData = await this.fetchDailyPuzzle();
+
+        if (dailyData) {
+          console.log("[GameManager] Loaded Static Puzzle!");
+          this.state = this.createStateFromJSON(dailyData);
+        } else {
+          throw new Error("No data returned");
+        }
+      } catch (err) {
+        console.warn(
+          "[GameManager] Static fetch failed/offline. Falling back to local generation.",
+          err,
         );
+        // 3. Fallback: Generate Locally
+        this.state = this.createNewState();
+        // Trigger background generation immediately
+        this.ensureSearchGenerated();
       }
-      this.state = this.createNewState();
+
       this.save();
     }
 
-    // Debug
-    if (CONFIG.debugMode) {
-      console.log("Game Initialized:", this.state);
+    // Beta Mode Cleanups
+    if (CONFIG.betaMode && this.state) {
+      if (this.state.search && this.state.search.found.length > 0) {
+        if (CONFIG.debugMode)
+          console.log("[GameManager] Beta Mode: Resetting found sequences.");
+        this.state.search.found = [];
+        this.save();
+      }
     }
+
+    if (CONFIG.debugMode) console.log("Game Initialized:", this.state);
+    return true;
+  }
+
+  async fetchDailyPuzzle() {
+    const seed = this.currentSeed;
+    const year = Math.floor(seed / 10000);
+    const month = Math.floor((seed % 10000) / 100);
+    const day = seed % 100;
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const url = `puzzles/daily-${dateStr}.json`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (e) {
+      if (CONFIG.debugMode) console.warn("Fetch failed:", e);
+      return null;
+    }
+  }
+
+  createStateFromJSON(json) {
+    const { data, meta } = json;
+    // We ignore meta from JSON mostly, use our own timestamps
+    return {
+      meta: {
+        seed: this.currentSeed,
+        startedAt: new Date().toISOString(),
+        lastPlayed: new Date().toISOString(),
+        generatedBy: "static-v1",
+      },
+      progress: {
+        currentStage: "memory",
+        stagesCompleted: [],
+      },
+      data: {
+        solution: data.solution,
+        initialPuzzle: data.puzzle,
+        chunks: data.chunks, // Provided by JSON
+      },
+      memory: {
+        pairsFound: 0,
+        cards: [],
+      },
+      jigsaw: {
+        placedChunks: [],
+      },
+      sudoku: {
+        currentBoard: data.puzzle, // Start with holes
+      },
+      search: {
+        // Static JSON likely contains searchTargets
+        targets: data.searchTargets || [],
+        found: [],
+        version: 14,
+      },
+    };
   }
 
   createNewState() {
@@ -87,7 +159,8 @@ export class GameManager {
         currentBoard: gameData.puzzle, // Will be modified by user
       },
       search: {
-        targets: generateSearchSequences(gameData.solution, this.currentSeed),
+        // Initialize empty, let ensureSearchGenerated fill it via Worker
+        targets: [],
         found: [],
         version: 14, // Increment this to invalidate caches
       },

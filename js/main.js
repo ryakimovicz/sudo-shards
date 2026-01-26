@@ -9,7 +9,7 @@ import { CONFIG } from "./config.js"; // Keep CONFIG for displayVersion
 // Capture native logging before suppression
 const systemLog = console.log;
 
-function startApp() {
+async function startApp() {
   // Handle Debug Mode
   if (CONFIG.debugMode) {
     document.body.classList.add("debug-mode");
@@ -25,7 +25,10 @@ function startApp() {
   }
 
   console.log("Jigsudo App Starting...");
-  // gameManager initializes itself on import
+
+  // Wait for Game Manager to fetch static puzzle or generate local
+  await gameManager.ready;
+
   initLanguage();
   initHome();
   initSudoku();

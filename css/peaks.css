@@ -46,6 +46,12 @@
   color: var(--text-main) !important;
 }
 
+/* Inner Number Wrapper for Animation */
+.mini-cell .curr-number {
+  display: inline-block; /* Required for transform */
+  pointer-events: none; /* Let clicks pass to cell */
+}
+
 /* Animation */
 @keyframes error-shake {
   0%,

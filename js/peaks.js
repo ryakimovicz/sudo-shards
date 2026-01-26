@@ -25,6 +25,20 @@ export function initPeaks() {
 
   // 3. Prepare Logic
   prepareGameLogic();
+
+  // Wrap numbers in spans for animation
+  const cells = document.querySelectorAll(".peaks-mode .mini-cell"); // careful with selector if class not yet applied? transition adds it. initPeaks called after transition.
+  cells.forEach((cell) => {
+    if (!cell.querySelector(".curr-number")) {
+      const text = cell.textContent;
+      cell.textContent = "";
+      const span = document.createElement("span");
+      span.className = "curr-number";
+      span.textContent = text;
+      cell.appendChild(span);
+    }
+  });
+
   updateRemainingCounter(); // Set initial value
 
   // 4. Attach Listeners
@@ -200,9 +214,16 @@ function handleIncorrectClick(cell) {
   peaksErrors++;
   updateErrorCounter();
 
-  // Shake animation or red flash
-  cell.classList.add("error-shake");
-  setTimeout(() => cell.classList.remove("error-shake"), 500);
+  // Shake animation on the NUMBER only
+  const numSpan = cell.querySelector(".curr-number");
+  if (numSpan) {
+    numSpan.classList.add("error-shake");
+    setTimeout(() => numSpan.classList.remove("error-shake"), 500);
+  } else {
+    // Fallback if span missing
+    cell.classList.add("error-shake");
+    setTimeout(() => cell.classList.remove("error-shake"), 500);
+  }
 }
 
 function updateRemainingCounter() {

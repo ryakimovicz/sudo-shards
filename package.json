@@ -1,0 +1,9 @@
+{
+  "name": "jigsudo-daily-generator",
+  "version": "1.0.0",
+  "description": "Daily puzzle generator for Jigsudo",
+  "type": "module",
+  "scripts": {
+    "generate": "node scripts/generate-daily.js"
+  }
+}

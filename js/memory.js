@@ -11,6 +11,7 @@ import {
 } from "./jigsaw.js";
 import { provideHint as provideSudokuHint } from "./sudoku.js";
 import { providePeaksHint } from "./peaks.js";
+import { provideSearchHint } from "./search.js";
 import { gameManager } from "./game-manager.js";
 import { CONFIG } from "./config.js";
 
@@ -140,6 +141,11 @@ function debugAutoMatch() {
 
   if (gameSection.classList.contains("peaks-mode")) {
     providePeaksHint();
+    return;
+  }
+
+  if (gameSection.classList.contains("search-mode")) {
+    provideSearchHint();
     return;
   }
 

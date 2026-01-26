@@ -11,8 +11,8 @@ let currentCells = []; // Array of DOM Elements
 export function initSearch() {
   console.log("Initializing Search Stage...");
 
-  // ensure data exists
-  gameManager.ensureSearchGenerated();
+  // Ensure data exists (Generated at Init now)
+  // gameManager.ensureSearchGenerated(); // Removed to avoid freeze during transition
   const state = gameManager.getState();
   const searchData = state.search;
 
@@ -252,16 +252,34 @@ function validateSequence() {
 
 function handleFoundSequence(target) {
   const state = gameManager.getState();
-  state.search.found.push(target.id);
-  gameManager.save();
+  if (!state.search.found.includes(target.id)) {
+    state.search.found.push(target.id);
+    gameManager.save();
+  }
 
   // 1. Mark Cells Permanently
-  currentCells.forEach((cell) => {
-    cell.classList.remove("search-selected");
-    cell.classList.add("search-found-cell");
+  // We cannot rely on currentCells being populated (e.g. Hint mode)
+  // So we explicitly find the cells from target.path
+  const board = document.getElementById("memory-board");
+
+  target.path.forEach((pos) => {
+    // Find dom element for this position
+    const slotIndex = Math.floor(pos.r / 3) * 3 + Math.floor(pos.c / 3);
+    const cellIndex = (pos.r % 3) * 3 + (pos.c % 3);
+
+    const slot = board.querySelector(
+      `.sudoku-chunk-slot[data-slot-index="${slotIndex}"]`,
+    );
+    if (slot) {
+      const cell = slot.querySelectorAll(".mini-cell")[cellIndex];
+      if (cell) {
+        cell.classList.remove("search-selected");
+        cell.classList.add("search-found-cell");
+      }
+    }
   });
 
-  // 2. Mark Chip
+  // 2. Mark Chip (UI List)
   const chip = document.querySelector(
     `.search-target-chip[data-id="${target.id}"]`,
   );
@@ -347,4 +365,25 @@ export function transitionToSearch() {
 
   // 6. Initialize Search Logic
   initSearch();
+}
+
+export function provideSearchHint() {
+  const state = gameManager.getState();
+  const searchData = state.search;
+
+  if (!searchData || !searchData.targets) return;
+
+  // Find first UNFOUND target
+  const target = searchData.targets.find(
+    (t) => !searchData.found.includes(t.id),
+  );
+
+  if (target) {
+    console.log(
+      `[Search] Resolving target ${target.id}: ${target.numbers.join("-")}`,
+    );
+    handleFoundSequence(target);
+  } else {
+    console.log("[Search] No more targets to solve.");
+  }
 }

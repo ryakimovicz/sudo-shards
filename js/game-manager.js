@@ -1,6 +1,9 @@
 import { getDailySeed } from "./utils/random.js";
 import { generateDailyGame } from "./sudoku-logic.js";
-import { generateSearchSequences } from "./search-gen.js";
+import {
+  generateSearchSequences,
+  countSequenceOccurrences,
+} from "./search-gen.js";
 import { CONFIG } from "./config.js";
 
 export class GameManager {
@@ -18,6 +21,9 @@ export class GameManager {
 
     if (savedState) {
       this.state = JSON.parse(savedState);
+
+      // Ensure Search exists (Migration for old saves)
+      this.ensureSearchGenerated();
 
       // Beta Mode Cleanups
       if (CONFIG.betaMode) {
@@ -81,8 +87,9 @@ export class GameManager {
         currentBoard: gameData.puzzle, // Will be modified by user
       },
       search: {
-        targets: [], // Generated lazily or now
+        targets: generateSearchSequences(gameData.solution, this.currentSeed),
         found: [],
+        version: 3, // Increment this to invalidate caches
       },
     };
   }
@@ -135,9 +142,13 @@ export class GameManager {
     if (
       !this.state.search ||
       !this.state.search.targets ||
-      this.state.search.targets.length === 0
+      this.state.search.targets.length === 0 ||
+      this.state.search.version !== 3 // V3 Check
     ) {
       shouldRegenerate = true;
+      console.warn(
+        "[GameManager] Search Data Outdated/Missing. Regenerating...",
+      );
     } else {
       // Validate Existing Targets
       const targets = this.state.search.targets;
@@ -177,6 +188,23 @@ export class GameManager {
             }
           }
         }
+
+        // 3. AMBIGUITY CHECK (Force regenerate if stale targets are ambiguous)
+        if (!shouldRegenerate) {
+          const numbers =
+            target.numbers ||
+            target.path.map((p) => this.state.data.solution[p.r][p.c]); // Ensure numbers exist
+          // Need full solution board for check
+          const board = this.state.data.solution;
+          if (countSequenceOccurrences(board, numbers) > 1) {
+            console.warn(
+              `[GameManager] AMBIGUOUS SEQUENCE DETECTED (${numbers.join("-")}) - Regenerating`,
+            );
+            shouldRegenerate = true;
+            break;
+          }
+        }
+
         if (shouldRegenerate) break;
       }
     }
@@ -190,7 +218,8 @@ export class GameManager {
 
       this.state.search = {
         targets: sequences,
-        found: [], // array of sequence IDs
+        found: [],
+        version: 2,
       };
       this.save();
     }

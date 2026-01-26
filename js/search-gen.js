@@ -53,6 +53,14 @@ export function generateSearchSequences(board, dateSeed) {
   );
 
   // 3. Backtracking Generation
+  const perfStats = {
+    count: 0,
+    max: 200000,
+    start: Date.now(),
+    timeout: false,
+    best: { sequences: [], usedCount: -1 },
+  };
+
   const result = backtrackSequences(
     board,
     usedMap,
@@ -61,17 +69,31 @@ export function generateSearchSequences(board, dateSeed) {
     targetUsedCount,
     peaksValleys,
     rng,
+    {
+      count: 0,
+      max: 200000,
+      start: Date.now(),
+      timeout: false,
+      best: { sequences: [], usedCount: -1 },
+    }, // Performance Stats
+    precomputeNumberLocations(board),
+    new Set(), // ambiguousCache
   );
 
-  if (!result) {
-    console.warn(
-      "Failed to generate perfect search sequences. Fallback or retry?",
-    );
-    // Fallback? Ideally we should always find one given the constraints are loose enough.
-    return [];
+  // If we found a perfect result, return it.
+  if (result) {
+    return sequences;
   }
 
-  return sequences;
+  // If we failed (or timed out), use BEST result instead of current stack
+  if (perfStats.best.usedCount > 0) {
+    console.warn(
+      `[Generator] Timeout/Limit. Restoring BEST result: ${perfStats.best.usedCount} cells used.`,
+    );
+    return perfStats.best.sequences.map((s, i) => ({ ...s, id: i }));
+  }
+
+  return [];
 }
 
 function backtrackSequences(
@@ -82,7 +104,36 @@ function backtrackSequences(
   targetUsedCount,
   peaksValleys,
   rng,
+  perfStats,
+  numberLocs,
 ) {
+  // Track Best Result
+  if (currentUsedCount > perfStats.best.usedCount) {
+    // Deep Copy sequences to save this state
+    const seqCopy = sequences.map((s) => ({
+      ...s,
+      path: s.path.map((p) => ({ ...p })),
+      numbers: [...s.numbers],
+    }));
+    perfStats.best = {
+      sequences: seqCopy,
+      usedCount: currentUsedCount,
+    };
+  }
+
+  // Performance Guard
+  perfStats.count++;
+  if (perfStats.count > perfStats.max) {
+    perfStats.timeout = true;
+    return true; // Return TRUE to preserve stack on limit
+  }
+  if (Date.now() - perfStats.start > 4000) {
+    // 4 Second Timeout
+    console.warn("Search Generation Timed Out");
+    perfStats.timeout = true;
+    return true; // Return TRUE to preserve stack on timeout
+  }
+
   // Base Case: Success
   if (currentUsedCount === targetUsedCount) {
     return true;
@@ -95,26 +146,36 @@ function backtrackSequences(
     return false;
   }
 
-  // Pick a random starting cell from unused available cells
-  const potentialStarts = [];
+  // 1. Filter and Calculate Degrees (MRV Heuristic)
+  // We want to prioritize cells with fewer available neighbors to prevent creating islands.
+  const styledStarts = [];
   for (let r = 0; r < 9; r++) {
     for (let c = 0; c < 9; c++) {
       const key = `${r},${c}`;
       if (!usedMap.has(key) && !peaksValleys.has(key)) {
-        potentialStarts.push({ r, c });
+        const degree = getDegree(r, c, usedMap, peaksValleys);
+        styledStarts.push({ r, c, degree });
       }
     }
   }
 
-  if (potentialStarts.length === 0) return false;
+  if (styledStarts.length === 0) return false;
 
-  // Shuffle starts to vary the generation
-  shuffleArray(potentialStarts, rng);
+  // 2. Sort by Degree (Ascending) + Randomness for ties
+  // Shuffle first to randomize ties
+  shuffleArray(styledStarts, rng);
+  // Then stable sort by degree
+  styledStarts.sort((a, b) => a.degree - b.degree);
 
-  for (const start of potentialStarts) {
-    // Try lengths 3 to 6
-    const lengths = [3, 4, 5, 6];
-    shuffleArray(lengths, rng);
+  // Take top N candidates? No, try them in order.
+
+  for (const startObj of styledStarts) {
+    const start = { r: startObj.r, c: startObj.c };
+
+    // Try lengths 6 down to 3 (Longer sequences first = better fill?)
+    // Actually, mixing lengths is good, but long first fills faster.
+    const lengths = [6, 5, 4, 3];
+    shuffleArray(lengths, rng); // Keep randomness in lengths
 
     for (const len of lengths) {
       // Don't exceed target
@@ -130,6 +191,14 @@ function backtrackSequences(
 
         // Extract Numbers
         const numbers = path.map((p) => board[p.r][p.c]);
+
+        // AMBIGUITY CHECK: Ensure this number sequence appears ONLY ONCE on the entire board
+        if (countSequenceOccurrences(board, numbers, numberLocs) > 1) {
+          // Reject ambiguous sequence
+          path.forEach((cell) => usedMap.delete(`${cell.r},${cell.c}`));
+          continue;
+        }
+
         const seqObj = { path, numbers, id: sequences.length };
         sequences.push(seqObj);
 
@@ -143,10 +212,15 @@ function backtrackSequences(
             targetUsedCount,
             peaksValleys,
             rng,
+            perfStats,
+            numberLocs,
           )
         ) {
           return true;
         }
+
+        // If child returned TRUE due to timeout, propagate it without popping
+        if (perfStats.timeout) return true;
 
         // Undo (Backtrack)
         sequences.pop();
@@ -220,6 +294,18 @@ function getComponentSize(startR, startC, usedMap, peaksValleys, visited) {
   return size;
 }
 
+function getDegree(r, c, usedMap, peaksValleys) {
+  let degree = 0;
+  const neighbors = getOrthogonalNeighbors(r, c);
+  for (const n of neighbors) {
+    const key = `${n.r},${n.c}`;
+    if (!usedMap.has(key) && !peaksValleys.has(key)) {
+      degree++;
+    }
+  }
+  return degree;
+}
+
 function findPaths(board, start, len, usedMap, peaksValleys) {
   const result = [];
 
@@ -252,4 +338,64 @@ function shuffleArray(array, rng) {
     const j = rng.range(0, i);
     [array[i], array[j]] = [array[j], array[i]];
   }
+}
+
+// Check how many times a number sequence exists on the board (Orthogonally)
+export function countSequenceOccurrences(board, numbers, numberLocs) {
+  let count = 0;
+  const startNum = numbers[0];
+
+  // Use pre-computed locations if available to speed up start finding
+  let starts = [];
+  if (numberLocs) {
+    starts = numberLocs[startNum];
+  } else {
+    // Fallback if called without locs (e.g. from game-manager validation)
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (board[r][c] === startNum) starts.push({ r, c });
+      }
+    }
+  }
+
+  for (const s of starts) {
+    count += countPathFrom(board, s.r, s.c, numbers, 1);
+    if (count > 1) return count;
+  }
+
+  return count;
+}
+
+function precomputeNumberLocations(board) {
+  const locs = Array.from({ length: 10 }, () => []);
+  for (let r = 0; r < 9; r++) {
+    for (let c = 0; c < 9; c++) {
+      const val = board[r][c];
+      if (val >= 0 && val <= 9) locs[val].push({ r, c });
+    }
+  }
+  return locs;
+}
+
+function countPathFrom(board, r, c, numbers, index, visited = new Set()) {
+  if (index >= numbers.length) return 1;
+
+  const currentKey = `${r},${c}`;
+  visited.add(currentKey);
+
+  const targetNum = numbers[index];
+  let total = 0;
+
+  const neighbors = getOrthogonalNeighbors(r, c);
+  for (const n of neighbors) {
+    const key = `${n.r},${n.c}`;
+    if (!visited.has(key) && board[n.r][n.c] === targetNum) {
+      // Clone set for branching paths
+      const newVisited = new Set(visited);
+      total += countPathFrom(board, n.r, n.c, numbers, index + 1, newVisited);
+      if (total > 1) break;
+    }
+  }
+
+  return total;
 }

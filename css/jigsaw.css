@@ -122,7 +122,8 @@
 /* Standard Desktop Jigsaw (Responsive) */
 @media (min-width: 769px) {
   .jigsaw-mode .memory-board,
-  .sudoku-mode .memory-board {
+  .sudoku-mode .memory-board,
+  .peaks-mode .memory-board {
     /* Use clamp/min to handle smaller desktops gracefully without media queries */
     width: min(420px, 45vw) !important;
     height: auto !important;
@@ -137,14 +138,16 @@
   }
 
   .jigsaw-mode .collected-wrapper,
-  .sudoku-mode .collected-wrapper {
+  .sudoku-mode .collected-wrapper,
+  .peaks-mode .collected-wrapper {
     gap: 15px;
     padding: 10px;
   }
 
   /* Adjust layout to fit larger board */
   .jigsaw-mode .memory-grid-layout,
-  .sudoku-mode .memory-grid-layout {
+  .sudoku-mode .memory-grid-layout,
+  .peaks-mode .memory-grid-layout {
     gap: 2rem;
     column-gap: 4rem;
     grid-template-columns: 1fr auto 1fr !important; /* Flexible sides, board automatic */

@@ -638,7 +638,8 @@ body.dark-mode .memory-card-back {
   /* Expand Board vertical budget when in Jigsaw or Sudoku Mode to allow growth */
   /* Added max(260px, ...) to ensure it doesn't shrink too much on small screens */
   .jigsaw-mode .memory-board,
-  .sudoku-mode .memory-board {
+  .sudoku-mode .memory-board,
+  .peaks-mode .memory-board {
     width: min(95vw, max(200px, calc(60dvh - var(--header-height) - 30px)));
     max-height: 100%; /* Relaxed to allow the 200px minimum */
   }

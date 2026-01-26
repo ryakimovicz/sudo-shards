@@ -1,5 +1,6 @@
 /* Sudoku Main Layout - Unified Vertical Stack for ALL devices */
-.sudoku-mode .memory-grid-layout {
+.sudoku-mode .memory-grid-layout,
+.peaks-mode .memory-grid-layout {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important; /* Horizontal centering */
@@ -15,14 +16,18 @@
 }
 
 /* Correct selector: space between body class and game class */
-.dark-mode .sudoku-mode .memory-grid-layout {
+.dark-mode .sudoku-mode .memory-grid-layout,
+.dark-mode .peaks-mode .memory-grid-layout {
   /* Swapped Contrast Logic: Dark mode gets LIGHT lines */
   --sudoku-grid-line: #eee;
 }
 
 /* Also swap the board background which forms the "thick" lines (gap) 
    But KEEP the outer border consistent with the background */
-.sudoku-mode .memory-board {
+/* Also swap the board background which forms the "thick" lines (gap) 
+   But KEEP the outer border consistent with the background */
+.sudoku-mode .memory-board,
+.peaks-mode .memory-board {
   background: var(--bg-secondary) !important; /* Back to theme background */
   padding: 0 !important;
   gap: 0 !important; /* REMOVE GAP: Borders provide better precision */
@@ -33,36 +38,50 @@
 }
 
 /* Remove internal rounding to prevent background bleed at edges */
+/* Remove internal rounding to prevent background bleed at edges */
 .sudoku-mode .sudoku-chunk-slot,
-.sudoku-mode .mini-sudoku-grid {
+.sudoku-mode .mini-sudoku-grid,
+.peaks-mode .sudoku-chunk-slot,
+.peaks-mode .mini-sudoku-grid {
   border-radius: 0 !important;
   box-sizing: border-box !important;
 }
 
 /* PIXEL-PERFECT SYMMETRY: Use borders instead of gaps to avoid rounding errors */
-.sudoku-mode .sudoku-chunk-slot {
+/* PIXEL-PERFECT SYMMETRY: Use borders instead of gaps to avoid rounding errors */
+.sudoku-mode .sudoku-chunk-slot,
+.peaks-mode .sudoku-chunk-slot {
   border-right: 3px solid var(--sudoku-grid-line);
   border-bottom: 3px solid var(--sudoku-grid-line);
 }
 
 /* Remove borders on the edges of the board */
-.sudoku-mode .sudoku-chunk-slot:nth-child(3n) {
+/* Remove borders on the edges of the board */
+.sudoku-mode .sudoku-chunk-slot:nth-child(3n),
+.peaks-mode .sudoku-chunk-slot:nth-child(3n) {
   border-right: none !important;
 }
 
-.sudoku-mode .sudoku-chunk-slot:nth-child(n + 7) {
+.sudoku-mode .sudoku-chunk-slot:nth-child(n + 7),
+.peaks-mode .sudoku-chunk-slot:nth-child(n + 7) {
   border-bottom: none !important;
 }
 
 /* Ensure side panels and cards are completely gone */
+/* Ensure side panels and cards are completely gone */
 .sudoku-mode .collected-zone,
 .sudoku-mode .collected-wrapper,
-.sudoku-mode .cards-area {
+.sudoku-mode .cards-area,
+.peaks-mode .collected-zone,
+.peaks-mode .collected-wrapper,
+.peaks-mode .cards-area {
   display: none !important;
 }
 
 /* Center elements within the stack */
-.sudoku-mode .board-wrapper {
+/* Center elements within the stack */
+.sudoku-mode .board-wrapper,
+.peaks-mode .board-wrapper {
   order: 1 !important;
   width: auto !important;
   margin: 0 !important;
@@ -146,7 +165,8 @@
 
 /* 3x3 Grid & Height-based Scaling - Mobile Transition */
 @media (max-width: 768px) {
-  .sudoku-mode .memory-grid-layout {
+  .sudoku-mode .memory-grid-layout,
+  .peaks-mode .memory-grid-layout {
     flex: 1 !important; /* Take all available space between header and timer */
     min-height: 0;
     width: 100% !important;
@@ -165,7 +185,8 @@
 
   /* Ultra-Short Screens optimizations */
   @media (max-height: 660px) {
-    .sudoku-mode .memory-grid-layout {
+    .sudoku-mode .memory-grid-layout,
+    .peaks-mode .memory-grid-layout {
       gap: 4px !important;
       padding-bottom: 0 !important;
       justify-content: space-between !important;
@@ -217,7 +238,8 @@
 /* 3x3 Grid & Height-based Scaling - Large Desktop */
 /* 3x3 Grid - Desktop Defaults */
 @media (min-width: 769px) {
-  .sudoku-mode .memory-grid-layout {
+  .sudoku-mode .memory-grid-layout,
+  .peaks-mode .memory-grid-layout {
     flex: 1 !important;
     min-height: 0;
     display: flex !important;
@@ -399,8 +421,7 @@
 }
 
 .sudoku-mode .memory-board.board-complete {
-  animation: sudokuPulseGreen 0.6s ease-out 2; /* Pulse twice like memory victory */
-  border-color: #4caf50 !important;
+  animation: sudokuPulseGreen 0.6s ease-out 1; /* Match memory: 1 pulse */
 }
 
 /* Notes Grid */

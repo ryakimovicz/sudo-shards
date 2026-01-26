@@ -1,6 +1,7 @@
 import { gameManager } from "./game-manager.js";
 import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
+import { transitionToPeaks } from "./peaks.js";
 
 let selectedCell = null;
 let pencilMode = false;
@@ -706,14 +707,20 @@ function handleSudokuWin() {
     setTimeout(() => {
       board.classList.remove("board-complete");
 
-      // Localized Browser Alert
-      const lang = getCurrentLang();
-      const msg =
-        translations[lang].alert_next_peaks || translations.es.alert_next_peaks;
-      alert(msg);
+      // Transition to Peaks
+      transitionToPeaks();
 
+      // We can also advance state here if not handled by transition
+      // gameManager.advanceStage(); // move this inside transitionToPeaks if preferred, or keep here
+      // Let's keep state logic separate or call it here?
+      // transitionToPeaks() has UI logic.
+      // gameManager.advanceStage() has Data logic.
+      // Best to call both or have one call the other.
+      // memory.js called transitionToSudoku() which called gameManager.updateProgress.
+
+      // Let's call the manager here for correctness
       gameManager.advanceStage();
-    }, 1500);
+    }, 600);
   }
 }
 

@@ -89,7 +89,7 @@ export class GameManager {
       search: {
         targets: generateSearchSequences(gameData.solution, this.currentSeed),
         found: [],
-        version: 3, // Increment this to invalidate caches
+        version: 6, // Increment this to invalidate caches
       },
     };
   }
@@ -143,12 +143,13 @@ export class GameManager {
       !this.state.search ||
       !this.state.search.targets ||
       this.state.search.targets.length === 0 ||
-      this.state.search.version !== 3 // V3 Check
+      this.state.search.version !== 6 // V6 Check
     ) {
       shouldRegenerate = true;
-      console.warn(
-        "[GameManager] Search Data Outdated/Missing. Regenerating...",
-      );
+      if (CONFIG.debugMode)
+        console.warn(
+          "[GameManager] Search Data Outdated/Missing. Regenerating...",
+        );
     } else {
       // Validate Existing Targets
       const targets = this.state.search.targets;
@@ -210,7 +211,8 @@ export class GameManager {
     }
 
     if (shouldRegenerate) {
-      console.log("[GameManager] Generating Search Sequences...");
+      if (CONFIG.debugMode)
+        console.log("[GameManager] Generating Search Sequences...");
       const sequences = generateSearchSequences(
         this.state.data.solution,
         this.currentSeed,

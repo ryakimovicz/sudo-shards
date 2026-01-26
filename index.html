@@ -346,19 +346,10 @@
     </div>
 
     <!-- Global Scripts -->
-    <script src="js/game-manager.js?v=1.1" type="module"></script>
+    <!-- game-manager and other modules are imported by main.js or each other. 
+         Removing explicit tags to prevent double-loading (e.g. ?v=1.1 mismatch). -->
 
-    <!-- Module Scripts (loaded by game-manager or individually if needed, but using modules is best) -->
-    <!-- We'll treat game-manager as the entry point importing others, or list them if not using ES modules fully yet. 
-         Let's stick to standard script tags for simplicity if we are not bundling, 
-         OR use type="module" for modern support. User didn't specify bundler.
-         I'll put separate tags for now to match the "file structure" request strictly.
-    -->
-    <script src="js/memory.js?v=1.1" type="module"></script>
-    <script src="js/jigsaw.js?v=1.1" type="module"></script>
-    <script src="js/sudoku.js?v=1.1" type="module"></script>
-    <script src="js/peaks.js?v=1.1" type="module"></script>
-    <script src="js/search.js?v=1.1" type="module"></script>
+    <!-- Entry Point -->
     <script type="module" src="js/main.js?v=1.1"></script>
     <!-- Entry Point -->
 

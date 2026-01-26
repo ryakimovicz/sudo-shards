@@ -3,6 +3,7 @@ import {
   getNeighbors,
   getOrthogonalNeighbors,
 } from "./peaks-logic.js";
+import { CONFIG } from "./config.js";
 
 // Deterministic RNG (Linear Congruential Generator)
 class SeededRNG {
@@ -48,9 +49,11 @@ export function generateSearchSequences(board, dateSeed) {
   const totalAvailable = availableCells.length;
   const targetUsedCount = Math.max(0, totalAvailable - 5);
 
-  console.log(
-    `Generating Search: Available ${totalAvailable}, Target Used ${targetUsedCount}`,
-  );
+  if (CONFIG.debugMode) {
+    console.log(
+      `Generating Search: Available ${totalAvailable}, Target Used ${targetUsedCount}`,
+    );
+  }
 
   // 3. Backtracking Generation
   const perfStats = {
@@ -90,7 +93,89 @@ export function generateSearchSequences(board, dateSeed) {
     console.warn(
       `[Generator] Timeout/Limit. Restoring BEST result: ${perfStats.best.usedCount} cells used.`,
     );
-    return perfStats.best.sequences.map((s, i) => ({ ...s, id: i }));
+    // Precompute locs again for Panic Mode (available in scope?)
+    // Actually we can pass 'precomputeNumberLocations(board)' but it is expensive.
+    // We call it once at top. We should have passed it down or stored it.
+    // Just recompute for safety in panic mode, it's one-off.
+    const boardLocs = precomputeNumberLocations(board);
+    let bestSeqs = perfStats.best.sequences.map((s, i) => ({ ...s, id: i }));
+
+    // PANIC MODE: Try to fill remaining gaps with simple greedy logic
+    // STRICT MODE: We must find UNIQUE sequences.
+    if (totalAvailable - perfStats.best.usedCount > 5) {
+      console.log("Entering Strict Panic Fill Mode...");
+
+      // Start with the best result found so far
+      const usedMap = new Set();
+      bestSeqs.forEach((s) =>
+        s.path.forEach((p) => usedMap.add(`${p.r},${p.c}`)),
+      );
+
+      // We need to fill until (totalAvailable - usedMap.size) <= 5
+      // Strategy: Find all holes, pick one, try to fill it strictly. Repeat.
+
+      let attempts = 0;
+      const maxAttempts = 50; // Prevention against infinite loops in panic mode
+
+      while (totalAvailable - usedMap.size > 5 && attempts < maxAttempts) {
+        attempts++;
+
+        // 1. Identify Holes
+        const holes = [];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const key = `${r},${c}`;
+            if (!usedMap.has(key) && !peaksValleys.has(key)) {
+              holes.push({ r, c });
+            }
+          }
+        }
+
+        if (holes.length === 0) break; // Should not happen if size check passed
+
+        // 2. Try to fill ANY hole
+        let filledAny = false;
+
+        // Sort holes by constraint (degree) again? Or just iterate.
+        // Iterate all holes to find the "easiest" to fill strictly
+        for (const hole of holes) {
+          if (usedMap.has(`${hole.r},${hole.c}`)) continue;
+
+          // Try diverse lengths. Smaller is easier to fit, but maybe harder to be unique?
+          // Actually longer sequences are usually MORE unique.
+          const lengths = [5, 4, 6, 3];
+
+          for (const len of lengths) {
+            const paths = findPaths(board, hole, len, usedMap, peaksValleys);
+
+            for (const p of paths) {
+              const numbers = p.map((cell) => board[cell.r][cell.c]);
+
+              // STRICT AMBIGUITY CHECK
+              if (countSequenceOccurrences(board, numbers, boardLocs) === 1) {
+                // Success!
+                p.forEach((cell) => usedMap.add(`${cell.r},${cell.c}`));
+                bestSeqs.push({ path: p, numbers, id: bestSeqs.length });
+                filledAny = true;
+                break;
+              }
+            }
+            if (filledAny) break;
+          }
+          if (filledAny) break; // Re-evaluate holes after filling one
+        }
+
+        if (!filledAny) {
+          // We are stuck. We have holes we can't fill strictly.
+          console.warn(
+            "Strict Panic Fill stuck. Cannot fill remaining holes uniquely.",
+          );
+          break;
+        }
+      }
+    }
+
+    return bestSeqs;
   }
 
   return [];

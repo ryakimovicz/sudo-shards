@@ -23,7 +23,7 @@ class SeededRNG {
   }
 }
 
-export function generateSearchSequences(board, dateSeed) {
+export function generateSearchSequences(board, dateSeed, maxDuration = 4000) {
   const rng = new SeededRNG(dateSeed);
   const rows = 9;
   const cols = 9;
@@ -55,130 +55,249 @@ export function generateSearchSequences(board, dateSeed) {
     );
   }
 
-  // 3. Backtracking Generation
-  const perfStats = {
-    count: 0,
-    max: 200000,
+  // 3. Retry Loop Strategy
+  // If we get a valid count (3 free) but they are CLUSTERED, we reject and retry.
+  // We perturb the RNG or heuristics slightly each time.
+  const maxRetries = 20;
+  let bestGlobalResult = null;
+  let minAdjacency = 999;
+
+  // Global performance stats to track overall time
+  const globalPerfStats = {
     start: Date.now(),
-    timeout: false,
-    best: { sequences: [], usedCount: -1 },
   };
 
-  const result = backtrackSequences(
-    board,
-    usedMap,
-    sequences,
-    0, // currentUsedCount
-    targetUsedCount,
-    peaksValleys,
-    rng,
-    {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    // START DEBUG LOG
+    const logPrefix = `[Generator ${attempt + 1}/${maxRetries}]`;
+    if (CONFIG.debugMode) console.log(`${logPrefix} Starting attempt...`);
+    // END DEBUG LOG
+
+    // Perturb RNG for subsequent attempts (keep deterministic base, but shift)
+    // We pass 'attempt' to influence sorting/randomness if needed,
+    // or just burn some RNG calls.
+    if (attempt > 0) {
+      rng.next(); // Shift state
+      rng.next();
+    }
+
+    const iterationPerf = {
       count: 0,
-      max: 200000,
+      max: 50000, // Reduced max per attempt to allow multiple fast tries
       start: Date.now(),
       timeout: false,
-      best: { sequences: [], usedCount: -1 },
-    }, // Performance Stats
-    precomputeNumberLocations(board),
-    new Set(), // ambiguousCache
-  );
+      best: { sequences: [], usedCount: -1, adjacencyScore: 999 },
+      maxDuration: maxDuration,
+    };
 
-  // If we found a perfect result, return it.
-  if (result) {
-    return sequences;
-  }
+    // Reset Collections for this attempt
+    usedMap.clear();
+    sequences.length = 0; // Clear array
 
-  // If we failed (or timed out), use BEST result instead of current stack
-  if (perfStats.best.usedCount > 0) {
-    console.warn(
-      `[Generator] Timeout/Limit. Restoring BEST result: ${perfStats.best.usedCount} cells used.`,
+    const result = backtrackSequences(
+      board,
+      usedMap,
+      sequences,
+      0, // currentUsedCount
+      targetUsedCount,
+      peaksValleys,
+      rng,
+      iterationPerf, // Use local perf stats
+      precomputeNumberLocations(board), // This is fast enough to redo or cache
+      attempt > 0, // enableRandomness for later attempts
     );
-    // Precompute locs again for Panic Mode (available in scope?)
-    // Actually we can pass 'precomputeNumberLocations(board)' but it is expensive.
-    // We call it once at top. We should have passed it down or stored it.
-    // Just recompute for safety in panic mode, it's one-off.
-    const boardLocs = precomputeNumberLocations(board);
-    let bestSeqs = perfStats.best.sequences.map((s, i) => ({ ...s, id: i }));
 
-    // PANIC MODE: Try to fill remaining gaps with simple greedy logic
-    // STRICT MODE: We must find UNIQUE sequences.
-    if (totalAvailable - perfStats.best.usedCount > 3) {
-      if (CONFIG.debugMode) console.log("Entering Strict Panic Fill Mode...");
+    // Analyze Result
+    let candidateSequences = [];
+    let candidateUsedCount = 0;
 
-      // Start with the best result found so far
-      const usedMap = new Set();
-      bestSeqs.forEach((s) =>
-        s.path.forEach((p) => usedMap.add(`${p.r},${p.c}`)),
-      );
+    if (result === true) {
+      // Improved: backtrack returned true (unlikely with strict max/time, but possible)
+      // DEEP COPY to prevent reference clearing
+      candidateSequences = sequences.map((s) => ({
+        ...s,
+        path: s.path.map((p) => ({ ...p })),
+        numbers: [...s.numbers],
+      }));
+      candidateUsedCount = targetUsedCount;
+    } else {
+      // Use Best of this iteration
+      if (iterationPerf.best.usedCount > 0) {
+        candidateSequences = iterationPerf.best.sequences.map((s, i) => ({
+          ...s,
+          id: i,
+        }));
+        candidateUsedCount = iterationPerf.best.usedCount;
 
-      // We need to fill until (totalAvailable - usedMap.size) <= 5
-      // Strategy: Find all holes, pick one, try to fill it strictly. Repeat.
-
-      let attempts = 0;
-      const maxAttempts = 50; // Prevention against infinite loops in panic mode
-
-      while (totalAvailable - usedMap.size > 3 && attempts < maxAttempts) {
-        attempts++;
-
-        // 1. Identify Holes
-        const holes = [];
-        for (let r = 0; r < rows; r++) {
-          for (let c = 0; c < cols; c++) {
-            const key = `${r},${c}`;
-            if (!usedMap.has(key) && !peaksValleys.has(key)) {
-              holes.push({ r, c });
-            }
-          }
-        }
-
-        if (holes.length === 0) break; // Should not happen if size check passed
-
-        // 2. Try to fill ANY hole
-        let filledAny = false;
-
-        // Sort holes by constraint (degree) again? Or just iterate.
-        // Iterate all holes to find the "easiest" to fill strictly
-        for (const hole of holes) {
-          if (usedMap.has(`${hole.r},${hole.c}`)) continue;
-
-          // Try diverse lengths. Smaller is easier to fit, but maybe harder to be unique?
-          // Actually longer sequences are usually MORE unique.
-          const lengths = [5, 4, 6, 3];
-
-          for (const len of lengths) {
-            const paths = findPaths(board, hole, len, usedMap, peaksValleys);
-
-            for (const p of paths) {
-              const numbers = p.map((cell) => board[cell.r][cell.c]);
-
-              // STRICT AMBIGUITY CHECK
-              if (countSequenceOccurrences(board, numbers, boardLocs) === 1) {
-                // Success!
-                p.forEach((cell) => usedMap.add(`${cell.r},${cell.c}`));
-                bestSeqs.push({ path: p, numbers, id: bestSeqs.length });
-                filledAny = true;
-                break;
-              }
-            }
-            if (filledAny) break;
-          }
-          if (filledAny) break; // Re-evaluate holes after filling one
-        }
-
-        if (!filledAny) {
-          // We are stuck. We have holes we can't fill strictly.
-          console.warn(
-            "Strict Panic Fill stuck. Cannot fill remaining holes uniquely.",
-          );
-          break;
-        }
+        // Run Panic Fill on this candidate
+        candidateSequences = runPanicFill(
+          candidateSequences,
+          board,
+          totalAvailable,
+          peaksValleys,
+          rows,
+          cols,
+        );
+        // Recalculate usage after panic
+        const pSet = new Set();
+        candidateSequences.forEach((s) =>
+          s.path.forEach((p) => pSet.add(`${p.r},${p.c}`)),
+        );
+        candidateUsedCount = pSet.size;
       }
     }
 
-    return bestSeqs;
+    // Check Clustering
+    const adj = calculateFinalAdjacency(
+      candidateSequences,
+      peaksValleys,
+      rows,
+      cols,
+    );
+    const holesLeft = totalAvailable - candidateUsedCount;
+
+    if (CONFIG.debugMode)
+      console.log(
+        `   > Attempt ${attempt}: used=${candidateUsedCount}, adj=${adj}`,
+      );
+
+    // SUCCESS CRITERIA: Full usage (only 3 left) AND 0 Adjacency
+    if (holesLeft <= 3 && adj === 0) {
+      if (CONFIG.debugMode)
+        console.log(
+          `${logPrefix} SUCCESS! Found separated solution with 3 holes.`,
+        );
+      return candidateSequences;
+    } else {
+      if (CONFIG.debugMode)
+        console.log(
+          `${logPrefix} Failed criteria. Holes: ${holesLeft} (Target <=3), Adj: ${adj} (Target 0). Retrying...`,
+        );
+    }
+
+    // Track Global Best (just in case we fail all retries)
+    // Prioritize: 1. Fewest Holes, 2. Lowest Adjacency
+    if (!bestGlobalResult) {
+      bestGlobalResult = {
+        seqs: candidateSequences,
+        holes: holesLeft,
+        adj: adj,
+      };
+      minAdjacency = adj;
+    } else {
+      if (holesLeft < bestGlobalResult.holes) {
+        bestGlobalResult = {
+          seqs: candidateSequences,
+          holes: holesLeft,
+          adj: adj,
+        };
+        minAdjacency = adj;
+      } else if (holesLeft === bestGlobalResult.holes && adj < minAdjacency) {
+        bestGlobalResult = {
+          seqs: candidateSequences,
+          holes: holesLeft,
+          adj: adj,
+        };
+        minAdjacency = adj;
+      }
+    }
+
+    // Logic for total timeout?
+    // Use the passed maxDuration (minus a buffer for retry loops)
+    if (Date.now() - globalPerfStats.start > maxDuration - 200) {
+      console.warn(
+        "[Generator] Global Time Limit reached. Returning best found.",
+      );
+      break;
+    }
   }
 
-  return [];
+  // Return best best
+  return bestGlobalResult ? bestGlobalResult.seqs : [];
+}
+
+// Extracted Panic Fill to reuse
+function runPanicFill(
+  bestSeqs,
+  board,
+  totalAvailable,
+  peaksValleys,
+  rows,
+  cols,
+) {
+  const usedMap = new Set();
+  bestSeqs.forEach((s) => s.path.forEach((p) => usedMap.add(`${p.r},${p.c}`)));
+  const boardLocs = precomputeNumberLocations(board);
+  let currentUsed = usedMap.size;
+
+  if (totalAvailable - currentUsed > 3) {
+    if (CONFIG.debugMode) console.log("Entering Strict Panic Fill Mode...");
+
+    let attempts = 0;
+    const maxAttempts = 100; // Increased from 50
+    let stuckCounter = 0;
+
+    while (totalAvailable - usedMap.size > 3 && attempts < maxAttempts) {
+      attempts++;
+      const holes = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const key = `${r},${c}`;
+          if (!usedMap.has(key) && !peaksValleys.has(key)) {
+            holes.push({ r, c });
+          }
+        }
+      }
+      if (holes.length === 0) break;
+
+      // Sorting ...
+      holes.forEach((h) => {
+        let degree = 0;
+        holes.forEach((other) => {
+          if (h === other) return;
+          const dist = Math.abs(h.r - other.r) + Math.abs(h.c - other.c);
+          if (dist === 1) degree++;
+        });
+        h.degree = degree;
+      });
+      holes.sort((a, b) => b.degree - a.degree);
+
+      let filledAny = false;
+      for (const hole of holes) {
+        if (usedMap.has(`${hole.r},${hole.c}`)) continue;
+        // Try lengths
+        const lengths = [5, 4, 3, 6];
+        for (const len of lengths) {
+          const paths = findPaths(board, hole, len, usedMap, peaksValleys);
+          for (const p of paths) {
+            const numbers = p.map((cell) => board[cell.r][cell.c]);
+            if (countSequenceOccurrences(board, numbers, boardLocs) === 1) {
+              p.forEach((cell) => usedMap.add(`${cell.r},${cell.c}`));
+              bestSeqs.push({ path: p, numbers, id: bestSeqs.length });
+              filledAny = true;
+              break;
+            }
+          }
+          if (filledAny) break;
+        }
+        if (filledAny) break;
+      }
+      if (!filledAny) {
+        stuckCounter++;
+        // If stuck, maybe try randomizing hole order instead of strict degree sort?
+        if (stuckCounter > 5) break; // Give it a few tries before giving up
+      } else {
+        stuckCounter = 0;
+      }
+    }
+  }
+  return bestSeqs;
+}
+
+function calculateFinalAdjacency(sequences, peaksValleys, rows, cols) {
+  const usedMap = new Set();
+  sequences.forEach((s) => s.path.forEach((p) => usedMap.add(`${p.r},${p.c}`)));
+  return calculateUnusedAdjacency(usedMap, peaksValleys, rows, cols);
 }
 
 function backtrackSequences(
@@ -191,9 +310,30 @@ function backtrackSequences(
   rng,
   perfStats,
   numberLocs,
+  enableRandomness = false,
 ) {
   // Track Best Result
+  // We want MAX usedCount.
+  // Tie-breaker: MIN adjacency of remaining holes.
+  let isBetter = false;
+  let adjScore = 999;
+
   if (currentUsedCount > perfStats.best.usedCount) {
+    isBetter = true;
+  } else if (currentUsedCount === perfStats.best.usedCount) {
+    // Check Adjacency Score (Lower is better)
+    // Calculate only if potential contender
+    adjScore = calculateUnusedAdjacency(usedMap, peaksValleys, 9, 9); // simplistic check
+    if (adjScore < perfStats.best.adjacencyScore) {
+      isBetter = true;
+    }
+  }
+
+  if (isBetter) {
+    // If we didn't calculate score yet (first case), do it now
+    if (adjScore === 999)
+      adjScore = calculateUnusedAdjacency(usedMap, peaksValleys, 9, 9);
+
     // Deep Copy sequences to save this state
     const seqCopy = sequences.map((s) => ({
       ...s,
@@ -203,6 +343,7 @@ function backtrackSequences(
     perfStats.best = {
       sequences: seqCopy,
       usedCount: currentUsedCount,
+      adjacencyScore: adjScore,
     };
   }
 
@@ -212,9 +353,9 @@ function backtrackSequences(
     perfStats.timeout = true;
     return true; // Return TRUE to preserve stack on limit
   }
-  if (Date.now() - perfStats.start > 4000) {
-    // 4 Second Timeout
-    console.warn("Search Generation Timed Out");
+  if (Date.now() - perfStats.start > perfStats.maxDuration) {
+    // Timeout
+    // console.warn("Search Generation Timed Out");
     perfStats.timeout = true;
     return true; // Return TRUE to preserve stack on timeout
   }
@@ -251,6 +392,18 @@ function backtrackSequences(
   shuffleArray(styledStarts, rng);
   // Then stable sort by degree
   styledStarts.sort((a, b) => a.degree - b.degree);
+
+  // EPSILON-GREEDY:
+  // If randomness is enabled (retry attempts), sometimes shuffle the "best" candidates
+  // to break local optima.
+  if (enableRandomness && rng.nextFloat() < 0.3) {
+    // 30% chance to shuffle the top 5 candidates
+    const topN = Math.min(styledStarts.length, 5);
+    for (let i = topN - 1; i > 0; i--) {
+      const j = rng.range(0, i);
+      [styledStarts[i], styledStarts[j]] = [styledStarts[j], styledStarts[i]];
+    }
+  }
 
   // Take top N candidates? No, try them in order.
 
@@ -299,6 +452,7 @@ function backtrackSequences(
             rng,
             perfStats,
             numberLocs,
+            enableRandomness,
           )
         ) {
           return true;
@@ -355,7 +509,34 @@ function isValidState(usedMap, peaksValleys, remainingToFill) {
   // So available for filling = (TotalFree - smallIslandSum).
   // If (TotalFree - smallIslandSum) < remainingToFill, we are stuck.
   // Or simply: smallIslandSum must fit in the final 3 buffer.
-  return smallIslandSum <= 3;
+  if (smallIslandSum > 3) return false;
+
+  // EXTRA CONSTRAINT: If remainingToFill is 0 (we are at the end state),
+  // we must ensure the 3 unused cells are NOT neighbors.
+  if (remainingToFill === 0) {
+    // Collect unused cells
+    const unused = [];
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const key = `${r},${c}`;
+        if (!usedMap.has(key) && !peaksValleys.has(key)) {
+          unused.push({ r, c });
+        }
+      }
+    }
+
+    // Check adjacency
+    for (let i = 0; i < unused.length; i++) {
+      for (let j = i + 1; j < unused.length; j++) {
+        const u1 = unused[i];
+        const u2 = unused[j];
+        const dist = Math.abs(u1.r - u2.r) + Math.abs(u1.c - u2.c);
+        if (dist === 1) return false; // Fail if neighbors
+      }
+    }
+  }
+
+  return true;
 }
 
 function getComponentSize(startR, startC, usedMap, peaksValleys, visited) {
@@ -483,4 +664,29 @@ function countPathFrom(board, r, c, numbers, index, visited = new Set()) {
   }
 
   return total;
+}
+
+function calculateUnusedAdjacency(usedMap, peaksValleys, rows, cols) {
+  let adjacency = 0;
+  // This is expensive O(N^2) or O(N), do sparingly.
+  // Iterating board is O(81).
+  const unused = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const key = `${r},${c}`;
+      if (!usedMap.has(key) && !peaksValleys.has(key)) {
+        unused.push({ r, c });
+      }
+    }
+  }
+
+  for (let i = 0; i < unused.length; i++) {
+    for (let j = i + 1; j < unused.length; j++) {
+      const u1 = unused[i];
+      const u2 = unused[j];
+      const dist = Math.abs(u1.r - u2.r) + Math.abs(u1.c - u2.c);
+      if (dist === 1) adjacency++;
+    }
+  }
+  return adjacency;
 }

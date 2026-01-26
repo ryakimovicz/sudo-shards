@@ -89,7 +89,7 @@ export class GameManager {
       search: {
         targets: generateSearchSequences(gameData.solution, this.currentSeed),
         found: [],
-        version: 6, // Increment this to invalidate caches
+        version: 14, // Increment this to invalidate caches
       },
     };
   }
@@ -143,7 +143,7 @@ export class GameManager {
       !this.state.search ||
       !this.state.search.targets ||
       this.state.search.targets.length === 0 ||
-      this.state.search.version !== 6 // V6 Check
+      this.state.search.version !== 11 // Explicit V11 Check
     ) {
       shouldRegenerate = true;
       if (CONFIG.debugMode)
@@ -212,16 +212,65 @@ export class GameManager {
 
     if (shouldRegenerate) {
       if (CONFIG.debugMode)
-        console.log("[GameManager] Generating Search Sequences...");
+        console.log(
+          "[GameManager] Starting Background Search Generation (Worker)...",
+        );
+
+      this.startBackgroundGeneration();
+    }
+  }
+
+  startBackgroundGeneration() {
+    if (window.Worker) {
+      const worker = new Worker("js/search-worker.js", { type: "module" });
+
+      worker.postMessage({
+        board: this.state.data.solution,
+        seed: this.currentSeed,
+        debugMode: CONFIG.debugMode,
+      });
+
+      worker.onmessage = (e) => {
+        const { status, sequences, message } = e.data;
+        if (status === "success") {
+          if (CONFIG.debugMode)
+            console.log(
+              "[GameManager] Background Generation Complete!",
+              sequences.length,
+            );
+
+          // Update State silently
+          this.state.search = {
+            targets: sequences,
+            found: [],
+            version: 14,
+          };
+          this.save();
+          worker.terminate();
+        } else {
+          console.error("[GameManager] Worker Failed:", message);
+          worker.terminate();
+        }
+      };
+
+      worker.onerror = (err) => {
+        console.error("[GameManager] Worker Error:", err);
+        worker.terminate();
+      };
+    } else {
+      // Fallback for no worker support
+      console.warn(
+        "[GameManager] Workers not supported. Running synchronously (might freeze).",
+      );
       const sequences = generateSearchSequences(
         this.state.data.solution,
         this.currentSeed,
+        4000, // Short timeout for sync fallback
       );
-
       this.state.search = {
         targets: sequences,
         found: [],
-        version: 2,
+        version: 14,
       };
       this.save();
     }

@@ -16,7 +16,9 @@ if (!fs.existsSync(PUZZLES_DIR)) {
 }
 
 async function generateDailyPuzzle() {
-  console.log("🧩 Starting Daily Puzzle Generation (Clean Board Strategy)...");
+  console.log(
+    "🧩 Starting Daily Puzzle Generation (Clean Board + Heuristic Greedy)...",
+  );
 
   let seed = process.argv[2];
   let dateStr = "";
@@ -55,15 +57,17 @@ async function generateDailyPuzzle() {
     let finalSearchTargets = {};
     let finalSimonValues = [];
 
-    // --- BUCLE PRINCIPAL ---
-    while (!success && attemptsGlobal < 500) {
+    // --- BUCLE PRINCIPAL (More attempts, faster greedy) ---
+    while (!success && attemptsGlobal < 5000) {
       attemptsGlobal++;
       const currentSeed = baseSeed * 1000 + attemptsGlobal;
 
       // 1. Generar Sudoku
       let gameData = generateDailyGame(currentSeed);
 
-      process.stdout.write(`   > Attempt ${attemptsGlobal}: `);
+      // Print progress every 10 attempts to reduce noise
+      if (attemptsGlobal % 10 === 1)
+        process.stdout.write(`   > Attempt ${attemptsGlobal}: `);
 
       // 2. Definir Variantes
       let variations = {
@@ -79,12 +83,11 @@ async function generateDailyPuzzle() {
 
       // 3. Procesar cada variante
       for (let key in variations) {
-        // A. Topology
         const { targetMap } = getAllTargets(variations[key].board);
         variations[key].peaksValleys = targetMap;
 
-        // B. Generar Cobertura "Greedy"
-        const rawPaths = generateGreedyCoverage(
+        // B. Generar Cobertura "Smart Greedy" (Heuristic to min islands)
+        const rawPaths = generateSmartGreedyCoverage(
           variations[key].board,
           variations[key].peaksValleys,
         );
@@ -92,7 +95,7 @@ async function generateDailyPuzzle() {
         // C. Verificar Islas PRE-Segmentation (Islas naturales)
         let islands = getIslands(rawPaths, variations[key].peaksValleys);
 
-        // D. Segmentation (Captura orphans/sawdust)
+        // D. Segmentation (Captura orphans)
         const { snakes, orphans } = segmentPathsSmart(
           rawPaths,
           variations[key].board,
@@ -104,16 +107,17 @@ async function generateDailyPuzzle() {
         islands = [...islands, ...orphans];
         variations[key].islands = islands;
 
-        // Check Count (Si > 3, descartar seed)
+        // Check Count (Strict: > 3 fail)
         if (islands.length > 3) {
-          process.stdout.write(
-            `Too many islands/orphans in [${key}] (${islands.length}). Next.\r`,
-          );
+          if (attemptsGlobal % 10 === 1)
+            process.stdout.write(
+              `Too many islands in [${key}] (${islands.length}).\r`,
+            );
           validTopology = false;
           break;
         }
 
-        // Track Forced Values
+        // Track Forced
         islands.forEach((isl) =>
           globalForcedValues.add(variations[key].board[isl.r][isl.c]),
         );
@@ -148,9 +152,7 @@ async function generateDailyPuzzle() {
 
       // --- STRICT CHECK: FORCED VALUES ---
       if (globalForcedValues.size > 3) {
-        process.stdout.write(
-          `Too many disparate islands (Union=${globalForcedValues.size}). Next.\r`,
-        );
+        // Too many diff islands
         continue;
       }
 
@@ -164,12 +166,7 @@ async function generateDailyPuzzle() {
         }
         if (!forcedCompatible) break;
       }
-      if (!forcedCompatible) {
-        process.stdout.write(
-          `Forced island value incompatible with other variants. Next.\r`,
-        );
-        continue;
-      }
+      if (!forcedCompatible) continue;
 
       // 4. Buscar Intersección
       let commonValues = [...allCandidates[0]];
@@ -185,7 +182,6 @@ async function generateDailyPuzzle() {
       );
 
       if (potentialFillers.length < slotsNeeded) {
-        process.stdout.write(`Not enough fillers to reach 3 targets. Next.\r`);
         continue;
       }
 
@@ -210,7 +206,7 @@ async function generateDailyPuzzle() {
         );
 
         if (!res.success) {
-          console.error("Critical: Failed to carve. Retry.");
+          console.error("Carve failed (topology).");
           carvingSuccess = false;
           break;
         }
@@ -230,11 +226,11 @@ async function generateDailyPuzzle() {
     }
 
     if (!success)
-      throw new Error("Could not generate valid puzzle after 500 attempts.");
+      throw new Error("Could not generate valid puzzle after 5000 attempts.");
 
     // --- SAVE ---
     const dailyPuzzle = {
-      meta: { version: "4.6-clean-board", date: dateStr, seed: seedInt },
+      meta: { version: "4.7-smart-greedy", date: dateStr, seed: seedInt },
       data: {
         solution: finalGameData.solution,
         puzzle: finalGameData.puzzle,
@@ -256,33 +252,62 @@ async function generateDailyPuzzle() {
   }
 }
 
-function generateGreedyCoverage(grid, pvMap) {
+// ==========================================
+// 🧠 LOGIC: SMART GREEDY PATH GENERATOR
+// ==========================================
+// Heuristic: Prefer moves that visit "hard to reach" neighbors (low degree),
+// effectively prioritizing tidying up corners/edges first.
+function generateSmartGreedyCoverage(grid, pvMap) {
   let visited = Array(9)
     .fill()
     .map(() => Array(9).fill(false));
   let unvisitedCount = 81 - pvMap.size;
+
+  // Mark walls
   pvMap.forEach((_, key) => {
     const [r, c] = key.split(",").map(Number);
     visited[r][c] = true;
   });
 
   let paths = [];
-  const getDirs = () =>
+
+  // Helper: Count unvisited neighbors of a cell
+  const countOpenNeighbors = (r, c) => {
+    let count = 0;
     [
       [0, 1],
       [0, -1],
       [1, 0],
       [-1, 0],
-    ].sort(() => 0.5 - Math.random());
+    ].forEach((d) => {
+      const nr = r + d[0],
+        nc = c + d[1];
+      if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && !visited[nr][nc]) count++;
+    });
+    return count;
+  };
 
   while (unvisitedCount > 0) {
+    // Find best start: Cell with FEWEST open neighbors (prioritize stranded cells)
     let candidates = [];
+    let minDegree = 5;
+
     for (let r = 0; r < 9; r++)
       for (let c = 0; c < 9; c++) {
-        if (!visited[r][c]) candidates.push({ r, c });
+        if (!visited[r][c]) {
+          const degree = countOpenNeighbors(r, c);
+          if (degree < minDegree) {
+            minDegree = degree;
+            candidates = [{ r, c }];
+          } else if (degree === minDegree) {
+            candidates.push({ r, c });
+          }
+        }
       }
+
     if (candidates.length === 0) break;
 
+    // Pick random from best candidates
     let start = candidates[Math.floor(Math.random() * candidates.length)];
     let currentPath = [start];
     visited[start.r][start.c] = true;
@@ -292,28 +317,58 @@ function generateGreedyCoverage(grid, pvMap) {
     let stuck = false;
 
     while (!stuck) {
-      let moved = false;
-      const dirs = getDirs();
-      for (let d of dirs) {
-        const nr = curr.r + d[0];
-        const nc = curr.c + d[1];
+      // Find valid moves
+      let moves = [];
+      [
+        [0, 1],
+        [0, -1],
+        [1, 0],
+        [-1, 0],
+      ].forEach((d) => {
+        const nr = curr.r + d[0],
+          nc = curr.c + d[1];
         if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && !visited[nr][nc]) {
-          visited[nr][nc] = true;
-          const nextNode = { r: nr, c: nc };
-          currentPath.push(nextNode);
-          curr = nextNode;
-          unvisitedCount--;
-          moved = true;
-          break;
+          // Heuristic Score:
+          // We want to move to a neighbor that is "in danger" of being isolated.
+          // Score = neighbors of (nr, nc) AFTER I move there.
+          // Lower score is better (visit the guy who has no other options first).
+          moves.push({ r: nr, c: nc });
         }
+      });
+
+      if (moves.length === 0) {
+        stuck = true;
+        break;
       }
-      if (!moved) stuck = true;
+
+      // Evaluate moves
+      moves.sort((a, b) => {
+        // Temporarily mark visited to calc degree? No, simple degree is fine.
+        // Degree of neighbor node
+        const da = countOpenNeighbors(a.r, a.c);
+        const db = countOpenNeighbors(b.r, b.c);
+        return da - db || Math.random() - 0.5; // Min degree first, then random
+      });
+
+      // Pick best
+      // Sometimes picking strictly best leads to snake trap.
+      // But let's try strict best first (Greedy Warnsdorff's rule).
+      // Actually, for Hamilton paths Warnsdorff is good.
+
+      const nextNode = moves[0];
+      visited[nextNode.r][nextNode.c] = true;
+      currentPath.push(nextNode);
+      curr = nextNode;
+      unvisitedCount--;
     }
     paths.push(currentPath);
   }
   return paths;
 }
 
+// ==========================================
+// 🪚 LOGIC: SMART SEGMENTATION ({snakes, orphans})
+// ==========================================
 function segmentPathsSmart(rawPaths, grid, pvMap) {
   let finalSnakes = [];
   let orphans = [];
@@ -326,11 +381,11 @@ function segmentPathsSmart(rawPaths, grid, pvMap) {
         if (len >= 3) {
           finalSnakes.push(remaining);
         } else {
-          orphans.push(...remaining); // Catch scraps
+          orphans.push(...remaining);
         }
         break;
       }
-
+      // Smart uniqueness
       let bestCut = -1;
       for (let cut = 6; cut >= 3; cut--) {
         let remSize = len - cut;
@@ -342,7 +397,7 @@ function segmentPathsSmart(rawPaths, grid, pvMap) {
           break;
         }
       }
-
+      // Fallback
       if (bestCut === -1) {
         let cut = 6;
         while (cut >= 3) {

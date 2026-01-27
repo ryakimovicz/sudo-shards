@@ -23,7 +23,6 @@ async function generateDailyPuzzle() {
   console.log("🧩 Starting Daily Puzzle Generation...");
 
   // 1. Determine Seed (Argument or Today)
-  // 1. Determine Seed (Argument or Today)
   let seed = process.argv[2];
   let dateStr = "";
   let seedInt;

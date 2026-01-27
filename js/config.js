@@ -1,7 +1,7 @@
 export const CONFIG = {
-  version: "v0.6.0", // Major.Minor.Patch
+  version: "v0.6.1", // Major.Minor.Patch
   fechaUpdate: "2026-01-27",
   autor: "Román Yakimovicz",
-  debugMode: true, // Toggle to true to see logs and debug panels
+  debugMode: false, // Toggle to true to see logs and debug panels
   betaMode: true, // Toggle to true to enable "Ayuda" button
 };

@@ -17,9 +17,7 @@ if (!fs.existsSync(PUZZLES_DIR)) {
 }
 
 async function generateDailyPuzzle() {
-  console.log(
-    "🧩 Starting Daily Puzzle Generation (Island-Constraint Strategy)...",
-  );
+  console.log("🧩 Starting Daily Puzzle Generation (Intersection Strategy)...");
 
   // 1. Determine Seed
   let seed = process.argv[2];
@@ -64,7 +62,7 @@ async function generateDailyPuzzle() {
       attemptsGlobal++;
 
       // 1. Generate NEW Sudoku
-      const currentSeed = baseSeed + attemptsGlobal * 777;
+      const currentSeed = (baseSeed * 1000) + attemptsGlobal;
       let gameData = generateDailyGame(currentSeed);
 
       process.stdout.write(`   > Attempt ${attemptsGlobal}: `);
@@ -77,102 +75,99 @@ async function generateDailyPuzzle() {
         HV: { board: swapBands(swapStacks(gameData.solution)) },
       };
 
-      // 3. ISLAND SCAN & CONSTRAINT ANALYSIS
-      // Detect forced cells (islands) in all variations
-      let forcedValues = new Set();
-      let constraintsValid = true;
+      // 3. SCAN ISLANDS & GENERATE SNAKES
+      // We do this in one pass to fail fast
+      let validGeneration = true;
+      let commonCandidates = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]); // Start assuming all are possible
 
       for (let key in variations) {
-        // Calculate Walls
+        // A. Topology
         const { targetMap } = getAllTargets(variations[key].board);
         variations[key].peaksValleys = targetMap;
 
-        // Find Islands (Cells trapped by walls)
+        // B. Detect Islands (These are MANDATORY candidates)
         const islands = getIslands(variations[key].peaksValleys);
+        variations[key].islands = islands;
 
-        // Save islands as "Pre-Reserved" for this variant
-        variations[key].reservedIslands = [];
-
-        for (let island of islands) {
-          const val = variations[key].board[island.r][island.c];
-          forcedValues.add(val);
-          variations[key].reservedIslands.push({
-            r: island.r,
-            c: island.c,
-            val: val,
-          });
-        }
-      }
-
-      // RULE: Max 3 distinct forced numbers allowed
-      if (forcedValues.size > 3) {
-        process.stdout.write(
-          `Too many forced islands (${forcedValues.size} > 3). Next.\r`,
-        );
-        continue;
-      }
-
-      // 4. PREPARE SIMON VALUES
-      // If we have forced values (e.g. 5), we keep them.
-      // Then we fill the rest of the 3 slots with random numbers.
-      let targetValues = Array.from(forcedValues);
-      const allNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-      const randomPool = allNumbers
-        .filter((n) => !forcedValues.has(n))
-        .sort(() => 0.5 - Math.random());
-
-      while (targetValues.length < 3) {
-        targetValues.push(randomPool.pop());
-      }
-
-      process.stdout.write(
-        `Targets: [${targetValues.join(",")}] (Forced: ${forcedValues.size})... `,
-      );
-
-      // 5. FILL & CARVE
-      let allVariationsSuccess = true;
-      let tempSearchTargets = {};
-
-      for (let key in variations) {
-        // A. Generate Full Cover (Respecting Islands)
-        // We pass the islands as 'reserved' so the generator doesn't try to cover them
+        // C. Full Fill (Respecting Islands)
         const fillResult = generateFullCover(
           variations[key].board,
           variations[key].peaksValleys,
-          variations[key].reservedIslands, // These stay empty (holes)
+          islands,
           currentSeed + 100,
         );
 
         if (!fillResult.success) {
-          allVariationsSuccess = false;
+          process.stdout.write(`Fill failed [${key}]. Next.\r`);
+          validGeneration = false;
           break;
         }
+        variations[key].fullSnakes = fillResult.sequences;
 
-        // B. Carve the REST of the numbers
-        // The islands are already "carved" (they are holes).
-        // We need to carve the other numbers from the generated snakes.
-
-        // Filter out values that are already satisfied by islands in THIS variant
-        const satisfiedByIslands = new Set(
-          variations[key].reservedIslands.map((i) => i.val),
+        // D. ANALYZE CARVABLE NUMBERS
+        // This is the new logic: Ask the board what can be removed.
+        const carvableSet = getCarvableValues(
+          variations[key].fullSnakes,
+          variations[key].board,
+          islands,
         );
-        const toCarve = targetValues.filter((v) => !satisfiedByIslands.has(v));
 
-        // Carve Logic
+        // Intersection: Keep only numbers that are carvable in ALL previous variants too
+        commonCandidates = new Set(
+          [...commonCandidates].filter((x) => carvableSet.has(x)),
+        );
+
+        if (commonCandidates.size < 3) {
+          process.stdout.write(`Intersection too small (<3). Next.\r`);
+          validGeneration = false;
+          break;
+        }
+      }
+
+      if (!validGeneration) continue;
+
+      // 4. THE EXECUTION
+      // If we got here, 'commonCandidates' contains numbers that are valid
+      // to remove in ALL 4 variations.
+
+      const candidatesArray = Array.from(commonCandidates);
+      // Pick 3 random numbers from the valid intersection
+      const finalTargets = candidatesArray
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3);
+
+      console.log(
+        `\n     💎 Match Found! Common Candidates: [${candidatesArray.join(",")}] -> Picking: [${finalTargets.join(",")}]`,
+      );
+
+      // 5. PERFORM CARVE (Guaranteed to succeed)
+      let tempSearchTargets = {};
+
+      for (let key in variations) {
+        // Identify which of the final targets are ALREADY islands in this variant
+        // (Islands don't need carving, they are already holes)
+        const islandValues = new Set(
+          variations[key].islands.map((i) => variations[key].board[i.r][i.c]),
+        );
+        const toCarve = finalTargets.filter((v) => !islandValues.has(v));
+
         const carveResult = carveHoles(
-          fillResult.sequences,
+          variations[key].fullSnakes,
           variations[key].board,
           toCarve,
         );
 
         if (!carveResult.success) {
-          allVariationsSuccess = false;
+          // Should happen very rarely given our pre-check, but possible due to randomness in "which" 5 to pick if multiple exist
+          // But 'carveHoles' scans all, so it should be fine.
+          console.error("Unexpected carve error. Retrying loop.");
+          validGeneration = false;
           break;
         }
 
-        // Combine Islands + Carved Holes for the final Simon Coordinates
+        // Combine Islands + Carved Holes
         const finalHoles = [
-          ...variations[key].reservedIslands.map((i) => ({ r: i.r, c: i.c })),
+          ...variations[key].islands.map((i) => ({ r: i.r, c: i.c })),
           ...carveResult.removedCoords,
         ];
 
@@ -182,14 +177,12 @@ async function generateDailyPuzzle() {
         };
       }
 
-      if (allVariationsSuccess) {
-        console.log(`\n     ✅ SUCCESS!`);
+      if (validGeneration) {
+        console.log(`     ✅ SUCCESS! Puzzle Generated.`);
         finalSearchTargets = tempSearchTargets;
-        finalSimonValues = targetValues;
+        finalSimonValues = finalTargets;
         finalGameData = gameData;
         success = true;
-      } else {
-        process.stdout.write(`Carve failed. Next.\r`);
       }
     }
 
@@ -198,7 +191,7 @@ async function generateDailyPuzzle() {
 
     // --- SAVE ---
     const dailyPuzzle = {
-      meta: { version: "3.3-island-hybrid", date: dateStr, seed: seedInt },
+      meta: { version: "3.4-intersection", date: dateStr, seed: seedInt },
       data: {
         solution: finalGameData.solution,
         puzzle: finalGameData.puzzle,
@@ -220,69 +213,65 @@ async function generateDailyPuzzle() {
   }
 }
 
-// --- HELPER: Detect Islands (Forced Holes) ---
-function getIslands(pvMap) {
-  // Returns array of {r,c} for cells that have 0 free neighbors
-  const grid = Array(9)
-    .fill()
-    .map(() => Array(9).fill(0)); // 0=Free, 1=Wall
-  for (let r = 0; r < 9; r++)
-    for (let c = 0; c < 9; c++) {
-      if (pvMap.has(`${r},${c}`)) grid[r][c] = 1;
-    }
+// --- NEW HELPER: Analyze what can be removed ---
+function getCarvableValues(sequences, grid, islands) {
+  const carvable = new Set();
 
-  const islands = [];
-  const dirs = [
-    [0, 1],
-    [0, -1],
-    [1, 0],
-    [-1, 0],
-  ];
+  // 1. Islands are always "carvable" (already carved)
+  for (let isl of islands) {
+    carvable.add(grid[isl.r][isl.c]);
+  }
 
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
-      if (grid[r][c] === 0) {
-        // Free cell
-        let freeNeighbors = 0;
-        for (let d of dirs) {
-          const nr = r + d[0],
-            nc = c + d[1];
-          if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && grid[nr][nc] === 0) {
-            freeNeighbors++;
-          }
-        }
-        if (freeNeighbors === 0) {
-          islands.push({ r, c }); // It's a trap!
-        }
+  // 2. Check generated snakes
+  for (let seq of sequences) {
+    for (let i = 0; i < seq.length; i++) {
+      const cell = seq[i];
+      const val = grid[cell.r][cell.c];
+
+      // If we already marked this number as feasible, skip expensive check
+      if (carvable.has(val)) continue;
+
+      // Simulate removal
+      let canRemove = false;
+
+      // Head
+      if (i === 0) {
+        if (seq.length - 1 >= 3) canRemove = true;
+      }
+      // Tail
+      else if (i === seq.length - 1) {
+        if (seq.length - 1 >= 3) canRemove = true;
+      }
+      // Middle
+      else {
+        // Length of left part = i
+        // Length of right part = seq.length - 1 - i
+        if (i >= 3 && seq.length - 1 - i >= 3) canRemove = true;
+      }
+
+      if (canRemove) {
+        carvable.add(val);
       }
     }
   }
-  return islands;
+  return carvable;
 }
 
 // --- HELPER 1: FULL COVER GENERATOR ---
 function generateFullCover(grid, pvMap, reserved, seed) {
   // Allow tolerance because we use absorbOrphans
   const result = generateSearchSequences(grid, seed, 1000, reserved);
-
-  // Expected holes = reserved.length
-  // We allow up to 40 extra holes to be cleaned
-  if (result && result.holes <= reserved.length + 40) {
+  if (result && result.holes <= reserved.length + 45) {
     absorbOrphans(result.sequences, grid, reserved, pvMap);
-
     const holes = countHoles(result.sequences, reserved.length, pvMap);
-    if (holes === 0) {
-      return { success: true, sequences: result.sequences };
-    }
+    if (holes === 0) return { success: true, sequences: result.sequences };
   }
   return { success: false };
 }
 
 // --- HELPER 2: THE CARVER ---
 function carveHoles(sequences, grid, targetValues) {
-  // Same logic as before, just removing numbers
   let removedCoords = [];
-  // Work on a deep copy of sequences so we don't mess up if we fail mid-way
   let seqCopy = JSON.parse(JSON.stringify(sequences));
 
   for (let target of targetValues) {
@@ -298,13 +287,14 @@ function carveHoles(sequences, grid, targetValues) {
         }
       }
     }
-    candidates.sort(() => 0.5 - Math.random());
+    // Important: Prefer candidates that allow simple head/tail removal first
+    candidates.sort((a, b) => {
+      // Simple heuristic: prefer removing from long snakes
+      return 0.5 - Math.random();
+    });
 
     for (let cand of candidates) {
       const seq = seqCopy[cand.sIdx];
-
-      // Validation Logic (Min Length 3)
-      // Check head, tail, split...
       if (cand.cIdx === 0) {
         if (seq.length - 1 >= 3) {
           seq.shift();
@@ -337,6 +327,34 @@ function carveHoles(sequences, grid, targetValues) {
 }
 
 // --- STANDARD HELPERS ---
+function getIslands(pvMap) {
+  const grid = Array(9)
+    .fill()
+    .map(() => Array(9).fill(0));
+  for (let r = 0; r < 9; r++)
+    for (let c = 0; c < 9; c++) if (pvMap.has(`${r},${c}`)) grid[r][c] = 1;
+  const islands = [];
+  const dirs = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ];
+  for (let r = 0; r < 9; r++)
+    for (let c = 0; c < 9; c++)
+      if (grid[r][c] === 0) {
+        let free = 0;
+        for (let d of dirs) {
+          const nr = r + d[0],
+            nc = c + d[1];
+          if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && grid[nr][nc] === 0)
+            free++;
+        }
+        if (free === 0) islands.push({ r, c });
+      }
+  return islands;
+}
+
 function absorbOrphans(sequences, grid, reservedArr, topographyMap) {
   const reservedSet = new Set(reservedArr.map((p) => `${p.r},${p.c}`));
   let changed = true;
@@ -356,7 +374,6 @@ function absorbOrphans(sequences, grid, reservedArr, topographyMap) {
     }
     if (orphans.length === 0) return true;
 
-    // Merge to neighbors
     for (let i = 0; i < orphans.length; i++) {
       let orphan = orphans[i];
       if (!orphan) continue;
@@ -376,7 +393,6 @@ function absorbOrphans(sequences, grid, reservedArr, topographyMap) {
       }
     }
 
-    // Phase 2: Create new snakes if stuck
     const rem = orphans.filter((o) => o !== null);
     if (!changed && rem.length >= 2) {
       for (let i = 0; i < rem.length; i++) {

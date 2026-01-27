@@ -176,6 +176,16 @@ export class GameManager {
       const solvedBoard = this.getTargetSolutionWithVariation(variationKey);
 
       this.state.search.targets = variationData.targets.map((snake, idx) => {
+        // IDEMPOTENCY CHECK: If already transformed (has .path and .numbers), return as is.
+        if (!Array.isArray(snake) && snake.path && snake.numbers) {
+          return snake;
+        }
+
+        if (!Array.isArray(snake)) {
+          console.warn(`[GameManager] Invalid snake at index ${idx}:`, snake);
+          return { id: idx, numbers: [], path: [] };
+        }
+
         // If it's the old format (already numbers), pass through (unlikely now)
         if (typeof snake[0] === "number") return { id: idx, numbers: snake };
 

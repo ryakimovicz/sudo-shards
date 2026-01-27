@@ -173,6 +173,42 @@ export class GameManager {
     this.save();
   }
 
+  getTargetSolution() {
+    // Returns the 9x9 solution grid ADAPTED to the current Jigsaw variation
+    if (!this.state || !this.state.data.solution) return [];
+
+    const baseSolution = this.state.data.solution;
+    const variation = this.state.jigsaw.variation || "0";
+
+    if (variation === "0") return baseSolution;
+
+    // Helper to Deep Copy
+    const board = JSON.parse(JSON.stringify(baseSolution));
+
+    // Apply Transformations (Same logic as Generator)
+    if (variation === "LR" || variation === "HV") {
+      // Swap Stacks (Cols 0-2 with 6-8)
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 3; c++) {
+          const temp = board[r][c];
+          board[r][c] = board[r][c + 6];
+          board[r][c + 6] = temp;
+        }
+      }
+    }
+
+    if (variation === "TB" || variation === "HV") {
+      // Swap Bands (Rows 0-2 with 6-8)
+      for (let offset = 0; offset < 3; offset++) {
+        const tempRow = board[offset];
+        board[offset] = board[offset + 6];
+        board[offset + 6] = tempRow;
+      }
+    }
+
+    return board;
+  }
+
   createNewState() {
     // Generate the Sudoku data
     const gameData = generateDailyGame(this.currentSeed);

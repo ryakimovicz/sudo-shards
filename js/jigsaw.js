@@ -983,11 +983,13 @@ export function checkBoardCompletion() {
   let matchesFound = 0;
 
   // Find Closest Target
+  console.log("Checking Board Variations... Current Chunks:", currentChunks);
   for (const [key, target] of Object.entries(targets)) {
     let matches = 0;
     for (let i = 0; i < 9; i++) {
       if (currentChunks[i] === target[i]) matches++;
     }
+    console.log(`Variation [${key}]: ${matches}/9 matches`);
     if (matches === 9) {
       bestMatchKey = key;
       matchesFound = 9;
@@ -1003,7 +1005,7 @@ export function checkBoardCompletion() {
     console.log(`Jigsaw Solved! Detected Variation: [${bestMatchKey}]`);
 
     // Save Variation to Game Manager
-    gameManager.updateProgress("jigsawVariation", bestMatchKey);
+    gameManager.setJigsawVariation(bestMatchKey);
 
     // Clean errors and Add Victory Animation
     clearBoardErrors();

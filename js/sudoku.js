@@ -669,8 +669,9 @@ function validateBoard() {
 
   console.log("Sudoku Board Full - Validating Matrix...");
 
-  const state = gameManager.getState();
-  const solution = state.data.solution;
+  console.log("Sudoku Board Full - Validating Matrix...");
+
+  const solution = gameManager.getTargetSolution();
   let errorCount = 0;
 
   allCells.forEach((cellData) => {
@@ -731,8 +732,7 @@ export function provideHint() {
 
   if (slots.length !== 9) return;
 
-  const state = gameManager.getState();
-  const solution = state.data.solution;
+  const solution = gameManager.getTargetSolution();
 
   // Find the first block that is not fully correct
   const targetSlot = slots.find((slot) => {

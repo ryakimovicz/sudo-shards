@@ -213,7 +213,7 @@ async function generateDailyPuzzle() {
           baseValid = true;
         }
         // Near-Perfect? Try to clean
-        else if (resultBase.holes <= 8) {
+        else if (resultBase.holes <= 15) {
           absorbOrphans(
             resultBase.sequences,
             variations["0"].board,
@@ -350,8 +350,8 @@ async function generateDailyPuzzle() {
         if (!result) continue;
 
         // B. ORPHAN ABSORPTION STRATEGY
-        // If result is "good enough" (holes <= 8), try to fix it.
-        if (result.holes <= 8) {
+        // If result is "good enough" (holes <= 15), try to fix it.
+        if (result.holes <= 15) {
           // Attempt to merge orphans
           absorbOrphans(result.sequences, grid, reserved, peaksValleysMap);
 
@@ -375,6 +375,7 @@ async function generateDailyPuzzle() {
     }
 
     // --- NUEVO HELPER PARA LIMPIEZA ---
+    // --- HELPER MEJORADO PARA LIMPIEZA ---
     function absorbOrphans(sequences, grid, reservedArr, topographyMap) {
       const reservedSet = new Set(reservedArr.map((p) => `${p.r},${p.c}`));
 
@@ -383,11 +384,11 @@ async function generateDailyPuzzle() {
         changed = false;
         const orphans = [];
 
-        // 1. Find Orphans
+        // 1. Identificar Huérfanos
         for (let r = 0; r < 9; r++) {
           for (let c = 0; c < 9; c++) {
             const key = `${r},${c}`;
-            // Re-check usage dynamically (expensive but safe)
+            // Recalcular uso dinámicamente
             const isUsed = sequences.some((seq) =>
               seq.some((s) => s.r === r && s.c === c),
             );
@@ -400,33 +401,58 @@ async function generateDailyPuzzle() {
           }
         }
 
-        if (orphans.length === 0) return true; // Clean!
+        if (orphans.length === 0) return true; // ¡Limpio total!
 
-        // 2. Merge Orphans
-        for (let orphan of orphans) {
+        // 2. Fase 1: Intentar pegar a víboras existentes
+        for (let i = 0; i < orphans.length; i++) {
+          let orphan = orphans[i];
+          if (!orphan) continue;
+
           for (let seq of sequences) {
-            // Check Head
+            // Chequear Cabeza
             const head = seq[0];
             if (
               Math.abs(head.r - orphan.r) + Math.abs(head.c - orphan.c) ===
               1
             ) {
               seq.unshift(orphan);
+              orphans[i] = null; // Marcar como usado
               changed = true;
               break;
             }
-            // Check Tail
+            // Chequear Cola
             const tail = seq[seq.length - 1];
             if (
               Math.abs(tail.r - orphan.r) + Math.abs(tail.c - orphan.c) ===
               1
             ) {
               seq.push(orphan);
+              orphans[i] = null;
               changed = true;
               break;
             }
           }
-          if (changed) break; // Restart scan after modification
+        }
+
+        // Limpiar array de huecos ya usados
+        const remainingOrphans = orphans.filter((o) => o !== null);
+
+        // 3. Fase 2: Crear NUEVAS víboras con huecos adyacentes (Si falló la fase 1)
+        if (!changed && remainingOrphans.length > 1) {
+          for (let i = 0; i < remainingOrphans.length; i++) {
+            for (let j = i + 1; j < remainingOrphans.length; j++) {
+              const a = remainingOrphans[i];
+              const b = remainingOrphans[j];
+
+              if (Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1) {
+                // ¡Se tocan! Creamos nueva secuencia.
+                sequences.push([a, b]); // Nueva víbora de 2
+                changed = true;
+                break;
+              }
+            }
+            if (changed) break;
+          }
         }
       }
       return false;

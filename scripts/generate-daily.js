@@ -288,24 +288,21 @@ async function generateDailyPuzzle() {
       targetValues,
       seed,
     ) {
-      // 1. Find candidates for each target value
+      // 1. Find candidates
       let candidatePools = [[], [], []];
-
       for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
           if (peaksValleysMap.has(`${r},${c}`)) continue;
           const val = grid[r][c];
           targetValues.forEach((target, idx) => {
-            if (val === target) {
-              candidatePools[idx].push({ r, c });
-            }
+            if (val === target) candidatePools[idx].push({ r, c });
           });
         }
       }
 
       if (candidatePools.some((p) => p.length === 0)) return { success: false };
 
-      // 2. Try generation with random candidates
+      // 2. Try generation with orphan cleanup
       let attempts = 0;
       while (attempts < 20) {
         attempts++;
@@ -318,22 +315,107 @@ async function generateDailyPuzzle() {
         const uniqueKeys = new Set(reserved.map((p) => `${p.r},${p.c}`));
         if (uniqueKeys.size < 3) continue;
 
+        // A. FASTER TIMEOUT (800ms) - Fail fast to try more combinations
         const result = generateSearchSequences(
           grid,
           seed + attempts * 10,
-          3000,
+          800,
           reserved,
         );
 
-        if (result && result.holes <= 3) {
-          return {
-            success: true,
-            sequences: result.sequences,
-            reserved: reserved,
-          };
+        if (!result) continue;
+
+        // B. ORPHAN ABSORPTION STRATEGY
+        // If result is "good enough" (holes <= 8), try to fix it.
+        if (result.holes <= 8) {
+          // Attempt to merge orphans
+          absorbOrphans(result.sequences, grid, reserved, peaksValleysMap);
+
+          // Verify perfection
+          const realHoles = countHoles(
+            result.sequences,
+            reserved,
+            peaksValleysMap,
+          );
+
+          if (realHoles === 0) {
+            return {
+              success: true,
+              sequences: result.sequences,
+              reserved: reserved,
+            };
+          }
         }
       }
       return { success: false };
+    }
+
+    // --- NUEVO HELPER PARA LIMPIEZA ---
+    function absorbOrphans(sequences, grid, reservedArr, topographyMap) {
+      const reservedSet = new Set(reservedArr.map((p) => `${p.r},${p.c}`));
+
+      let changed = true;
+      while (changed) {
+        changed = false;
+        const orphans = [];
+
+        // 1. Find Orphans
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            const key = `${r},${c}`;
+            // Re-check usage dynamically (expensive but safe)
+            const isUsed = sequences.some((seq) =>
+              seq.some((s) => s.r === r && s.c === c),
+            );
+            const isWall = topographyMap.has(key);
+            const isReserved = reservedSet.has(key);
+
+            if (!isUsed && !isWall && !isReserved) {
+              orphans.push({ r, c });
+            }
+          }
+        }
+
+        if (orphans.length === 0) return true; // Clean!
+
+        // 2. Merge Orphans
+        for (let orphan of orphans) {
+          for (let seq of sequences) {
+            // Check Head
+            const head = seq[0];
+            if (
+              Math.abs(head.r - orphan.r) + Math.abs(head.c - orphan.c) ===
+              1
+            ) {
+              seq.unshift(orphan);
+              changed = true;
+              break;
+            }
+            // Check Tail
+            const tail = seq[seq.length - 1];
+            if (
+              Math.abs(tail.r - orphan.r) + Math.abs(tail.c - orphan.c) ===
+              1
+            ) {
+              seq.push(orphan);
+              changed = true;
+              break;
+            }
+          }
+          if (changed) break; // Restart scan after modification
+        }
+      }
+      return false;
+    }
+
+    function countHoles(sequences, reserved, pvMap) {
+      let usedCount = 0;
+      sequences.forEach((s) => (usedCount += s.length));
+      let wallCount = pvMap.size;
+      let reservedCount = 3; // Fixed for Simon
+      let totalCells = 81;
+      // Holes = Total - (Used + Walls + Reserved)
+      return totalCells - (usedCount + wallCount + reservedCount);
     }
 
     function getSafeCells(grid, pvMap) {

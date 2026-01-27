@@ -47,8 +47,17 @@ async function generateDailyPuzzle() {
 
     console.log(`📅 Target Date: ${dateStr} (Tomorrow), Seed: ${seed}`);
   } else {
-    dateStr = "custom-" + seed;
-    console.log(`🔧 Custom Seed: ${seed}`);
+    // If seed is "20260127", we want dateStr to be "2026-01-27"
+    // Check if seed matches YYYYMMDD format
+    if (/^\d{8}$/.test(seed)) {
+      const y = seed.substring(0, 4);
+      const m = seed.substring(4, 6);
+      const d = seed.substring(6, 8);
+      dateStr = `${y}-${m}-${d}`;
+    } else {
+      dateStr = "custom-" + seed;
+    }
+    console.log(`🔧 Custom Seed: ${seed} -> Date: ${dateStr}`);
   }
 
   try {

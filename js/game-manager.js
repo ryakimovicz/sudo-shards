@@ -69,7 +69,15 @@ export class GameManager {
       }
     }
 
-    if (CONFIG.debugMode) console.log("Game Initialized:", this.state);
+    if (CONFIG.debugMode) {
+      console.log("Game Initialized:", this.state);
+      const ver = this.state.meta.version || "unknown";
+      const seed = this.state.meta.seed;
+      console.log(
+        `%c🧩 Jigsaw Sudoku Loaded | Ver: ${ver} | Seed: ${seed}`,
+        "color: #00bcd4; font-weight: bold;",
+      );
+    }
     return true;
   }
 
@@ -96,10 +104,11 @@ export class GameManager {
     // We ignore meta from JSON mostly, use our own timestamps
     return {
       meta: {
-        seed: this.currentSeed,
+        seed: meta.seed || this.currentSeed,
+        version: meta.version || "unknown", // Capture version from JSON
         startedAt: new Date().toISOString(),
         lastPlayed: new Date().toISOString(),
-        generatedBy: "static-v1",
+        generatedBy: "static-server",
       },
       progress: {
         currentStage: "memory",
@@ -159,13 +168,32 @@ export class GameManager {
         console.log(
           `[GameManager] Loaded Search/Simon data for ${variationKey}`,
         );
-      this.state.search.targets = variationData.targets;
+
+      // --- CRITICAL FIX: Transform Coords to Numbers ---
+      // The JSON provides snakes as [{r,c}, {r,c}], but UI needs { numbers: [1,2,3] }
+      // We must look up the numbers from the correctly transformed solution board.
+
+      const solvedBoard = this.getTargetSolutionWithVariation(variationKey);
+
+      this.state.search.targets = variationData.targets.map((snake, idx) => {
+        // If it's the old format (already numbers), pass through (unlikely now)
+        if (typeof snake[0] === "number") return { id: idx, numbers: snake };
+
+        // New format: Array of {r,c}
+        const numbers = snake.map((pos) => solvedBoard[pos.r][pos.c]);
+        return {
+          id: idx,
+          path: snake,
+          numbers: numbers,
+        };
+      });
+
       this.state.simon.coordinates = variationData.simon || [];
     } else {
       console.error(
         `[GameManager] Critical: No data found for variation ${variationKey}`,
       );
-      // Fallback to "0" or empty?
+      // Fallback
       this.state.search.targets = [];
       this.state.simon.coordinates = [];
     }
@@ -174,11 +202,16 @@ export class GameManager {
   }
 
   getTargetSolution() {
-    // Returns the 9x9 solution grid ADAPTED to the current Jigsaw variation
+    return this.getTargetSolutionWithVariation(
+      this.state.jigsaw.variation || "0",
+    );
+  }
+
+  getTargetSolutionWithVariation(variationKey) {
     if (!this.state || !this.state.data.solution) return [];
 
     const baseSolution = this.state.data.solution;
-    const variation = this.state.jigsaw.variation || "0";
+    const variation = variationKey || "0";
 
     if (variation === "0") return baseSolution;
 
@@ -261,16 +294,6 @@ export class GameManager {
   save() {
     this.state.meta.lastPlayed = new Date().toISOString();
     localStorage.setItem(this.storageKey, JSON.stringify(this.state));
-
-    // Log info if debug enabled (as requested by user "mejor en la consola")
-    if (CONFIG.debugMode) {
-      const ver = this.state.meta.version || "unknown";
-      const seed = this.state.meta.seed;
-      console.log(
-        `%c🧩 Jigsaw Sudoku Loaded | Ver: ${ver} | Seed: ${seed}`,
-        "color: #00bcd4; font-weight: bold;",
-      );
-    }
   }
 
   getState() {

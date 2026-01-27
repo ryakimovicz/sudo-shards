@@ -117,6 +117,14 @@ async function generateDailyPuzzle() {
           break;
         }
 
+        // --- NEW: PRE-CHECK ISLAND ADJACENCY ---
+        if (hasAdjacency(islands)) {
+          if (attemptsGlobal % 10 === 1)
+            process.stdout.write(`Adjacent Islands in [${key}]. Next.\r`);
+          validTopology = false;
+          break;
+        }
+
         // Track Forced
         islands.forEach((isl) =>
           globalForcedValues.add(variations[key].board[isl.r][isl.c]),
@@ -211,6 +219,13 @@ async function generateDailyPuzzle() {
           break;
         }
 
+        // --- NEW: ADJACENCY CHECK ---
+        if (hasAdjacency(res.simonCoords)) {
+          // console.error("Adjacency in free cells detected. Retry.");
+          carvingSuccess = false;
+          break;
+        }
+
         tempSearchTargets[key] = {
           targets: res.snakes,
           simon: res.simonCoords,
@@ -230,7 +245,7 @@ async function generateDailyPuzzle() {
 
     // --- SAVE ---
     const dailyPuzzle = {
-      meta: { version: "4.7-smart-greedy", date: dateStr, seed: seedInt },
+      meta: { version: "4.8-adjacency", date: dateStr, seed: seedInt },
       data: {
         solution: finalGameData.solution,
         puzzle: finalGameData.puzzle,
@@ -555,6 +570,25 @@ function swapBands(board) {
   for (let r = 0; r < 3; r++)
     [newBoard[r], newBoard[r + 6]] = [newBoard[r + 6], newBoard[r]];
   return newBoard;
+}
+
+function hasAdjacency(coords) {
+  if (coords.length < 2) return false;
+  for (let i = 0; i < coords.length; i++) {
+    for (let j = i + 1; j < coords.length; j++) {
+      const di = Math.abs(coords[i].r - coords[j].r);
+      const dj = Math.abs(coords[i].c - coords[j].c);
+      // Orthogonal adjacency: distance is 1 (sum of diffs is 1)
+      // Diagonal adjacency: r diff 1, c diff 1 (sum is 2, diffs non-zero)
+      // User probably means Orthogonal. Or ANY touch?
+      // "Adyacentes" usually includes diagonals in Minesweeper but only orthogonal in Crosswords.
+      // Let's assume ANY touch (Orthogonal + Diagonal) to be safe for "visually separate".
+      // So if max(dr, dc) == 1 => adjacent.
+
+      if (di <= 1 && dj <= 1) return true;
+    }
+  }
+  return false;
 }
 
 generateDailyPuzzle();

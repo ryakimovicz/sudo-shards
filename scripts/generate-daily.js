@@ -194,9 +194,18 @@ async function generateDailyPuzzle() {
       }
 
       let fillers = [...potentialFillers];
-      // Deterministic Shuffle (Prando)
+
+      // Simple Seeded RNG (Linear Congruential Generator)
+      // to avoid dependency issues with Prando in Node script
+      let localSeed = currentSeed;
+      const nextRnd = () => {
+        localSeed = (localSeed * 9301 + 49297) % 233280;
+        return localSeed / 233280;
+      };
+
+      // Deterministic Shuffle
       for (let i = fillers.length - 1; i > 0; i--) {
-        const j = Math.floor(rnd.next() * (i + 1));
+        const j = Math.floor(nextRnd() * (i + 1));
         [fillers[i], fillers[j]] = [fillers[j], fillers[i]];
       }
       fillers = fillers.slice(0, slotsNeeded);

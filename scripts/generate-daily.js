@@ -20,7 +20,7 @@ let uniquenessCache = new Map();
 
 async function generateDailyPuzzle() {
   console.log(
-    "🧩 Starting Daily Puzzle Generation (Survivor Greedy + Cleanup)...",
+    "🧩 Starting Daily Puzzle Generation (Infinite Loop until Success)...",
   );
 
   let seed = process.argv[2];
@@ -60,8 +60,8 @@ async function generateDailyPuzzle() {
     let finalSearchTargets = {};
     let finalSimonValues = [];
 
-    // --- BUCLE PRINCIPAL ---
-    while (!success && attemptsGlobal < 5000) {
+    // --- BUCLE PRINCIPAL (SIN LÍMITE) ---
+    while (!success) {
       attemptsGlobal++;
       const currentSeed = baseSeed * 1000 + attemptsGlobal;
 
@@ -75,7 +75,7 @@ async function generateDailyPuzzle() {
       // 1. Generar Sudoku
       let gameData = generateDailyGame(currentSeed);
 
-      if (attemptsGlobal % 10 === 1)
+      if (attemptsGlobal % 50 === 1) // Log menos frecuente para no saturar
         process.stdout.write(`   > Attempt ${attemptsGlobal}: `);
 
       // 2. Definir Variantes
@@ -112,11 +112,11 @@ async function generateDailyPuzzle() {
           variations[key].peaksValleys,
         );
 
-        // Islas naturales (aisladas por paredes)
+        // Islas totales
         let naturalIslands = getIslands(rawPaths, variations[key].peaksValleys);
         let totalIslands = [...naturalIslands, ...orphans];
 
-        // Deduplicar islas
+        // Deduplicar
         let uniqueIslandCoords = new Set();
         let pendingIslands = [];
         totalIslands.forEach((isl) => {
@@ -127,8 +127,7 @@ async function generateDailyPuzzle() {
           }
         });
 
-        // D. CLEANUP PHASE (El cambio clave)
-        // Intentar pegar las islas a las víboras existentes
+        // D. CLEANUP PHASE
         const cleanupResult = cleanupIslands(
           pendingIslands,
           snakes,
@@ -143,7 +142,7 @@ async function generateDailyPuzzle() {
 
         // REGLA: Máximo 3 celdas libres
         if (finalIslands.length > 3) {
-          if (attemptsGlobal % 10 === 1)
+          if (attemptsGlobal % 50 === 1)
             process.stdout.write(
               `Too many islands in [${key}] (${finalIslands.length}).\r`,
             );
@@ -153,7 +152,7 @@ async function generateDailyPuzzle() {
 
         // --- CHEQUEO DE ADYACENCIA ---
         if (hasAdjacency(finalIslands)) {
-          if (attemptsGlobal % 10 === 1)
+          if (attemptsGlobal % 50 === 1)
             process.stdout.write(`Adjacent Islands in [${key}]. Next.\r`);
           validTopology = false;
           break;
@@ -242,7 +241,7 @@ async function generateDailyPuzzle() {
         );
 
         if (!res.success) {
-          console.error("Carve failed (topology or value mismatch).");
+          console.error("Carve failed.");
           carvingSuccess = false;
           break;
         }
@@ -266,12 +265,9 @@ async function generateDailyPuzzle() {
       }
     }
 
-    if (!success)
-      throw new Error("Could not generate valid puzzle after 5000 attempts.");
-
     // --- SAVE ---
     const dailyPuzzle = {
-      meta: { version: "5.3-cleanup-phase", date: dateStr, seed: seedInt },
+      meta: { version: "5.4-infinite-loop", date: dateStr, seed: seedInt },
       data: {
         solution: finalGameData.solution,
         puzzle: finalGameData.puzzle,
@@ -294,25 +290,22 @@ async function generateDailyPuzzle() {
 }
 
 // ==========================================
-// 🧹 LOGIC: CLEANUP ISLANDS (MERGE ORPHANS)
+// 🧹 LOGIC: CLEANUP ISLANDS
 // ==========================================
 function cleanupIslands(islands, snakes, grid, pvMap) {
     let currentIslands = [...islands];
     let currentSnakes = [...snakes];
     let changed = true;
 
-    // Repeat until no more merges can be made
     while (changed) {
         changed = false;
         let nextIslands = [];
 
         for (let island of currentIslands) {
             let merged = false;
-
-            // Try to merge this island into ANY existing snake
             for (let i = 0; i < currentSnakes.length; i++) {
                 let snake = currentSnakes[i];
-                if (snake.length >= 9) continue; // Snake too long (max 9 usually)
+                if (snake.length >= 9) continue; 
 
                 // Try Head
                 if (dist(snake[0], island) === 1) {
@@ -338,14 +331,10 @@ function cleanupIslands(islands, snakes, grid, pvMap) {
                     }
                 }
             }
-
-            if (!merged) {
-                nextIslands.push(island);
-            }
+            if (!merged) nextIslands.push(island);
         }
         currentIslands = nextIslands;
     }
-
     return { islands: currentIslands, snakes: currentSnakes };
 }
 
@@ -600,8 +589,6 @@ function getIslands(paths, pvMap) {
   }
   return islands;
 }
-
-function dist(a, b) { return Math.abs(a.r - b.r) + Math.abs(a.c - b.c); }
 
 function swapStacks(board) {
   const newBoard = board.map((r) => [...r]);

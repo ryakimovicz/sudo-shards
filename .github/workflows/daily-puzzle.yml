@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Allow manual trigger
     inputs:
       seed:
-        description: "Seed/Date to generate (e.g., 20260126)"
+        description: "Seed/Date to generate (e.g., YYYYMMDD)"
         required: false
         default: ""
 

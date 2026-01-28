@@ -103,7 +103,8 @@ async function generateDailyPuzzle() {
         // C. Verificar Islas PRE-Segmentation (Islas naturales)
         let islands = getIslands(rawPaths, variations[key].peaksValleys);
 
-        // D. Segmentation (Captura orphans)
+        // D. Segmentation (Backtracking + Strict Uniqueness)
+        // Ahora usamos la nueva función que garantiza unicidad
         const { snakes, orphans } = segmentPathsSmart(
           rawPaths,
           variations[key].board,
@@ -138,7 +139,7 @@ async function generateDailyPuzzle() {
           globalForcedValues.add(variations[key].board[isl.r][isl.c]),
         );
 
-        // E. Unique Analysis
+        // E. Unique Analysis (Double check, though segmentation should guarantee it now)
         const uniqueSnakes = identifyUniqueSnakes(
           snakes,
           variations[key].board,
@@ -380,10 +381,6 @@ function generateSmartGreedyCoverage(grid, pvMap, rnd) {
       });
 
       // Pick best
-      // Sometimes picking strictly best leads to snake trap.
-      // But let's try strict best first (Greedy Warnsdorff's rule).
-      // Actually, for Hamilton paths Warnsdorff is good.
-
       const nextNode = moves[0];
       visited[nextNode.r][nextNode.c] = true;
       currentPath.push(nextNode);
@@ -396,49 +393,79 @@ function generateSmartGreedyCoverage(grid, pvMap, rnd) {
 }
 
 // ==========================================
-// 🪚 LOGIC: SMART SEGMENTATION ({snakes, orphans})
+// 🪚 LOGIC: SMART SEGMENTATION (BACKTRACKING + STRICT UNIQUENESS)
 // ==========================================
 function segmentPathsSmart(rawPaths, grid, pvMap) {
   let finalSnakes = [];
   let orphans = [];
+  let uniqueCache = new Map();
 
   for (let path of rawPaths) {
-    let remaining = [...path];
-    while (remaining.length > 0) {
-      const len = remaining.length;
-      if (len <= 6) {
-        if (len >= 3) {
-          finalSnakes.push(remaining);
+    // Recursive solver for this path
+    // Returns: { snakes: [], orphans: [], orphanCount: number }
+    const solve = (currentPath, memo = {}) => {
+      const key = currentPath.length;
+      if (memo[key]) return memo[key];
+
+      if (currentPath.length === 0) {
+        return { snakes: [], orphans: [], orphanCount: 0 };
+      }
+
+      let bestRes = null;
+      let minOrphans = Infinity;
+
+      // 1. Try to cut a snake (6..3)
+      let maxCut = Math.min(currentPath.length, 6);
+      for (let cut = maxCut; cut >= 3; cut--) {
+        const chunk = currentPath.slice(0, cut);
+        const seqValues = chunk.map((p) => grid[p.r][p.c]);
+        const seqKey = seqValues.join(",");
+
+        let isUnique;
+        if (uniqueCache.has(seqKey)) {
+          isUnique = uniqueCache.get(seqKey);
         } else {
-          orphans.push(...remaining);
+          isUnique = countOccurrences(grid, pvMap, seqValues) === 1;
+          uniqueCache.set(seqKey, isUnique);
         }
-        break;
-      }
-      // Smart uniqueness
-      let bestCut = -1;
-      for (let cut = 6; cut >= 3; cut--) {
-        let remSize = len - cut;
-        if (remSize > 0 && remSize < 3) continue;
-        const candidateChunk = remaining.slice(0, cut);
-        const seqValues = candidateChunk.map((p) => grid[p.r][p.c]);
-        if (countOccurrences(grid, pvMap, seqValues) === 1) {
-          bestCut = cut;
-          break;
+
+        if (isUnique) {
+          const remRes = solve(currentPath.slice(cut), memo);
+          const currentOrphans = remRes.orphanCount;
+          if (currentOrphans < minOrphans) {
+            minOrphans = currentOrphans;
+            bestRes = {
+              snakes: [chunk, ...remRes.snakes],
+              orphans: remRes.orphans,
+              orphanCount: currentOrphans,
+            };
+            if (minOrphans === 0) break;
+          }
         }
       }
-      // Fallback
-      if (bestCut === -1) {
-        let cut = 6;
-        while (cut >= 3) {
-          if (len - cut === 0 || len - cut >= 3) break;
-          cut--;
+
+      // 2. Erosion (Skip 1 cell)
+      // Only if we didn't find a perfect solution or forced to skip
+      if (minOrphans > 0) {
+        const remRes = solve(currentPath.slice(1), memo);
+        const currentOrphans = 1 + remRes.orphanCount;
+        if (currentOrphans < minOrphans) {
+          minOrphans = currentOrphans;
+          bestRes = {
+            snakes: remRes.snakes,
+            orphans: [currentPath[0], ...remRes.orphans],
+            orphanCount: currentOrphans,
+          };
         }
-        if (cut < 3) cut = 3;
-        bestCut = cut;
       }
-      finalSnakes.push(remaining.slice(0, bestCut));
-      remaining = remaining.slice(bestCut);
-    }
+
+      memo[key] = bestRes;
+      return bestRes;
+    };
+
+    const result = solve(path);
+    finalSnakes.push(...result.snakes);
+    orphans.push(...result.orphans);
   }
   return { snakes: finalSnakes, orphans };
 }

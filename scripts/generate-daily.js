@@ -90,6 +90,7 @@ async function generateDailyPuzzle() {
         const rawPaths = generateSmartGreedyCoverage(
           variations[key].board,
           variations[key].peaksValleys,
+          nextRnd,
         );
 
         // C. Verificar Islas PRE-Segmentation (Islas naturales)
@@ -286,7 +287,7 @@ async function generateDailyPuzzle() {
 // ==========================================
 // Heuristic: Prefer moves that visit "hard to reach" neighbors (low degree),
 // effectively prioritizing tidying up corners/edges first.
-function generateSmartGreedyCoverage(grid, pvMap) {
+function generateSmartGreedyCoverage(grid, pvMap, rnd) {
   let visited = Array(9)
     .fill()
     .map(() => Array(9).fill(false));
@@ -376,7 +377,7 @@ function generateSmartGreedyCoverage(grid, pvMap) {
         // Degree of neighbor node
         const da = countOpenNeighbors(a.r, a.c);
         const db = countOpenNeighbors(b.r, b.c);
-        return da - db || Math.random() - 0.5; // Min degree first, then random
+        return da - db || rnd() - 0.5; // Min degree first, then seeded random
       });
 
       // Pick best

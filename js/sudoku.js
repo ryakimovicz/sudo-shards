@@ -276,6 +276,7 @@ function updateKeypadHighlights(cell) {
   if (!cell) return;
 
   const presentNumbers = new Set();
+  let visibleNotesCount = 0;
   let hasNotes = false;
 
   // 2. Check content
@@ -283,7 +284,10 @@ function updateKeypadHighlights(cell) {
     hasNotes = true;
     const slots = cell.querySelectorAll(".note-slot");
     slots.forEach((slot) => {
-      if (slot.textContent) presentNumbers.add(slot.dataset.note);
+      if (slot.textContent) {
+        presentNumbers.add(slot.dataset.note);
+        visibleNotesCount++;
+      }
     });
   } else {
     const val = cell.textContent.trim();
@@ -299,9 +303,14 @@ function updateKeypadHighlights(cell) {
       btn.classList.add("key-present");
     }
 
-    // Disable if: Not Pencil Mode AND Has Notes AND This number is NOT in notes
-    // This enforces "Using candidates as constraints"
-    if (!pencilMode && hasNotes && !presentNumbers.has(val)) {
+    // Disable if: Not Pencil Mode AND Has Notes AND This number is NOT in notes AND there are visible notes
+    // This enforces "Using candidates as constraints" ONLY if candidates exist
+    if (
+      !pencilMode &&
+      hasNotes &&
+      !presentNumbers.has(val) &&
+      visibleNotesCount > 0
+    ) {
       btn.classList.add("key-disabled");
     }
   });
@@ -463,11 +472,19 @@ function handleNumberInput(num) {
   if (!pencilMode && selectedCell.classList.contains("has-notes")) {
     const notesGrid = selectedCell.querySelector(".notes-grid");
     if (notesGrid) {
-      const noteSlot = notesGrid.querySelector(`[data-note="${num}"]`);
-      // If slot is empty (text content is empty), then this number is NOT a candidate
-      if (!noteSlot || !noteSlot.textContent) {
-        console.log("Input blocked by Note Constraint");
-        return;
+      // Check if ANY note is visible
+      const visibleNotes = Array.from(
+        notesGrid.querySelectorAll(".note-slot"),
+      ).filter((slot) => slot.textContent).length;
+
+      // Only enforce constraint if there are actually visible notes
+      if (visibleNotes > 0) {
+        const noteSlot = notesGrid.querySelector(`[data-note="${num}"]`);
+        // If slot is empty (text content is empty), then this number is NOT a candidate
+        if (!noteSlot || !noteSlot.textContent) {
+          console.log("Input blocked by Note Constraint");
+          return;
+        }
       }
     }
   }
@@ -492,6 +509,7 @@ function handleNumberInput(num) {
 
     // VALIDATE BOARD AFTER FILL
     validateBoard();
+    updateNoteVisibility(); // Check constraints
     updateKeypadHighlights(selectedCell);
     highlightSimilarCells(num);
   }
@@ -518,6 +536,7 @@ function clearSelectedCell() {
 
   // Clear highlighting since the cell is now empty
   highlightSimilarCells(null);
+  updateNoteVisibility(); // Recalculate visibility (restore suppressed notes)
 }
 
 // History for Undo
@@ -566,6 +585,7 @@ function handleUndo() {
 
   // Re-validate to clear any global error states potentially caused by this move
   validateBoard();
+  updateNoteVisibility();
 }
 
 function toggleNote(cell, num, skipHistory = true) {
@@ -595,23 +615,218 @@ function toggleNote(cell, num, skipHistory = true) {
       const slot = document.createElement("div");
       slot.classList.add("note-slot");
       slot.dataset.note = i;
+      // Default: Not active
+      slot.dataset.userActive = "false";
       notesGrid.appendChild(slot);
     }
 
     // Capture the existing number as a note if it was a user entry
     if (wasUserFilled && existingVal && !hasExistingNotes) {
       const oldSlot = notesGrid.querySelector(`[data-note="${existingVal}"]`);
-      if (oldSlot) oldSlot.textContent = existingVal;
+      if (oldSlot) {
+        oldSlot.dataset.userActive = "true";
+        oldSlot.textContent = existingVal;
+      }
     }
   }
 
   const slot = notesGrid.querySelector(`[data-note="${num}"]`);
   if (slot) {
-    // Toggle: if empty set num, if num set empty
-    slot.textContent = slot.textContent ? "" : num;
+    // Toggle based on VISIBILITY, not just intent.
+    // If it's hidden (suppressed) but active, we want to SHOW it (User Override).
+    const isVisible = !!slot.textContent;
+    const shouldBeVisible = !isVisible; // Toggle
+
+    slot.dataset.userActive = shouldBeVisible ? "true" : "false";
+
+    // Check if we are forcing a conflict
+    if (shouldBeVisible) {
+      const coords = getCellCoordinates(cell);
+      const conflictCount = getConflictCount(coords, num);
+      if (conflictCount > 0) {
+        slot.dataset.pinnedConflictCount = conflictCount;
+      } else {
+        slot.dataset.pinnedConflictCount = "0";
+      }
+    } else {
+      slot.dataset.pinnedConflictCount = "0";
+    }
+
+    slot.textContent = shouldBeVisible ? num : "";
+
+    // Only promote if we REMOVED a note (potentially leaving 1).
+    // If we added a note, we are building up candidates, don't auto-promote 0->1.
+    if (!shouldBeVisible) {
+      promoteSingleCandidatesGlobal();
+    }
   }
 
   updateKeypadHighlights(cell);
+}
+
+function getCellCoordinates(cell) {
+  const slot = cell.closest(".sudoku-chunk-slot");
+  const slotIndex = parseInt(slot.dataset.slotIndex);
+  const cells = Array.from(slot.querySelectorAll(".mini-cell"));
+  const localIndex = cells.indexOf(cell);
+
+  const row = Math.floor(slotIndex / 3) * 3 + Math.floor(localIndex / 3);
+  const col = (slotIndex % 3) * 3 + (localIndex % 3);
+
+  return { slotIndex, row, col };
+}
+
+function getConflictCount(coords, num) {
+  const board = document.getElementById("memory-board");
+  const slots = Array.from(board.querySelectorAll(".sudoku-chunk-slot"));
+  let count = 0;
+
+  slots.forEach((slot, sIdx) => {
+    const cells = slot.querySelectorAll(".mini-cell");
+    cells.forEach((cell, lIdx) => {
+      const val = cell.textContent.trim();
+      if (!val || cell.classList.contains("has-notes")) return;
+
+      if (val === num) {
+        const r = Math.floor(sIdx / 3) * 3 + Math.floor(lIdx / 3);
+        const c = (sIdx % 3) * 3 + (lIdx % 3);
+
+        if (r === coords.row || c === coords.col || sIdx === coords.slotIndex) {
+          count++;
+        }
+      }
+    });
+  });
+  return count;
+}
+
+// New Helper: Hides notes if conflicting number exists
+export function updateNoteVisibility() {
+  const board = document.getElementById("memory-board");
+  if (!board) return;
+
+  const slots = Array.from(board.querySelectorAll(".sudoku-chunk-slot"));
+  if (slots.length !== 9) return;
+
+  // Update Notes visibility
+  slots.forEach((slot, slotIndex) => {
+    const cells = slot.querySelectorAll(".mini-cell");
+    cells.forEach((cell, localIndex) => {
+      if (!cell.classList.contains("has-notes")) return;
+
+      const notesGrid = cell.querySelector(".notes-grid");
+      if (!notesGrid) return;
+
+      const r = Math.floor(slotIndex / 3) * 3 + Math.floor(localIndex / 3);
+      const c = (slotIndex % 3) * 3 + (localIndex % 3);
+      const coords = { slotIndex, row: r, col: c };
+
+      const noteSlots = notesGrid.querySelectorAll(".note-slot");
+      noteSlots.forEach((nSlot) => {
+        const num = nSlot.dataset.note;
+        const userWants = nSlot.dataset.userActive === "true";
+
+        if (!userWants) {
+          nSlot.textContent = "";
+          return;
+        }
+
+        // Check constraints using strict counting
+        const currentConflictCount = getConflictCount(coords, num);
+
+        if (currentConflictCount > 0) {
+          const pinnedCount = parseInt(nSlot.dataset.pinnedConflictCount) || 0;
+
+          // If the situation is NOT WORSE than when we pinned it -> Show
+          if (currentConflictCount <= pinnedCount) {
+            nSlot.textContent = num;
+          } else {
+            nSlot.textContent = "";
+            nSlot.dataset.pinnedConflictCount = "0";
+          }
+        } else {
+          // No conflict, Clear Pin and Show
+          nSlot.dataset.pinnedConflictCount = "0";
+          nSlot.textContent = num;
+        }
+      });
+    });
+  });
+
+  // Trigger Promotion Logic (Singles Chain)
+  promoteSingleCandidatesGlobal();
+}
+
+let isPromoting = false; // Guard to prevent infinite re-entry if logic flaws exist
+
+function promoteSingleCandidatesGlobal() {
+  if (isPromoting) return;
+  isPromoting = true;
+
+  const board = document.getElementById("memory-board");
+  if (!board) {
+    isPromoting = false;
+    return;
+  }
+
+  const slots = Array.from(board.querySelectorAll(".sudoku-chunk-slot"));
+
+  // Find ONE candidate to promote (to facilitate chain visualization)
+  // Or promote all?
+  // Safety: Promote ALL that are ready in this pass.
+
+  const cellsToPromote = [];
+
+  slots.forEach((slot) => {
+    const cells = slot.querySelectorAll(".mini-cell");
+    cells.forEach((cell) => {
+      if (!cell.classList.contains("has-notes")) return;
+
+      const notesGrid = cell.querySelector(".notes-grid");
+      if (!notesGrid) return;
+
+      // Count VISIBLE notes
+      const visibleNotes = Array.from(
+        notesGrid.querySelectorAll(".note-slot"),
+      ).filter((n) => n.textContent !== ""); // Only currently visible ones
+
+      if (visibleNotes.length === 1) {
+        cellsToPromote.push({
+          cell: cell,
+          num: visibleNotes[0].dataset.note,
+        });
+      }
+    });
+  });
+
+  // Apply promotions
+  cellsToPromote.forEach((action) => {
+    // Re-check validity (in case previous promotion in loop invalidated this one?
+    // e.g. two cells waiting for "1" - impossible if logic is sound but safety first)
+    // Actually, if we have two cells with only "1" visible in same row, both trying to promote...
+    // The first one fills "1". The second one now conflicts.
+    // `handleNumberInput` triggers `updateNoteVisibility` which hides the note in 2nd cell.
+    // So 2nd cell has 0 notes visible.
+    // So we should strictly check before applying.
+
+    if (action.cell.classList.contains("has-notes")) {
+      // Select it to emulate user interaction properly for handleNumberInput
+      // Or refactor handleNumberInput to accept cell?
+      // handleNumberInput uses `selectedCell`.
+
+      // Force Selection
+      selectCell(action.cell, true);
+      console.log("Auto-Promoting Candidate:", action.num);
+
+      // Force Real Number Input
+      const wasPencil = pencilMode;
+      pencilMode = false;
+      handleNumberInput(action.num);
+      pencilMode = wasPencil;
+    }
+  });
+
+  isPromoting = false;
 }
 
 function validateBoard() {

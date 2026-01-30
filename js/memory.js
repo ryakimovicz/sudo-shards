@@ -13,7 +13,9 @@ import { provideHint as provideSudokuHint } from "./sudoku.js";
 import { providePeaksHint } from "./peaks.js";
 import { provideSearchHint } from "./search.js";
 import { gameManager } from "./game-manager.js";
+import { gameManager } from "./game-manager.js";
 import { CONFIG } from "./config.js";
+import { startTimer } from "./timer.js";
 
 // DOM Elements
 let memorySection;
@@ -30,9 +32,7 @@ let matchesFound = 0;
 // let panelCount = 0; // Removed
 const TOTAL_PAIRS = 9;
 
-// Timer State
-let timerStartTime;
-let timerInterval;
+// Timer State (Moved to timer.js)
 
 export function initMemoryGame() {
   console.log("Initializing Memory Game...");
@@ -111,7 +111,7 @@ export function initMemoryGame() {
   });
 
   // Start Timer
-  startTimer();
+  initTimer();
 
   // Debug Button matching
   const debugBtn = document.getElementById("debug-help-btn");
@@ -632,46 +632,13 @@ function shuffleArray(array) {
   }
 }
 
-// Timer Functions
-function startTimer() {
-  stopTimer();
-  // Force layout update in case viewport settled
-  setTimeout(() => {
-    fitMemoryCards();
-    fitCollectedPieces();
-  }, 500);
-
-  timerStartTime = Date.now();
-  timerInterval = setInterval(updateTimer, 100);
-  updateTimer();
-}
-
-export function stopTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-}
-
-function updateTimer() {
-  const now = Date.now();
-  const elapsed = now - timerStartTime;
-  const totalSeconds = Math.floor(elapsed / 1000);
-
-  const hrs = Math.floor(totalSeconds / 3600);
-  const mins = Math.floor((totalSeconds % 3600) / 60);
-  const secs = totalSeconds % 60;
-
-  const timerElement = document.getElementById("memory-timer");
-  if (timerElement) {
-    if (hrs > 0) {
-      timerElement.textContent = `⏱ ${hrs.toString().padStart(2, "0")}:${mins
-        .toString()
-        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    } else {
-      timerElement.textContent = `⏱ ${mins.toString().padStart(2, "0")}:${secs
-        .toString()
-        .padStart(2, "0")}`;
-    }
-  }
+// Timer Functions (Delegated to timer.js)
+function initTimer() {
+  startTimer(() => {
+    // Force layout update in case viewport settled
+    setTimeout(() => {
+      fitMemoryCards();
+      fitCollectedPieces();
+    }, 500);
+  });
 }

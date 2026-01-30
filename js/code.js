@@ -3,7 +3,7 @@ import { gameManager } from "./game-manager.js";
 import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
 import { getDailySeed } from "./utils/random.js";
-import { stopTimer } from "./memory.js";
+import { stopTimer } from "./timer.js";
 
 let sequence = []; // The full 5-digit code
 let currentLevel = 3; // Starts at 3

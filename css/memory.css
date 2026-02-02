@@ -494,15 +494,15 @@ body.dark-mode .memory-card-back {
 @keyframes boardPulseGreen {
   0% {
     transform: scale(1);
-    border-color: rgba(76, 175, 80, 0);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
   }
   50% {
     transform: scale(1.05); /* Slight grow */
-    border-color: #4caf50;
+    box-shadow: 0 0 30px 10px rgba(76, 175, 80, 0.6); /* Intense green glow */
   }
   100% {
     transform: scale(1);
-    border-color: rgba(76, 175, 80, 0);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
   }
 }
 

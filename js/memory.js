@@ -391,7 +391,7 @@ function previewCards() {
       },
       500 + cards.length * 30,
     ); // Wait for sequence + buffer
-  }, 2000); // 2 Seconds Preview
+  }, 3000); // 3 Seconds Preview
 }
 
 function visualShuffle() {

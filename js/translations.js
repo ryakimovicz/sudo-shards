@@ -93,6 +93,8 @@ export const translations = {
 
     peaks_errors: "Errores:",
     peaks_remaining: "Faltan:",
+    peaks_tooltip_peak: "Pico",
+    peaks_tooltip_valley: "Valle",
 
     // Search
     search_targets_title: "Secuencias:",
@@ -197,6 +199,8 @@ export const translations = {
 
     peaks_errors: "Errors:",
     peaks_remaining: "Remaining:",
+    peaks_tooltip_peak: "Peak",
+    peaks_tooltip_valley: "Valley",
     // Code Game
     game_code: "The Code",
     code_help_title: "The Code",

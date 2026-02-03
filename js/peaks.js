@@ -131,6 +131,26 @@ function attachPeaksListeners() {
   // IMPORTANT: We need to filter events if NOT in peaks mode, partially handled by logic but safer to check.
 
   board.addEventListener("click", handleBoardClick);
+
+  // Listen for language changes to update tooltips dynamically
+  window.addEventListener("languageChanged", updatePeaksTooltips);
+}
+
+function updatePeaksTooltips() {
+  const lang = getCurrentLang();
+  const t = translations[lang];
+  const board = document.getElementById("memory-board");
+  if (!board) return;
+
+  // Update Peaks
+  board.querySelectorAll(".peak-found").forEach((cell) => {
+    cell.title = t.peaks_tooltip_peak || "Pico";
+  });
+
+  // Update Valleys
+  board.querySelectorAll(".valley-found").forEach((cell) => {
+    cell.title = t.peaks_tooltip_valley || "Valle";
+  });
 }
 
 function handleBoardClick(e) {
@@ -169,12 +189,15 @@ function handleBoardClick(e) {
 function handleCorrectClick(cell, type) {
   cell.classList.add("peaks-found");
   // Visuals handled via CSS classes
+  const lang = getCurrentLang();
+  const t = translations[lang];
+
   if (type === "peak") {
     cell.classList.add("peak-found");
-    cell.title = "Pico / Peak";
+    cell.title = t.peaks_tooltip_peak || "Pico";
   } else {
     cell.classList.add("valley-found");
-    cell.title = "Valle / Valley";
+    cell.title = t.peaks_tooltip_valley || "Valle";
   }
 
   foundTargets++;

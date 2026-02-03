@@ -267,6 +267,7 @@ async function generateDailyPuzzle() {
         }
 
         if (hasAdjacency(res.simonCoords)) {
+          console.log(`     ❌ Carve failed: Adjacency detected in [${key}].`);
           carvingSuccess = false;
           break;
         }

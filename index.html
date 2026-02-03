@@ -26,6 +26,21 @@
     <link rel="icon" type="image/png" href="assets/images/favicon.png" />
   </head>
   <body>
+    <script>
+      (function () {
+        const saved = localStorage.getItem("jigsudo_theme");
+        const sysDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        if (
+          saved === "dark" ||
+          (!saved && sysDark) ||
+          (saved === "auto" && sysDark)
+        ) {
+          document.body.classList.add("dark-mode");
+        }
+      })();
+    </script>
     <!-- Main Application Container -->
     <div id="app">
       <!-- Header -->

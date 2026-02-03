@@ -1043,6 +1043,9 @@ function confirmClearBoard() {
   const dontAsk = document.getElementById("modal-dont-ask");
   if (dontAsk && dontAsk.checked) {
     localStorage.setItem("jigsudo_skip_clear_confirm", "true");
+    // Sync with settings menu (Logic: Checked = Ask, Unchecked = Skip)
+    const toggle = document.getElementById("confirm-clear-toggle");
+    if (toggle) toggle.checked = false;
   }
 
   clearBoard();

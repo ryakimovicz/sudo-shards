@@ -147,7 +147,8 @@ body.dark-mode .debug-btn {
   backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* Move from center to top */
+  padding-top: 15vh; /* Optical center / "Lower" than top edge */
   z-index: 30000;
   opacity: 0;
   visibility: hidden;

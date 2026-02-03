@@ -17,11 +17,13 @@ let activeTimeouts = []; // Track animation timeouts to cancel them on interrupt
 
 let penaltyMode = false; // New state
 let maxUnlockedLevel = 3; // Tracks the highest level shown to player
+let isMultipressBlocked = false; // Prevent debug overlapping
 
 // ... (In initCode or reset)
 export function initCode() {
   console.log("Initializing Code Stage...");
   penaltyMode = false; // Reset penalty mode
+  isMultipressBlocked = false;
 
   const state = gameManager.getState();
   const simonCoords = state.simon.coordinates;
@@ -529,7 +531,10 @@ function updateStatusDisplay() {
 }
 
 export function debugSolveCode() {
+  if (isMultipressBlocked) return;
   console.log("[Code] Debug Solve Triggered");
+  isMultipressBlocked = true;
+
   if (isInputBlocked && activeTimeouts.length > 0) {
     stopAnimation();
   }

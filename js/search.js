@@ -43,17 +43,13 @@ function renderTargets(data) {
   container.id = "search-targets-container";
   container.className = "search-targets-container";
 
-  const title = document.createElement("h3");
-  // Set translation key
-  title.setAttribute("data-i18n", "search_targets_title");
-
-  // Apply translation immediately if available
-  const lang = getCurrentLang();
-  const t = translations[lang];
-  title.textContent =
-    t && t.search_targets_title ? t.search_targets_title : "Secuencias:";
-
-  container.appendChild(title);
+  // REMOVED TITLE as per user request
+  // const title = document.createElement("h3");
+  // title.setAttribute("data-i18n", "search_targets_title");
+  // const lang = getCurrentLang();
+  // const t = translations[lang];
+  // title.textContent = t && t.search_targets_title ? t.search_targets_title : "Secuencias:";
+  // container.appendChild(title);
 
   const list = document.createElement("div");
   list.className = "search-targets-list";

@@ -75,6 +75,10 @@ export function initCode() {
   }, 100);
 
   attachCodeListeners();
+
+  // Mark section for Debug Button detection
+  const memSection = document.getElementById("memory-game");
+  if (memSection) memSection.classList.add("code-mode");
 }
 
 function generateFallbackSequence() {
@@ -517,4 +521,34 @@ function finalizeVictory() {
 function updateStatusDisplay() {
   // Optional: Update some UI to show "Level X"
   // Reusing the header or subtitle
+}
+
+export function debugSolveCode() {
+  console.log("[Code] Debug Solve Triggered");
+  if (isInputBlocked && activeTimeouts.length > 0) {
+    stopAnimation();
+  }
+
+  isInputBlocked = true;
+  let delay = 0;
+  const stepDelay = 300; // Fast but visible
+
+  // Simulate pressing each correct button
+  sequence.forEach((val, index) => {
+    setTimeout(() => {
+      // Find a cell with this value
+      // We use simonData to find the element
+      const data = simonData.find((d) => d.value === val);
+      if (data && data.element) {
+        highlightCell(data.element, 200);
+        // Optional: Play sound if we had it
+      }
+    }, delay);
+    delay += stepDelay;
+  });
+
+  // Trigger Win after full sequence
+  setTimeout(() => {
+    winGame();
+  }, delay + 500);
 }

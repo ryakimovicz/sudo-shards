@@ -15,6 +15,7 @@ import { provideSearchHint } from "./search.js";
 import { gameManager } from "./game-manager.js";
 import { CONFIG } from "./config.js";
 import { startTimer } from "./timer.js";
+import { debugSolveCode } from "./code.js";
 
 // DOM Elements
 let memorySection;
@@ -145,6 +146,11 @@ function debugAutoMatch() {
 
   if (gameSection.classList.contains("search-mode")) {
     provideSearchHint();
+    return;
+  }
+
+  if (gameSection.classList.contains("code-mode")) {
+    debugSolveCode();
     return;
   }
 

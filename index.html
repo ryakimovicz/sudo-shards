@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/peaks.css" />
     <link rel="stylesheet" href="css/search.css" />
     <link rel="stylesheet" href="css/code.css" />
+    <link rel="stylesheet" href="css/auth.css" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -91,6 +92,30 @@
               <h3 class="dropdown-header" data-i18n="profile_header">
                 Mí perfil
               </h3>
+
+              <!-- Account Actions -->
+              <div class="account-actions">
+                <button
+                  id="btn-login-trigger"
+                  class="btn-secondary full-width"
+                  data-i18n="btn_login_menu"
+                >
+                  Iniciar Sesión
+                </button>
+                <div id="logged-in-view" class="hidden">
+                  <p class="user-greeting">
+                    Hola, <span id="user-display-name">Guest</span>
+                  </p>
+                  <button
+                    id="btn-logout"
+                    class="btn-danger small full-width"
+                    data-i18n="btn_logout"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </div>
+              </div>
+
               <div class="dropdown-divider"></div>
 
               <h3 class="dropdown-header" data-i18n="profile_dark_mode">
@@ -445,6 +470,119 @@
             Borrar
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay hidden">
+      <div class="modal-content login-content glass-panel">
+        <span class="close-modal" id="login-modal-cancel">&times;</span>
+        <h2 data-i18n="login_title">Cuenta Jigsudo</h2>
+
+        <div class="auth-forms">
+          <!-- Login Form -->
+          <form id="login-form" class="auth-form active">
+            <input
+              type="email"
+              id="login-email"
+              placeholder="Email"
+              required
+              autocomplete="email"
+              class="auth-input"
+            />
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="login-password"
+                placeholder="Contraseña"
+                required
+                autocomplete="current-password"
+                class="auth-input"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                aria-label="Mostrar contraseña"
+              >
+                👁️
+              </button>
+            </div>
+            <button
+              type="submit"
+              class="btn-primary auth-submit"
+              data-i18n="btn_login"
+            >
+              Iniciar Sesión
+            </button>
+            <p class="auth-switch">
+              ¿No tienes cuenta?
+              <a href="#" id="switch-to-register" data-i18n="link_register"
+                >Regístrate</a
+              >
+            </p>
+          </form>
+
+          <!-- Register Form -->
+          <form id="register-form" class="auth-form hidden">
+            <input
+              type="text"
+              id="register-username"
+              placeholder="Nombre de usuario"
+              required
+              autocomplete="username"
+              class="auth-input"
+            />
+            <input
+              type="email"
+              id="register-email"
+              placeholder="Email"
+              required
+              autocomplete="email"
+              class="auth-input"
+            />
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="register-password"
+                placeholder="Contraseña (min 6 chars)"
+                required
+                autocomplete="new-password"
+                class="auth-input"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                aria-label="Mostrar contraseña"
+              >
+                👁️
+              </button>
+            </div>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="register-password-confirm"
+                placeholder="Repetir Contraseña"
+                required
+                autocomplete="new-password"
+                class="auth-input"
+              />
+            </div>
+            <button
+              type="submit"
+              class="btn-primary auth-submit"
+              data-i18n="btn_register"
+            >
+              Crear Cuenta
+            </button>
+            <p class="auth-switch">
+              ¿Ya tienes cuenta?
+              <a href="#" id="switch-to-login" data-i18n="link_login"
+                >Inicia Sesión</a
+              >
+            </p>
+          </form>
+        </div>
+        <div id="auth-error-msg" class="error-msg hidden"></div>
       </div>
     </div>
 

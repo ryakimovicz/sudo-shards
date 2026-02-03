@@ -105,6 +105,17 @@ export const translations = {
       "Memoriza la secuencia numérica y repítela en las celdas correctas.<br>La secuencia crece en cada turno.",
     code_level_local: "Nivel",
     code_win: "¡CÓDIGO DESCIFRADO!",
+
+    // Authentication
+    login_title: "Cuenta Jigsudo",
+    btn_login: "Iniciar Sesión",
+    btn_login_menu: "Iniciar Sesión",
+    btn_logout: "Cerrar Sesión",
+    btn_register: "Crear Cuenta",
+    link_register: "Regístrate",
+    link_login: "Inicia Sesión",
+    auth_success: "¡Bienvenido!",
+    auth_logout: "Sesión cerrada",
   },
   en: {
     app_title: "JIGSUDO",
@@ -209,5 +220,16 @@ export const translations = {
       "Memorize the number sequence and repeat it on the correct cells.<br>The sequence grows each turn.",
     code_level_local: "Level",
     code_win: "CODE CRACKED!",
+
+    // Authentication
+    login_title: "Jigsudo Account",
+    btn_login: "Log In",
+    btn_login_menu: "Log In",
+    btn_logout: "Log Out",
+    btn_register: "Create Account",
+    link_register: "Sign Up",
+    link_login: "Log In",
+    auth_success: "Welcome!",
+    auth_logout: "Logged out",
   },
 };

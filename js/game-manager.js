@@ -325,9 +325,52 @@ export class GameManager {
     };
   }
 
-  save() {
+  async save() {
     this.state.meta.lastPlayed = new Date().toISOString();
     localStorage.setItem(this.storageKey, JSON.stringify(this.state));
+
+    // CLOUD SYNC
+    // Dynamic Import to avoid circular dependencies at top level if desired,
+    // or just assume global auth state if module loaded.
+    // Better: Check if user is logged in via Auth module helper
+    try {
+      const { getCurrentUser } = await import("./auth.js");
+      const { saveUserProgress } = await import("./db.js");
+      const user = getCurrentUser();
+      if (user) {
+        saveUserProgress(user.uid, this.state);
+      }
+    } catch (e) {
+      console.warn("Cloud save failed/skipped", e);
+    }
+  }
+
+  // Called when remote data is loaded
+  handleCloudSync(remoteData) {
+    if (!remoteData) return;
+
+    // Simple Strategy: If remote is "ahead" or we just logged in and local is fresh.
+    // For now, let's just overwrite local with remote if remote exists to ensure sync across devices.
+    // Ideally we check timestamps.
+
+    const remoteTime = new Date(remoteData.meta.lastPlayed).getTime();
+    const localTime = new Date(this.state.meta.lastPlayed).getTime();
+
+    console.log(`[Sync] Remote: ${remoteTime}, Local: ${localTime}`);
+
+    // If remote is newer OR local is basically empty/fresh seed
+    // (Simplified: Always load remote on login for now as "Restore Profile")
+    this.state = remoteData;
+    this.save(); // Save to local
+
+    // Reload App state?
+    // Since specific game logic might have initialized (like Jigsaw pieces),
+    // we might need to reload the page or re-init modules.
+    // Easiest: Reload page.
+    // Better: Dispatch 'stateRestored' event.
+
+    console.log("Cloud Save Restored. Reloading...");
+    setTimeout(() => window.location.reload(), 500);
   }
 
   getState() {

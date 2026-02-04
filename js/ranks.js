@@ -18,38 +18,37 @@ export const RANKS = [
 ];
 
 export const SCORING = {
-  BASE_SCORE: 100000,
-  ERROR_PENALTY: 300,
-  TIME_PENALTY: 1, // per second
-  RP_DIVISOR: 10000, // Factor 10k -> 0-10 Scale
-  MISSED_DAY_RP: 3, // ~30% of a win (was 500/1600)
+  SECONDS_IN_DAY: 86400, // 24 * 60 * 60
+  MAX_BONUS: 6.0,
+  ERROR_PENALTY_RP: 0.5,
+  MISSED_DAY_RP: 3,
+
   PARTIAL_RP: {
     memory: 0.5,
-    jigsaw: 0.5,
-    sudoku: 1,
-    peaks: 1,
+    jigsaw: 1.0,
+    sudoku: 1.0,
+    peaks: 0.5,
+    search: 0.5,
+    code: 0.5,
   },
 };
 
 /**
- * Calculates the Daily Score (0 - 100,000)
- * This is the RAW score.
+ * Calculates Time Bonus: Linear decay from 6.0 to 0 over 24 hours.
  */
-export function calculateDailyScore(totalSeconds, errors = 0) {
-  let score = SCORING.BASE_SCORE;
-  score -= totalSeconds * SCORING.TIME_PENALTY;
-  score -= errors * SCORING.ERROR_PENALTY;
-  return Math.max(0, score); // Floor at 0
+export function calculateTimeBonus(totalSeconds) {
+  const decayPerSecond = SCORING.MAX_BONUS / SCORING.SECONDS_IN_DAY;
+  const penalty = totalSeconds * decayPerSecond;
+  const bonus = SCORING.MAX_BONUS - penalty;
+  // Return raw precision for Leaderboard sorting (e.g. 5.123414)
+  return Math.max(0, bonus);
 }
 
 /**
- * Converts Daily Score to Unified Points (0-10 Scale)
- * @param {number} score
- * @returns {number} Points earned (2 decimals)
+ * Helper to ensure float precision
  */
 export function calculateRP(score) {
-  const points = score / SCORING.RP_DIVISOR;
-  return Number(points.toFixed(2)); // Return float for precision (e.g. 9.85)
+  return Number(score.toFixed(2));
 }
 
 /**

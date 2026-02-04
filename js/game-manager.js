@@ -550,6 +550,8 @@ export class GameManager {
       this.state.progress.currentStage = nextStage;
       if (!this.state.progress.stagesCompleted.includes(currentStage)) {
         this.state.progress.stagesCompleted.push(currentStage);
+        // Award Partial Points for the completed stage
+        this.awardStagePoints(currentStage);
       }
       this.forceCloudSave(); // Immediate Cloud Push on Stage Win
 
@@ -572,6 +574,42 @@ export class GameManager {
     // data: { peaksErrors: 1 }
     this.state[section] = { ...this.state[section], ...data };
     this.save();
+  }
+
+  /**
+   * Awards partial RP for modifying a stage.
+   * Updates global stats immediately.
+   */
+  async awardStagePoints(stage) {
+    const points = SCORING.PARTIAL_RP[stage] || 0;
+    if (points <= 0) return;
+
+    console.log(`[Score] Awarding Partial Points for ${stage}: +${points}`);
+
+    // Update Global Stats
+    let stats =
+      this.stats ||
+      JSON.parse(localStorage.getItem("jigsudo_user_stats")) ||
+      {};
+
+    // Initialize currentRP if missing
+    stats.currentRP = (stats.currentRP || 0) + points;
+
+    // Also update localized accumulators for display
+    stats.totalScoreAccumulated = (stats.totalScoreAccumulated || 0) + points;
+
+    // Save
+    this.stats = stats;
+    localStorage.setItem("jigsudo_user_stats", JSON.stringify(stats));
+
+    // Cloud Save (Stats Only)
+    const { saveUserStats } = await import("./db.js");
+    const { getCurrentUser } = await import("./auth.js");
+    const user = getCurrentUser();
+
+    if (user) {
+      saveUserStats(user.uid, stats);
+    }
   }
 
   showCriticalError(message) {
@@ -818,21 +856,61 @@ export class GameManager {
       stats.maxStreak = stats.currentStreak;
     }
 
-    // SCORING
+    // SCORING (Bonus Only)
     const startStr = this.state.meta.startedAt;
     const totalTimeMs = startStr
       ? Date.now() - new Date(startStr).getTime()
       : 0;
     const totalSeconds = Math.floor(totalTimeMs / 1000);
 
-    // Get Errors (Peaks) - assuming we tracked it in state.stats.peaksErrors
-    // We need to ensure we track this. For now default to 0.
+    // Get Errors (Peaks) - tracking
     const peaksErrors = this.state.stats?.peaksErrors || 0;
 
-    const dailyScore = calculateDailyScore(totalSeconds, peaksErrors);
-    const rpEarned = calculateRP(dailyScore);
+    // 1. Calculate Time-Based Bonus (Linear 24h Decay)
+    const { calculateTimeBonus } = await import("./ranks.js");
+    const timeBonus = calculateTimeBonus(totalSeconds);
 
-    stats.currentRP = (stats.currentRP || 0) + rpEarned;
+    console.log(
+      `[Score] Time: ${totalSeconds}s -> Bonus: ${timeBonus}/${SCORING.MAX_BONUS}`,
+    );
+
+    // 2. Calculate Penalties
+    const penaltyPoints = peaksErrors * SCORING.ERROR_PENALTY_RP;
+
+    // 3. Final Calculation
+    // Total Gain Today = Fixed Points (4.0) + TimeBonus - Penalties
+    // We already added Fixed Points to currentRP incrementally.
+    // Now we add netChange.
+
+    let netChange = timeBonus - penaltyPoints;
+
+    // Store RAW precision for Leaderboards
+    // netChange = Number(netChange.toFixed(2));
+
+    // PROTECTION: Ensure we don't subtract from HISTORICAL points.
+    // The worst that can happen is you lose all the points you made TODAY.
+    // So 'Fixed Points (4.0) + netChange' must be >= 0.
+
+    // Calculate what the theoretical total score is currently
+    const theoreticalTotal = 4.0 + netChange; // 4.0 is max fixed.
+
+    if (theoreticalTotal < 0) {
+      // If errors are so huge that they eat all today's points and more...
+      // We cap the penalty so the total result is exactly 0.
+      // 4.0 + netChange = 0  =>  netChange = -4.0
+      netChange = -4.0;
+    }
+
+    // Update Stats
+    stats.currentRP = (stats.currentRP || 0) + netChange;
+    // We do NOT round stats.currentRP to keep sorting precision
+
+    // Safety check (shouldn't be needed with logic above, but good for float drift)
+    if (stats.currentRP < 0) stats.currentRP = 0;
+
+    // Display Score can be rounded for UI, but logs/storage keep precision
+    const dailyScore = Math.max(0, 4.0 + netChange);
+    const rpEarned = netChange; // Log differential
 
     // --- Update Optimized Cache ---
     // Initialize if missing (migration)
@@ -882,10 +960,13 @@ export class GameManager {
     if (totalTimeMs > 0 && totalTimeMs < stats.bestTime) {
       stats.bestTime = totalTimeMs;
     }
-    if (rpEarned > stats.bestScore) {
-      stats.bestScore = rpEarned;
+    // FIX: Compare dailyScore (Total 10.0 scale) not just rpEarned (Bonus)
+    if (dailyScore > stats.bestScore) {
+      stats.bestScore = dailyScore;
     }
     stats.totalTimeAccumulated += totalTimeMs;
+    // FIX: Add rpEarned (Bonus) to total. Fixed points were already added via awardStagePoints!
+    // So here we only add the Bonus part to avoid double counting the Fixed part.
     stats.totalScoreAccumulated += rpEarned;
     stats.totalPeaksErrorsAccumulated += peaksErrors;
 
@@ -909,7 +990,7 @@ export class GameManager {
       const w = stats.weekdayStatsAccumulated[dayIdx];
       w.sumTime += totalTimeMs;
       w.sumErrors += peaksErrors;
-      w.sumScore += rpEarned;
+      w.sumScore += dailyScore; // Use TOTAL Daily Score for day averages
       w.count++;
     }
 

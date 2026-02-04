@@ -23,6 +23,7 @@ export function initAuth() {
       // gameManager.onUserLogin(user);
       import("./db.js").then((module) => {
         module.loadUserProgress(user.uid);
+        module.listenToUserProgress(user.uid); // Start Real-time Conflict Detection
       });
     } else {
       // User is signed out
@@ -117,6 +118,11 @@ function updateUIForLogout() {
 
   if (loginWrapper) loginWrapper.classList.remove("hidden");
   if (loggedInView) loggedInView.classList.add("hidden");
+
+  // Stop Listener
+  import("./db.js").then((module) => {
+    module.stopListeningAndCleanup();
+  });
 }
 
 function translateAuthError(code) {

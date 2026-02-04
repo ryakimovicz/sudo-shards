@@ -360,6 +360,7 @@ export class GameManager {
   }
 
   async save() {
+    if (this.conflictBlocked) return; // Prevent overwriting cloud data
     this.state.meta.lastPlayed = new Date().toISOString();
     localStorage.setItem(this.storageKey, JSON.stringify(this.state));
 
@@ -391,6 +392,8 @@ export class GameManager {
       this.cloudSaveTimeout = null;
     }
 
+    if (this.conflictBlocked) return; // Strict Block
+
     try {
       const { getCurrentUser } = await import("./auth.js");
       const { saveUserProgress } = await import("./db.js");
@@ -408,6 +411,7 @@ export class GameManager {
   // Called when remote data is loaded
   handleCloudSync(remoteData) {
     if (!remoteData) return;
+    if (this.conflictBlocked) return; // Already blocked
 
     // Cloud data might have stringified arrays, deserialize them
     const hydratedData = this._deserializeState(remoteData);
@@ -417,18 +421,69 @@ export class GameManager {
 
     console.log(`[Sync] Remote: ${remoteTime}, Local: ${localTime}`);
 
-    // Prevent Infinite Loop: Check timestamp
-    if (remoteTime <= localTime) {
-      console.log("[Sync] Remote is not newer. Skipping sync/reload.");
+    // Allow 10 second buffer for clock skew / latency
+    // If Remote is > Local + 10s, it means another device really played later
+    if (remoteTime > localTime + 10000) {
+      console.warn("[Sync] Conflict detected! Remote is newer.");
+      this.showConflictModal();
       return;
     }
 
-    // If remote is newer
-    this.state = hydratedData;
-    this.save(); // Save to local
+    // Normal Sync (if newer or same) - we usually don't hot-reload unless user refreshes,
+    // but here we just ensure we don't overwrite if remote is newer.
+    // If remote is newer but within buffer? Maybe just accept it?
+    // For now, only STRICT blocking.
+  }
 
-    console.log("Cloud Save Restored. Reloading...");
-    setTimeout(() => window.location.reload(), 500);
+  showConflictModal() {
+    this.conflictBlocked = true; // STOP ALL SAVING
+
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "rgba(0,0,0,0.95)";
+    overlay.style.color = "white";
+    overlay.style.display = "flex";
+    overlay.style.flexDirection = "column";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.zIndex = "99999";
+    overlay.style.fontFamily = "outfit, sans-serif";
+    overlay.style.textAlign = "center";
+    overlay.style.padding = "20px";
+
+    overlay.innerHTML = `
+        <h1 style="color: #ff5555; margin-bottom: 20px; font-size: 3rem;">⚠️</h1>
+        <h2 style="margin-bottom: 10px;">Partida activa en otro dispositivo</h2>
+        <p style="font-size: 1.1rem; margin-bottom: 30px; max-width: 400px; color: #ccc;">
+            Se ha detectado progreso más reciente desde otra ubicación.
+            Por seguridad, esta sesión se ha detenido.
+        </p>
+        <button id="btn-conflict-reload" style="
+            background: #ff5555;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 85, 85, 0.4);
+            transition: transform 0.2s;
+        ">
+            Recargar Datos
+        </button>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById("btn-conflict-reload").onclick = () => {
+      window.location.hash = ""; // Go to home
+      window.location.reload();
+    };
   }
 
   // FIRESTORE HELPER: Flatten nested arrays

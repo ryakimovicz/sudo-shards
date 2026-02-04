@@ -7,10 +7,43 @@ import {
   deleteDoc,
   serverTimestamp,
   deleteField,
+  onSnapshot,
 } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 import { gameManager } from "./game-manager.js";
 
 // ... (rest of imports/vars)
+
+// Real-time listener unsubscribe function
+let unsubscribeProgress = null;
+
+export function listenToUserProgress(userId) {
+  if (!userId) return;
+
+  // Unsubscribe previous if exists
+  if (unsubscribeProgress) {
+    unsubscribeProgress();
+    unsubscribeProgress = null;
+  }
+
+  const userRef = doc(db, "users", userId);
+
+  console.log(`[DB] Starting real-time listener for ${userId}`);
+  unsubscribeProgress = onSnapshot(userRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // Pass data to GameManager for conflict checking
+      gameManager.handleCloudSync(data.progress, data.stats);
+    }
+  });
+}
+
+export function stopListeningAndCleanup() {
+  if (unsubscribeProgress) {
+    unsubscribeProgress();
+    unsubscribeProgress = null;
+    console.log("[DB] Real-time listener stopped.");
+  }
+}
 
 export async function cleanupLegacyStats(userId) {
   if (!userId) return;

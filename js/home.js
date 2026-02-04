@@ -336,12 +336,32 @@ export function initHome() {
     }
   };
 
+  // Check if daily puzzle is already won
+  const checkDailyWin = () => {
+    try {
+      const stats = JSON.parse(
+        localStorage.getItem("jigsudo_user_stats") || "{}",
+      );
+      const today = new Date().toISOString().split("T")[0];
+      return stats.history?.[today]?.status === "won";
+    } catch (e) {
+      return false;
+    }
+  };
+  const isWon = checkDailyWin();
+
   if (startBtn) {
-    startBtn.onclick = handleStart;
+    if (isWon && currentMode === "daily") {
+      startBtn.textContent = "¡Completado!";
+      startBtn.disabled = true;
+      startBtn.classList.add("btn-won");
+    } else {
+      startBtn.onclick = handleStart;
+    }
   }
 
-  // Enable button now that listeners are ready (if mode is valid)
-  if (currentMode === "daily" && startBtn) {
+  // Enable button now that listeners are ready (if not won)
+  if (currentMode === "daily" && startBtn && !isWon) {
     startBtn.disabled = false;
   }
 

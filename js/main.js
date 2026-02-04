@@ -1,4 +1,8 @@
 /* Main Entry Point */
+console.log(
+  "%c🔥 MAIN.JS LOADED FROM SOURCE 🔥",
+  "color: red; font-size: 20px; font-weight: bold;",
+);
 import { initHome } from "./home.js";
 import { initLanguage } from "./i18n.js";
 import { initSudoku } from "./sudoku.js";
@@ -45,6 +49,35 @@ async function startApp() {
   initProfile(); // Profile Module
 
   attachAuthListeners();
+
+  // DEBUG TOOL: Reset User Data
+  window.resetDaily = async () => {
+    // Dynamic import to break potential cycles or just cleanliness
+    const { getCurrentUser } = await import("./auth.js");
+    const { wipeUserData } = await import("./db.js");
+    const user = getCurrentUser();
+
+    if (user) {
+      if (
+        confirm(
+          "¿Seguro que quieres borrar TU PROGRESO en la nube? Esto no se puede deshacer.",
+        )
+      ) {
+        console.log("Wiping remote data...");
+        await wipeUserData(user.uid);
+        console.log("Clearing local storage...");
+        localStorage.clear();
+        console.log("Reloading...");
+        window.location.reload();
+      }
+    } else {
+      console.warn("No logged in user to wipe.");
+      console.log("Clearing local storage anyway...");
+      localStorage.clear();
+      window.location.reload();
+    }
+  };
+  console.log("🛠️ Debug: Run 'resetDaily()' in console to wipe progress.");
 }
 
 function attachAuthListeners() {

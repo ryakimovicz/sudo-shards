@@ -1073,6 +1073,10 @@ export function checkBoardCompletion() {
 
     // Delay advance
     setTimeout(() => {
+      // Timer Transition
+      gameManager.stopStageTimer();
+      gameManager.startStageTimer("sudoku");
+
       transitionToSudoku();
     }, 600);
   }

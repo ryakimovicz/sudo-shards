@@ -46,6 +46,9 @@ export function initMemoryGame() {
   collectedLeft = document.getElementById("collected-left");
   collectedRight = document.getElementById("collected-right");
 
+  // Start Stage Timer
+  gameManager.startStageTimer("memory");
+
   // Init Jigsaw Logic Reference (Pass Elements)
   // Init Jigsaw Logic Reference (Pass Elements)
   try {
@@ -616,6 +619,11 @@ function handleMatchSuccess(chunkIndex) {
     // 3. Transition to Jigsaw (Keep Timer Running!)
     setTimeout(() => {
       if (boardContainer) boardContainer.classList.remove("board-complete");
+
+      // Timer Transition
+      gameManager.stopStageTimer();
+      gameManager.startStageTimer("jigsaw");
+
       transitionToJigsaw();
     }, 700); // Wait for pulse/fade (0.6s) + buffer
   }

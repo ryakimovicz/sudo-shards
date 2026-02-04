@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="css/search.css" />
     <link rel="stylesheet" href="css/code.css" />
     <link rel="stylesheet" href="css/auth.css" />
-    <link rel="stylesheet" href="css/profile.css?v=26" />
+    <link rel="stylesheet" href="css/profile.css?v=38" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -529,21 +529,42 @@
             </div>
           </div>
 
-          <!-- 3. Calendar -->
-          <div class="calendar-heatmap glass-panel">
-            <div class="calendar-header">
-              <button id="cal-prev-btn" class="icon-btn-small">←</button>
-              <div
-                class="section-title history-title"
-                id="cal-month-label"
-                data-i18n="history_title"
-              >
-                Historial
+          <!-- 3. History & Analysis (Row) -->
+          <div class="stats-grid history-grid-row" style="margin-top: 24px">
+            <!-- Calendar -->
+            <div class="calendar-heatmap" style="margin-top: 0 !important">
+              <div class="calendar-header">
+                <button id="cal-prev-btn" class="icon-btn-small">←</button>
+                <div
+                  class="section-title history-title"
+                  id="cal-month-label"
+                  data-i18n="history_title"
+                >
+                  Historial
+                </div>
+                <button id="cal-next-btn" class="icon-btn-small">→</button>
               </div>
-              <button id="cal-next-btn" class="icon-btn-small">→</button>
+              <div class="calendar-grid" id="calendar-grid">
+                <!-- JS will populate days -->
+              </div>
             </div>
-            <div class="calendar-grid" id="calendar-grid">
-              <!-- JS will populate days -->
+
+            <!-- Weekday Stats -->
+            <div class="daily-time-report" style="margin-top: 0 !important">
+              <div
+                class="calendar-header"
+                style="
+                  width: 100%;
+                  justify-content: center;
+                  min-height: 32px;
+                  margin-bottom: 12px;
+                "
+              >
+                <div class="section-title history-title">Promedio Diario</div>
+              </div>
+              <div class="daily-time-chart" id="daily-time-chart">
+                <!-- Chart -->
+              </div>
             </div>
           </div>
 
@@ -664,7 +685,7 @@
          Removing explicit tags to prevent double-loading (e.g. ?v=1.1 mismatch). -->
 
     <!-- Entry Point -->
-    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/main.js?v=999"></script>
     <!-- Entry Point -->
 
     <!-- Confirmation Modal -->

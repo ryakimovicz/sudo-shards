@@ -294,7 +294,104 @@ function updateProfileData() {
   }
 
   // 3. Render Calendar
-  renderCalendar(stats.history || {});
+  try {
+    renderCalendar(stats.history || {});
+  } catch (e) {
+    console.error("Calendar Render Error:", e);
+  }
+
+  // 4. Render Weekday Stats
+  try {
+    renderWeekdayStats(stats.history || {});
+  } catch (e) {
+    console.error("Weekday Stats Render Error:", e);
+  }
+}
+
+function renderWeekdayStats(history) {
+  const container = document.getElementById("daily-time-chart");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  // 0=Sun, 1=Mon ... 6=Sat
+  const days = [
+    { label: "D", sum: 0, count: 0 },
+    { label: "L", sum: 0, count: 0 },
+    { label: "M", sum: 0, count: 0 },
+    { label: "M", sum: 0, count: 0 }, // Miércoles check
+    { label: "J", sum: 0, count: 0 },
+    { label: "V", sum: 0, count: 0 },
+    { label: "S", sum: 0, count: 0 },
+  ];
+
+  // Labels map based on 0-6 index
+  const labels = ["D", "L", "M", "X", "J", "V", "S"];
+
+  console.log("Processing History for Weekday Stats:", history);
+  let hasData = false;
+
+  Object.entries(history).forEach(([dateStr, data]) => {
+    // console.log("Processing Entry:", dateStr, data);
+    if (data.status === "won" && data.totalTime > 0) {
+      const parts = dateStr.split("-");
+      if (parts.length === 3) {
+        const [y, m, d] = parts.map(Number);
+        const date = new Date(y, m - 1, d);
+        const dayIdx = date.getDay(); // 0-6
+
+        if (!isNaN(dayIdx)) {
+          days[dayIdx].sum += data.totalTime;
+          days[dayIdx].count++;
+          hasData = true;
+        }
+      }
+    }
+  });
+
+  if (!hasData) {
+    console.warn("No valid won games found for Weekday Stats");
+    container.innerHTML =
+      "<div style='color: #888; padding: 20px; text-align: center;'>Sin datos suficientes</div>";
+    return;
+  }
+
+  // Render Cards
+  days.forEach((d, i) => {
+    const card = document.createElement("div");
+    card.className = "daily-stat-card";
+
+    const avg = d.count > 0 ? d.sum / d.count : 0;
+    let timeStr = "--";
+    if (d.count > 0) {
+      const seq = Math.floor(avg / 1000);
+      const m = Math.floor(seq / 60);
+      const s = seq % 60;
+      timeStr = `${m}:${s.toString().padStart(2, "0")}`;
+    }
+
+    const dayNames = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ];
+
+    const lbl = document.createElement("div");
+    lbl.className = "daily-stat-label";
+    lbl.textContent = dayNames[i];
+
+    const val = document.createElement("div");
+    val.className = "daily-stat-value";
+    val.textContent = timeStr;
+
+    card.appendChild(lbl);
+    card.appendChild(val);
+    container.appendChild(card);
+  });
 }
 
 function changeMonth(delta) {

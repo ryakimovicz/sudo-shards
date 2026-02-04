@@ -43,7 +43,7 @@ body.dark-mode #profile-section::-webkit-scrollbar-thumb:hover {
 
 #profile-section .scrollable-content {
   padding: 20px;
-  max-width: 600px;
+  max-width: 800px; /* Increased from 600px to fit side-by-side panels */
   margin: 0 auto;
   width: 100%;
   flex: 1; /* Take remaining space */
@@ -280,35 +280,48 @@ body.dark-mode #profile-section::-webkit-scrollbar-thumb:hover {
   color: var(--text-muted);
 }
 
+/* Calendar Heatmap Container */
 .calendar-heatmap {
-  padding: 20px;
-  background: white;
-  border: 1px solid var(--glass-border);
-  /* Force Dimensions Aggressively */
   display: flex !important;
   flex-direction: column !important;
-  background: white; /* Ensure bg is visible */
+  align-items: center;
+  padding: 0 16px 16px 16px !important;
+  border-radius: 16px;
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--paper-shadow); /* Add shadow */
 
-  /* Override glass-panel hidden defaults */
+  /* Force Visibility */
   opacity: 1 !important;
   transform: none !important;
   pointer-events: auto !important;
+  visibility: visible !important;
+  position: relative !important; /* Prevent absolute overlap */
 
-  /* Shrink to fit grid */
-  width: fit-content;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0 !important;
 }
 
-/* Calendar Heatmap Container */
-.calendar-heatmap {
-  display: flex;
-  flex-direction: column;
+/* Daily Stats Container */
+.daily-time-report {
+  display: flex !important;
+  flex-direction: column !important;
   align-items: center;
-  padding: 0 16px 16px 16px; /* Zero top padding */
+  padding: 0 16px 16px 16px !important; /* Zero top padding to match Calendar */
   border-radius: 16px;
-  background-color: var(--bg-card); /* Ensure dark bg */
-  max-width: 320px; /* Slightly wider than grid */
-  margin: 16px auto 0 auto; /* Reduced from 32px */
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--paper-shadow); /* Add shadow */
+
+  /* Force Visibility */
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  position: relative !important; /* Prevent absolute overlap */
+
+  width: 100%;
+  margin: 0 !important;
 }
 
 .calendar-header {
@@ -322,6 +335,9 @@ body.dark-mode #profile-section::-webkit-scrollbar-thumb:hover {
   gap: 3px; /* Tightest gap */
   width: 100%;
   margin: 10px 0;
+  /* Fixed Height for 6 weeks (7 rows * 36px + 6 gaps * 3px = 270px) */
+  min-height: 270px;
+  align-content: start; /* Pack rows at top, don't spread */
 }
 
 .calendar-day {
@@ -428,7 +444,104 @@ body.dark-mode .profile-avatar-large {
   justify-content: center;
   gap: 3px;
   width: 100%;
-  margin: 2px 0 10px 0; /* Top reduced from 10px to 2px */
+  margin: 10px 0 10px 0;
 }
 
 /* Ensure Profile Scrolls */
+
+/* History Grid (Calendar + Weekday Stats) */
+.history-grid {
+  display: flex !important;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 600px; /* Match other containers */
+  margin: 0 auto;
+}
+
+/* Weekday Stats Container */
+.daily-time-report {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  border-radius: 16px;
+  background-color: var(--bg-card);
+  width: 100%;
+}
+
+/* New Daily Stats Grid */
+.daily-time-chart {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.daily-stat-card {
+  background: var(--bg-paper);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+
+/* Center the last item (Saturday) */
+.daily-stat-card:last-child {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: 50%; /* Or auto/100% depending on preference */
+}
+
+.daily-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.daily-stat-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Desktop Layout */
+@media (min-width: 768px) {
+  .history-grid {
+    flex-direction: row;
+    align-items: flex-start;
+    max-width: 100%; /* Use available space */
+  }
+
+  .calendar-heatmap,
+  .weekday-stats {
+    flex: 1;
+    max-width: none; /* Reset individual max-widths */
+    /* height: 100%; Removed to prevent stretching */
+  }
+
+  /* Reset calendar top margin logic if it conflicts */
+  .calendar-heatmap {
+    margin: 0 !important;
+  }
+}
+
+/* History Row Grid */
+.stats-grid.history-grid-row {
+  grid-template-columns: 1fr; /* Mobile: Stacked */
+}
+
+@media (min-width: 768px) {
+  .stats-grid.history-grid-row {
+    grid-template-columns: repeat(
+      2,
+      1fr
+    ); /* Desktop: 50% Cal / 50% Stats (Equal Split) */
+    align-items: stretch; /* Match Height */
+  }
+}

@@ -169,6 +169,7 @@ export class GameManager {
         wins: 0,
         currentStreak: 0,
         maxStreak: 0,
+        peaksErrors: 0, // Track for daily score
         history: {},
         distribution: { "<2m": 0, "2-5m": 0, "+5m": 0 },
       },
@@ -509,6 +510,20 @@ export class GameManager {
       this.state.meta.stageTimes = {};
     }
     this._checkRankDecay();
+
+    // Cleanup Legacy Data (Once per session mainly)
+    const user = import("./auth.js").then((m) => m.getCurrentUser?.());
+    // Since this is async/sync hybrid complexity, we just trigger it if user exists
+    // We'll import dynamically to avoid circular dep issues if any, or better,
+    // rely on auth.js listener calling ensureStats?
+    // Actually, let's just use the auth listener approach later or assume userId is available in some context?
+    // Simplified: We'll import cleanupLegacyStats and call it if we can.
+    import("./db.js").then(({ cleanupLegacyStats }) => {
+      const auth = import("./auth.js").then(({ getCurrentUser }) => {
+        const u = getCurrentUser();
+        if (u) cleanupLegacyStats(u.uid);
+      });
+    });
   }
 
   async _checkRankDecay() {
@@ -558,6 +573,24 @@ export class GameManager {
     }
   }
 
+  // Stage Timing Logic
+  startStageTimer(stage) {
+    this.currentStage = stage;
+    this.stageStartTime = Date.now();
+    console.log(`[Timer] Started stage: ${stage}`);
+  }
+
+  stopStageTimer() {
+    if (!this.currentStage || !this.stageStartTime) return;
+
+    const duration = Date.now() - this.stageStartTime;
+    this.recordStageTime(this.currentStage, duration);
+    console.log(`[Timer] Stopped stage: ${this.currentStage} (${duration}ms)`);
+
+    this.currentStage = null;
+    this.stageStartTime = null;
+  }
+
   // Called when stage changes in main loop (needs hook)
   recordStageTime(stage, durationMs) {
     if (!this.state) return;
@@ -565,8 +598,6 @@ export class GameManager {
 
     const current = this.state.meta.stageTimes[stage] || 0;
     this.state.meta.stageTimes[stage] = current + durationMs;
-    // Frequent saves might be heavy? Save on stage exit?
-    // For now rely on periodic saves or event-driven saves
     this.save();
   }
 

@@ -351,6 +351,11 @@ function handleFoundSequence(target) {
 
     setTimeout(() => {
       boardWrapper.classList.remove("search-win");
+
+      // Timer Transition
+      gameManager.stopStageTimer(); // End Search
+      gameManager.startStageTimer("code"); // Start Code
+
       gameManager.advanceStage(); // Advances to 'code'
       transitionToCode();
     }, 500);

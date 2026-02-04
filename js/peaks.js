@@ -21,6 +21,8 @@ export function initPeaks() {
   foundTargets = 0;
   currentHintRow = 0; // Reset hint progress
   updateErrorCounter();
+  // Sync Reset
+  gameManager.updateProgress("stats", { peaksErrors: 0 });
   updateRemainingCounter();
 
   // 2. Show Stats
@@ -209,6 +211,9 @@ function handleIncorrectClick(cell) {
   peaksErrors++;
   updateErrorCounter();
 
+  // Sync with GameManager State
+  gameManager.updateProgress("stats", { peaksErrors: peaksErrors });
+
   // Shake animation on the NUMBER only
   const numSpan = cell.querySelector(".curr-number");
   if (numSpan) {
@@ -248,6 +253,11 @@ function checkPeaksVictory() {
     // Trigger Search Stage...
     setTimeout(() => {
       if (board) board.classList.remove("board-complete");
+
+      // Timer Transition
+      gameManager.stopStageTimer(); // End Peaks
+      gameManager.startStageTimer("search"); // Start Search
+
       transitionToSearch();
       // Also advance logic state
       gameManager.advanceStage("search");

@@ -328,7 +328,8 @@ function winGame() {
   console.log("CODE CRACKED! Starting Victory Animation...");
 
   // 1. STOP TIMER & ANIMATIONS IMMEDIATELY
-  stopTimer();
+  stopTimer(); // Global Wall Clock
+  gameManager.stopStageTimer(); // End Code Stage
   stopAnimation();
   clearIdleTimer();
 

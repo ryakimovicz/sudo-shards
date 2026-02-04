@@ -999,6 +999,10 @@ function handleSudokuWin() {
     setTimeout(() => {
       board.classList.remove("board-complete");
 
+      // Timer Transition
+      gameManager.stopStageTimer(); // End Sudoku
+      gameManager.startStageTimer("peaks"); // Start Peaks
+
       // Transition to Peaks
       transitionToPeaks();
 

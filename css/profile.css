@@ -299,6 +299,22 @@ body.dark-mode #profile-section::-webkit-scrollbar-thumb:hover {
   margin: 0 auto;
 }
 
+/* Calendar Heatmap Container */
+.calendar-heatmap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 16px 16px; /* Zero top padding */
+  border-radius: 16px;
+  background-color: var(--bg-card); /* Ensure dark bg */
+  max-width: 320px; /* Slightly wider than grid */
+  margin: 16px auto 0 auto; /* Reduced from 32px */
+}
+
+.calendar-header {
+  margin-top: 12px; /* Explicit top spacing */
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 36px); /* Fixed Emoji Size */
@@ -395,14 +411,24 @@ body.dark-mode .profile-avatar-large {
 }
 
 /* Update Calendar Header for Vertical Layout */
+/* Update Calendar Header for Integrated Layout */
 .calendar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 280px; /* Match Grid */
-  margin: 32px auto 4px auto; /* Spacing from Stats */
-  position: relative;
+  padding-bottom: 2px; /* Reduced from 8px */
+  margin-bottom: 0px; /* Reduced from 4px */
+}
+
+/* Update Calendar Grid spacing */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 36px);
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  margin: 2px 0 10px 0; /* Top reduced from 10px to 2px */
 }
 
 /* Ensure Profile Scrolls */

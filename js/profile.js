@@ -119,19 +119,27 @@ function updateProfileData() {
   const nameEl = document.getElementById("profile-username");
   const emailEl = document.getElementById("profile-email");
 
-  if (!user) {
+  if (user) {
+    const displayName = user.displayName || "Usuario";
+    const initial = displayName.charAt(0).toUpperCase();
+
+    if (nameEl) nameEl.textContent = displayName;
+    if (emailEl) emailEl.textContent = user.email;
+    if (avatarEl) {
+      avatarEl.textContent = initial;
+      avatarEl.style.backgroundColor = ""; // Reset
+    }
+  } else {
+    // Guest
     if (nameEl) nameEl.textContent = "Invitado";
-    if (emailEl) emailEl.textContent = "";
-    if (avatarEl) avatarEl.textContent = "?";
-    return;
+    if (emailEl) emailEl.textContent = "Sin cuenta";
+
+    // Guest Avatar
+    if (avatarEl) {
+      avatarEl.textContent = "I";
+      avatarEl.style.backgroundColor = "#94a3b8";
+    }
   }
-
-  const displayName = user.displayName || "Usuario";
-  const initial = displayName.charAt(0).toUpperCase();
-
-  if (nameEl) nameEl.textContent = displayName;
-  if (emailEl) emailEl.textContent = user.email;
-  if (avatarEl) avatarEl.textContent = initial;
 
   // Stats from Global Storage
   const statsStr = localStorage.getItem("jigsudo_user_stats");
@@ -286,7 +294,7 @@ function updateProfileData() {
   }
 
   // 3. Render Calendar
-  renderCalendar(stats.history);
+  renderCalendar(stats.history || {});
 }
 
 function changeMonth(delta) {
@@ -313,19 +321,56 @@ function changeMonth(delta) {
 function renderCalendar(history = {}) {
   const grid = document.getElementById("calendar-grid");
   const label = document.getElementById("cal-month-label");
-  if (!grid) return;
+  if (!grid) {
+    console.error("Calendar Grid Element NOT FOUND");
+    return;
+  }
 
-  grid.innerHTML = "";
+  // Ensure we are not stacking
+  while (grid.firstChild) {
+    grid.removeChild(grid.firstChild);
+  }
+
+  // Fallback dates
+  if (!currentViewDate || isNaN(currentViewDate.getTime())) {
+    console.warn("Recovering currentViewDate");
+    currentViewDate = new Date();
+  }
+
+  console.log(
+    "Rendering Calendar ->",
+    currentViewDate.toLocaleDateString(),
+    "History Keys:",
+    history ? Object.keys(history).length : 0,
+  );
 
   try {
+    // Validate Date
+    if (isNaN(currentViewDate.getTime())) {
+      console.error("Invalid View Date, resetting");
+      currentViewDate = new Date();
+    }
+
     const year = currentViewDate.getFullYear();
     const month = currentViewDate.getMonth();
 
-    // Update Label
-    const monthName = new Intl.DateTimeFormat(getCurrentLang(), {
-      month: "long",
-      year: "numeric",
-    }).format(currentViewDate);
+    // Update Label (Safe Locale)
+    let locale = "es-ES";
+    try {
+      locale = getCurrentLang() || "es-ES";
+    } catch (e) {
+      console.warn("Locale fetch failed", e);
+    }
+
+    let monthName = "Mes";
+    try {
+      monthName = new Intl.DateTimeFormat(locale, {
+        month: "long",
+        year: "numeric",
+      }).format(currentViewDate);
+    } catch (err) {
+      monthName = currentViewDate.toDateString(); // Extreme fallback
+    }
 
     // Days in Month
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -341,7 +386,7 @@ function renderCalendar(history = {}) {
     headers.forEach((h) => {
       const el = document.createElement("div");
       el.className = "calendar-day header-day";
-      el.textContent = h;
+      el.innerText = h; // Use innerText to ensuring rendering
       grid.appendChild(el);
     });
 
@@ -362,7 +407,7 @@ function renderCalendar(history = {}) {
       // Format YYYY-MM-DD
       const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 
-      if (history[dateStr]) {
+      if (history && history[dateStr]) {
         if (history[dateStr].status === "won") {
           dayEl.classList.add("win");
         } else {
@@ -374,5 +419,7 @@ function renderCalendar(history = {}) {
     }
   } catch (e) {
     console.error("Calendar Error:", e);
+    grid.innerHTML =
+      "<div style='color:red; grid-column: 1/-1;'>Error cargando calendario</div>";
   }
 }

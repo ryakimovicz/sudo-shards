@@ -360,4 +360,24 @@ export function initHome() {
     // Ensure icon state matches initial load (if landing on #profile)
     // Actual icon switching happens in profile.js _showProfileUI/_hideProfileUI
   }
+
+  // Home Navigation (Title Click)
+  const appTitle = document.querySelector(".app-title");
+  if (appTitle) {
+    appTitle.style.cursor = "pointer";
+    appTitle.addEventListener("click", () => {
+      // 1. Close Profile
+      hideProfile();
+
+      // 2. Reset to Home (if in Game)
+      const menu = document.getElementById("menu-content");
+      const gameSection = document.getElementById("game-section");
+
+      if (menu) menu.classList.remove("hidden");
+      if (gameSection) gameSection.classList.add("hidden");
+
+      // 3. Reset URL
+      window.location.hash = "";
+    });
+  }
 }

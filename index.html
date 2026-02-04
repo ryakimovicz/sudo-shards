@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="css/search.css" />
     <link rel="stylesheet" href="css/code.css" />
     <link rel="stylesheet" href="css/auth.css" />
-    <link rel="stylesheet" href="css/profile.css?v=17" />
+    <link rel="stylesheet" href="css/profile.css?v=26" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -102,6 +102,25 @@
                 </h4>
                 <!-- Login State (Toggled by JS) -->
                 <div id="login-wrapper">
+                  <!-- Guest Profile Access -->
+                  <div
+                    class="user-info-row centered"
+                    style="margin-bottom: 12px"
+                  >
+                    <button
+                      id="btn-guest-profile"
+                      class="btn-profile-link"
+                      title="Ver Perfil de Invitado"
+                    >
+                      <span
+                        class="user-avatar-placeholder"
+                        style="background: #e2e8f0; color: #64748b"
+                        >👤</span
+                      >
+                      <strong>Invitado</strong>
+                    </button>
+                  </div>
+
                   <button
                     id="btn-login-trigger"
                     class="btn-secondary full-width"
@@ -511,18 +530,18 @@
           </div>
 
           <!-- 3. Calendar -->
-          <div class="calendar-header" style="margin-top: 32px">
-            <button id="cal-prev-btn" class="icon-btn-small">←</button>
-            <div
-              class="section-title history-title"
-              id="cal-month-label"
-              data-i18n="history_title"
-            >
-              Historial
-            </div>
-            <button id="cal-next-btn" class="icon-btn-small">→</button>
-          </div>
           <div class="calendar-heatmap glass-panel">
+            <div class="calendar-header">
+              <button id="cal-prev-btn" class="icon-btn-small">←</button>
+              <div
+                class="section-title history-title"
+                id="cal-month-label"
+                data-i18n="history_title"
+              >
+                Historial
+              </div>
+              <button id="cal-next-btn" class="icon-btn-small">→</button>
+            </div>
             <div class="calendar-grid" id="calendar-grid">
               <!-- JS will populate days -->
             </div>

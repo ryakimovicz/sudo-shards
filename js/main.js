@@ -69,10 +69,19 @@ function attachAuthListeners() {
     });
   }
 
-  // Profile Navigation
+  // Profile Navigation (Logged In)
   const btnViewProfile = document.getElementById("btn-view-profile");
   if (btnViewProfile) {
     btnViewProfile.addEventListener("click", () => {
+      showProfile();
+      document.getElementById("profile-dropdown")?.classList.add("hidden");
+    });
+  }
+
+  // Profile Navigation (Guest)
+  const btnGuestProfile = document.getElementById("btn-guest-profile");
+  if (btnGuestProfile) {
+    btnGuestProfile.addEventListener("click", () => {
       showProfile();
       document.getElementById("profile-dropdown")?.classList.add("hidden");
     });

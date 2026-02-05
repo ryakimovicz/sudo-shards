@@ -40,75 +40,83 @@ export function initMemoryGame() {
   // Show Solve button (restore CSS control)
   const solveBtn = document.getElementById("debug-help-btn");
   if (solveBtn) solveBtn.style.display = ""; // Let CSS (debug-mode) handle it
-  memorySection = document.getElementById("memory-game");
+  memorySection = document.getElementById("game-section"); // FIXED ID
   boardContainer = document.getElementById("memory-board");
   cardsContainer = document.getElementById("memory-cards");
   collectedLeft = document.getElementById("collected-left");
   collectedRight = document.getElementById("collected-right");
 
+  // Start Stage Timer
+  gameManager.startStageTimer("memory");
+
   // Init Jigsaw Logic Reference (Pass Elements)
-  initJigsaw({
-    memorySection,
-    boardContainer,
-    collectedLeft,
-    collectedRight,
-  });
-
-  // Info Icon Mobile Interaction
-  const infoWrapper = document.querySelector(".info-icon-wrapper");
-  const titleContainer = document.querySelector(".header-title-container");
-  if (infoWrapper && titleContainer) {
-    infoWrapper.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent closing immediately
-      titleContainer.classList.toggle("active");
+  // Init Jigsaw Logic Reference (Pass Elements)
+  try {
+    initJigsaw({
+      memorySection,
+      boardContainer,
+      collectedLeft,
+      collectedRight,
     });
 
-    // Close when clicking outside
-    document.addEventListener("click", () => {
-      titleContainer.classList.remove("active");
+    // Info Icon Mobile Interaction
+    const infoWrapper = document.querySelector(".info-icon-wrapper");
+    const titleContainer = document.querySelector(".header-title-container");
+    if (infoWrapper && titleContainer) {
+      infoWrapper.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent closing immediately
+        titleContainer.classList.toggle("active");
+      });
+
+      // Close when clicking outside
+      document.addEventListener("click", () => {
+        titleContainer.classList.remove("active");
+      });
+    }
+
+    // 2. Show Section (and Hide Home)
+    if (memorySection) {
+      memorySection.classList.remove("hidden");
+      document.getElementById("menu-content")?.classList.add("hidden");
+    }
+
+    // 3. Load Data
+    const state = gameManager.getState();
+    if (!state || !state.data || !state.data.initialPuzzle) {
+      throw new Error("No game data found in state!");
+    }
+
+    // Reset State
+    cards = [];
+    flippedCards = [];
+    isLocked = false;
+    matchesFound = 0;
+    cardsContainer.innerHTML = "";
+    collectedLeft.innerHTML = "";
+    collectedRight.innerHTML = "";
+
+    // Reset Board Slots
+    setupBoard(state.data.initialPuzzle);
+    createPanelPlaceholders(); // <--- Imported from jigsaw.js
+
+    // 5. Setup Cards
+    const puzzleChunks = getChunksFromBoard(state.data.initialPuzzle);
+    setupCards(puzzleChunks);
+
+    // Initialize Resizing
+    fitCollectedPieces(); // Imported
+    fitMemoryCards();
+    window.addEventListener("resize", () => {
+      fitCollectedPieces();
+      fitMemoryCards();
     });
+  } catch (err) {
+    console.error("[Memory] Initialization Failed:", err);
+    alert("Error iniciando juego: " + err.message);
+    // Try to recover home
+    if (memorySection) memorySection.classList.add("hidden");
+    document.getElementById("menu-content")?.classList.remove("hidden");
   }
-
-  // 2. Show Section (and Hide Home)
-  if (memorySection) {
-    memorySection.classList.remove("hidden");
-    document.getElementById("menu-content")?.classList.add("hidden");
-  }
-
-  // 3. Load Data
-  const state = gameManager.getState();
-  if (!state || !state.data || !state.data.initialPuzzle) {
-    console.error("No game data found!");
-    return;
-  }
-
-  // Reset State
-  cards = [];
-  flippedCards = [];
-  isLocked = false;
-  matchesFound = 0;
-  matchesFound = 0;
-  // panelCount = 0; // Removed unused
-  cardsContainer.innerHTML = "";
-  collectedLeft.innerHTML = "";
-  collectedRight.innerHTML = "";
-
-  // Reset Board Slots
-  setupBoard(state.data.initialPuzzle);
-  createPanelPlaceholders(); // <--- Imported from jigsaw.js
-
-  // 5. Setup Cards
-  const puzzleChunks = getChunksFromBoard(state.data.initialPuzzle);
-  setupCards(puzzleChunks);
-
-  // Initialize Resizing
-  fitCollectedPieces(); // Imported
-  fitMemoryCards();
-  window.addEventListener("resize", () => {
-    fitCollectedPieces();
-    fitMemoryCards();
-    fitMemoryCards();
-  });
 
   // Start Timer
   initTimer();
@@ -126,7 +134,7 @@ export function initMemoryGame() {
 }
 
 function debugAutoMatch() {
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section"); // FIXED ID
   if (!gameSection) return;
 
   if (gameSection.classList.contains("jigsaw-mode")) {
@@ -590,6 +598,11 @@ function disableCards(cardsToDisable) {
 
 function handleMatchSuccess(chunkIndex) {
   matchesFound++;
+
+  // SYNC STATE: Save matches count
+  gameManager.updateProgress("memory", { pairsFound: matchesFound });
+  gameManager.save();
+
   console.log(`Matched Pair for Chunk ${chunkIndex}!`);
 
   const idx = parseInt(chunkIndex);
@@ -611,6 +624,11 @@ function handleMatchSuccess(chunkIndex) {
     // 3. Transition to Jigsaw (Keep Timer Running!)
     setTimeout(() => {
       if (boardContainer) boardContainer.classList.remove("board-complete");
+
+      // Timer Transition
+      gameManager.stopStageTimer();
+      gameManager.startStageTimer("jigsaw");
+
       transitionToJigsaw();
     }, 700); // Wait for pulse/fade (0.6s) + buffer
   }

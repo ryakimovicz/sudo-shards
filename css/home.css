@@ -883,3 +883,230 @@ input:checked + .slider-small:before {
   padding: 10px 30px !important;
   font-size: 1.1rem !important;
 }
+
+/* --- New Settings Menu Styles --- */
+
+.dropdown-content {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 280px; /* Wider for better layout */
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--bg-paper);
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 80vh;
+  overflow-y: auto;
+
+  /* Override glass-panel defaults */
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+.dropdown-header {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  color: var(--text-main);
+  border-bottom: 2px solid var(--accent-color);
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.settings-subhead {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 8px 0;
+  letter-spacing: 1px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 4px 0;
+}
+
+/* User Info Row */
+.user-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.user-info-row.centered {
+  justify-content: center;
+  padding: 0;
+  margin-top: -8px; /* Pulled up closer to header */
+}
+
+.btn-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.05); /* Subtle background */
+  border: 1px solid transparent;
+  padding: 8px 16px; /* Match standard button padding if needed */
+  border-radius: 12px; /* Match Standard Button Radius */
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: 1rem;
+  font-weight: 600; /* Add weight like Start btn */
+  cursor: pointer;
+  width: 100%;
+  justify-content: flex-start;
+  transition: all 0.2s;
+}
+
+.dark-mode .btn-profile-link {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-profile-link:hover {
+  background: var(--bg-tertiary); /* Slightly darker */
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.user-avatar-placeholder {
+  font-size: 1.2rem;
+}
+
+/* Segmented Control (Theme Switcher) */
+.segmented-control {
+  display: flex;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 2px;
+}
+body.dark-mode .segmented-control {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.segment-label {
+  flex: 1;
+  position: relative;
+  cursor: pointer;
+}
+
+.segment-label input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.segment-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  color: var(--text-muted);
+}
+
+.segment-content .icon {
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+.segment-content .text {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Active State */
+.segment-label input:checked + .segment-content {
+  background: var(--bg-paper);
+  color: var(--text-main);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Gameplay Items */
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.icon-label {
+  font-size: 1.1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.label-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.setting-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.1;
+}
+
+/* Logout Button */
+.logout-container {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.btn-logout-danger {
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid #ef4444; /* Tailwind Red-500 */
+  color: #ef4444;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-logout-danger:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* Scrollbar for dropdown */
+.dropdown-content::-webkit-scrollbar {
+  width: 4px;
+}
+.dropdown-content::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 2px;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+  .dropdown-content {
+    width: 90%;
+    right: 5%;
+    top: 70px;
+  }
+}

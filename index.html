@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="css/peaks.css" />
     <link rel="stylesheet" href="css/search.css" />
     <link rel="stylesheet" href="css/code.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="stylesheet" href="css/profile.css?v=40" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -81,70 +83,158 @@
               aria-label="Perfil"
               data-i18n-aria="header_profile_label"
             >
-              👤
+              ⚙️
             </button>
             <!-- Profile Dropdown -->
             <div
               id="profile-dropdown"
-              class="settings-dropdown glass-panel hidden"
+              class="dropdown-content glass-panel hidden"
             >
-              <h3 class="dropdown-header" data-i18n="profile_header">
-                Mí perfil
-              </h3>
-              <div class="dropdown-divider"></div>
-
-              <h3 class="dropdown-header" data-i18n="profile_dark_mode">
-                Modo Oscuro
+              <!-- HEADER -->
+              <h3 class="dropdown-header" data-i18n="settings_title">
+                Configuración
               </h3>
 
-              <!-- Auto Theme Option -->
-              <div class="setting-item">
-                <span class="setting-label" data-i18n="profile_auto"
-                  >Automático</span
-                >
-                <label class="switch-small">
-                  <input type="checkbox" id="auto-theme-toggle" />
-                  <span class="slider-small round"></span>
-                </label>
-              </div>
+              <!-- SECTION: ACCOUNT -->
+              <div class="settings-section account-section">
+                <h4 class="settings-subhead" data-i18n="settings_account">
+                  Cuenta
+                </h4>
+                <!-- Login State (Toggled by JS) -->
+                <div id="login-wrapper">
+                  <!-- Guest Profile Access -->
+                  <div
+                    class="user-info-row centered"
+                    style="margin-bottom: 12px"
+                  >
+                    <button
+                      id="btn-guest-profile"
+                      class="btn-profile-link"
+                      title="Ver Perfil de Invitado"
+                    >
+                      <span
+                        class="user-avatar-placeholder"
+                        style="background: #e2e8f0; color: #64748b"
+                        >👤</span
+                      >
+                      <strong>Invitado</strong>
+                    </button>
+                  </div>
 
-              <!-- Manual Theme Option -->
-              <div class="setting-item option-manual">
-                <div class="theme-switch-wrapper">
-                  <span class="theme-icon sun">☀️</span>
-                  <label class="switch">
-                    <input type="checkbox" id="theme-toggle" />
-                    <span class="slider round"></span>
-                  </label>
-                  <span class="theme-icon moon">🌙</span>
+                  <button
+                    id="btn-login-trigger"
+                    class="btn-secondary full-width"
+                    data-i18n="btn_login_menu"
+                  >
+                    Iniciar Sesión
+                  </button>
+                </div>
+
+                <div id="logged-in-view" class="hidden">
+                  <div class="user-info-row centered">
+                    <button
+                      id="btn-view-profile"
+                      class="btn-profile-link"
+                      title="Ver Perfil"
+                    >
+                      <span class="user-avatar-placeholder">👤</span>
+                      <strong id="user-display-name">Usuario</strong>
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div class="dropdown-divider"></div>
-              <h3 class="dropdown-header" data-i18n="profile_settings">
-                Ajustes
-              </h3>
 
-              <!-- Confirm Clear Toggle -->
-              <div class="setting-item">
-                <span class="setting-label" data-i18n="profile_quick_clear"
-                  >Borrado Rápido</span
-                >
-                <label class="switch-small">
-                  <input type="checkbox" id="confirm-clear-toggle" />
-                  <span class="slider-small round"></span>
-                </label>
+              <!-- SECTION: APPEARANCE -->
+              <div class="settings-section appearance-section">
+                <h4 class="settings-subhead" data-i18n="settings_appearance">
+                  Apariencia
+                </h4>
+                <div class="segmented-control theme-switcher">
+                  <label class="segment-label">
+                    <input type="radio" name="theme" value="light" />
+                    <span class="segment-content">
+                      <span class="icon">☀️</span>
+                      <span class="text" data-i18n="theme_light">Claro</span>
+                    </span>
+                  </label>
+                  <label class="segment-label">
+                    <input type="radio" name="theme" value="auto" />
+                    <span class="segment-content">
+                      <span class="icon">🌗</span>
+                      <span class="text" data-i18n="theme_auto">Auto</span>
+                    </span>
+                  </label>
+                  <label class="segment-label">
+                    <input type="radio" name="theme" value="dark" />
+                    <span class="segment-content">
+                      <span class="icon">🌙</span>
+                      <span class="text" data-i18n="theme_dark">Oscuro</span>
+                    </span>
+                  </label>
+                </div>
               </div>
 
-              <!-- Language Option -->
-              <div class="setting-item">
-                <span class="setting-label" data-i18n="profile_language"
-                  >Idioma</span
-                >
-                <select id="language-select" class="lang-select">
-                  <option value="es">Español</option>
-                  <option value="en">English</option>
-                </select>
+              <div class="dropdown-divider"></div>
+
+              <!-- SECTION: GAMEPLAY -->
+              <div class="settings-section gameplay-section">
+                <h4 class="settings-subhead" data-i18n="settings_gameplay">
+                  Jugabilidad
+                </h4>
+
+                <!-- Sound -->
+                <div class="setting-item">
+                  <span class="setting-label">
+                    <span class="icon-label">🔊</span>
+                    <span data-i18n="setting_sound">Sonido</span>
+                  </span>
+                  <label class="switch-small">
+                    <input type="checkbox" id="sound-toggle" checked />
+                    <span class="slider-small round"></span>
+                  </label>
+                </div>
+
+                <!-- Vibration (Mobile Only via JS) -->
+                <div class="setting-item" id="setting-vibration-container">
+                  <span class="setting-label">
+                    <span class="icon-label">📳</span>
+                    <span data-i18n="setting_vibration">Vibración</span>
+                  </span>
+                  <label class="switch-small">
+                    <input type="checkbox" id="vibration-toggle" checked />
+                    <span class="slider-small round"></span>
+                  </label>
+                </div>
+
+                <!-- Confirm Clear -->
+                <div class="setting-item">
+                  <div class="label-group">
+                    <span class="setting-label">
+                      <span class="icon-label">🛡️</span>
+                      <span data-i18n="setting_confirm_clear"
+                        >Confirmar Borrado</span
+                      >
+                    </span>
+                    <!-- <small class="setting-desc" data-i18n="setting_confirm_desc">Evita borrar todo por error</small> -->
+                  </div>
+                  <label class="switch-small">
+                    <input type="checkbox" id="confirm-clear-toggle" checked />
+                    <span class="slider-small round"></span>
+                  </label>
+                </div>
+
+                <!-- Language -->
+                <div class="setting-item">
+                  <span class="setting-label" data-i18n="profile_language"
+                    >Idioma</span
+                  >
+                  <select id="language-select" class="lang-select">
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -314,8 +404,241 @@
         </button>
       </main>
 
-      <!-- Memory Game Section -->
-      <section id="memory-game" class="game-section hidden">
+      <!-- Profile Section -->
+      <section id="profile-section" class="hidden">
+        <div class="scrollable-content">
+          <!-- 1. Identity Card -->
+          <div class="profile-card identity-card glass-panel">
+            <div class="profile-avatar-large" id="profile-avatar">U</div>
+            <div class="profile-identity">
+              <h2 id="profile-username">Usuario</h2>
+              <div class="rank-display">
+                <div class="rank-header-row">
+                  <span class="rank-icon" id="profile-rank-icon">🌱</span>
+                  <span class="rank-title" id="profile-rank-name">Novato</span>
+                </div>
+
+                <div class="rank-progress-container">
+                  <div class="rank-progress-bar">
+                    <div
+                      class="rank-progress-fill"
+                      id="profile-rank-progress"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <div class="rank-details-row">
+                    <span class="rank-level" id="profile-rank-level"
+                      >Nvl. 0</span
+                    >
+                    <span class="rank-points"
+                      ><span id="profile-rp-current">0</span> /
+                      <span id="profile-rp-next">15000</span> RP</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Future: Edit Button -->
+          </div>
+
+          <!-- 2. Statistics Grid (Wordle Style) -->
+          <!-- 2-Column Layout (Stats Left, Calendar Right) -->
+          <!-- 1. Stats Overview -->
+          <div class="section-title" data-i18n="stats_title">Estadísticas</div>
+          <div class="stats-grid overview">
+            <!-- Row 1: Activity -->
+            <div class="stat-box">
+              <span class="stat-number" id="stat-played">0</span>
+              <span class="stat-label">Jugadas</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stat-streak">0</span>
+              <span class="stat-label">Racha Actual</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stat-max-streak">0</span>
+              <span class="stat-label">Racha Máx.</span>
+            </div>
+
+            <!-- Row 2: Performance -->
+            <div class="stat-box">
+              <span class="stat-number" id="stat-max-score">0</span>
+              <span class="stat-label">Puntaje Máx.</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stat-best-time">--:--</span>
+              <span class="stat-label">Tiempo Récord</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stat-avg-time">--:--</span>
+              <span class="stat-label">Tiempo Prom.</span>
+            </div>
+          </div>
+
+          <!-- 2. Detailed Stage Stats -->
+          <div
+            class="section-title sub-title"
+            id="stats-details-title"
+            style="
+              margin-top: 24px;
+              margin-bottom: 8px;
+              font-size: 0.9rem;
+              opacity: 0.8;
+            "
+          >
+            Tiempos por Juego (Promedio)
+          </div>
+          <div class="stats-grid details">
+            <div class="stat-detail-box">
+              <span class="detail-label">Memoria</span>
+              <span class="detail-value" id="stat-avg-memory">--</span>
+            </div>
+            <div class="stat-detail-box">
+              <span class="detail-label">Rompecabezas</span>
+              <span class="detail-value" id="stat-avg-jigsaw">--</span>
+            </div>
+            <div class="stat-detail-box">
+              <span class="detail-label">Sudoku</span>
+              <span class="detail-value" id="stat-avg-sudoku">--</span>
+            </div>
+            <div class="stat-detail-box">
+              <span class="detail-label">Picos y Valles</span>
+              <div class="detail-multi">
+                <span id="stat-avg-peaks">--</span>
+                <span class="detail-sub" id="stat-avg-peaks-err"></span>
+              </div>
+            </div>
+            <div class="stat-detail-box">
+              <span class="detail-label">Sopa Números</span>
+              <span class="detail-value" id="stat-avg-search">--</span>
+            </div>
+            <div class="stat-detail-box">
+              <span class="detail-label">El Código</span>
+              <span class="detail-value" id="stat-avg-code">--</span>
+            </div>
+          </div>
+
+          <!-- 3. History & Analysis (Row) -->
+          <div class="stats-grid history-grid-row" style="margin-top: 24px">
+            <!-- Calendar -->
+            <div class="calendar-heatmap" style="margin-top: 0 !important">
+              <div class="calendar-header">
+                <button id="cal-prev-btn" class="icon-btn-small">←</button>
+                <div
+                  class="section-title history-title"
+                  id="cal-month-label"
+                  data-i18n="history_title"
+                >
+                  Historial
+                </div>
+                <button id="cal-next-btn" class="icon-btn-small">→</button>
+              </div>
+              <div class="calendar-grid" id="calendar-grid">
+                <!-- JS will populate days -->
+              </div>
+            </div>
+
+            <!-- Weekday Stats -->
+            <div class="daily-time-report" style="margin-top: 0 !important">
+              <div
+                class="calendar-header"
+                style="
+                  width: 100%;
+                  justify-content: center;
+                  min-height: 32px;
+                  margin-bottom: 12px;
+                "
+              >
+                <div class="section-title history-title">Promedio Diario</div>
+              </div>
+              <div class="daily-time-chart" id="daily-time-chart">
+                <!-- Chart -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Settings / Actions -->
+          <div class="section-title" data-i18n="settings_title">Ajustes</div>
+          <div class="profile-actions hidden">
+            <div
+              id="profile-email-display"
+              style="
+                text-align: center;
+                margin-bottom: 20px;
+                color: var(--text-muted);
+                font-size: 0.9rem;
+              "
+            ></div>
+
+            <button
+              id="btn-profile-change-name"
+              class="btn-secondary full-width"
+              data-i18n="btn_change_username"
+            >
+              Cambiar Nombre
+            </button>
+
+            <button
+              id="btn-profile-change-pw"
+              class="btn-secondary full-width"
+              data-i18n="btn_change_password"
+            >
+              Cambiar Contraseña
+            </button>
+
+            <button
+              id="btn-profile-logout"
+              class="btn-danger full-width"
+              data-i18n="btn_logout"
+            >
+              Cerrar Sesión
+            </button>
+
+            <button
+              id="btn-profile-delete"
+              class="btn-delete-danger full-width"
+              style="
+                margin-top: 25px;
+                border: 1px solid #ff5555;
+                background: transparent;
+                color: #ff5555;
+                opacity: 0.8;
+              "
+              data-i18n="btn_delete_account"
+            >
+              Eliminar Cuenta
+            </button>
+          </div>
+
+          <!-- Guest Actions (Visible only when logged out) -->
+          <div class="guest-actions hidden">
+            <div
+              style="
+                text-align: center;
+                margin-bottom: 20px;
+                color: var(--text-muted);
+                font-size: 0.9rem;
+              "
+            >
+              Inicia sesión para guardar tu progreso y aparecer en el ranking.
+            </div>
+            <button
+              id="btn-profile-login-guest"
+              class="btn-primary full-width"
+              style="margin-top: 10px"
+            >
+              Iniciar Sesión
+            </button>
+          </div>
+
+          <div class="profile-footer-info">
+            ID: <span id="profile-email-small">...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game Section (Sudoku/Jigsaw) -->
+      <section id="game-section" class="hidden">
         <!-- TEST PANELS FOR MOBILE -->
         <div class="test-mobile-panels">
           <div class="test-panel red"></div>
@@ -412,7 +735,7 @@
          Removing explicit tags to prevent double-loading (e.g. ?v=1.1 mismatch). -->
 
     <!-- Entry Point -->
-    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/main.js?v=999"></script>
     <!-- Entry Point -->
 
     <!-- Confirmation Modal -->
@@ -448,9 +771,257 @@
       </div>
     </div>
 
-    <!-- Debug Help Button -->
-    <button id="debug-help-btn" class="debug-btn" data-i18n="btn_solve">
-      Resolver
-    </button>
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay hidden">
+      <div class="modal-content login-content glass-panel">
+        <span class="close-modal" id="login-modal-cancel">&times;</span>
+        <h2 data-i18n="login_title">Cuenta Jigsudo</h2>
+
+        <div class="auth-forms">
+          <!-- Login Form -->
+          <form id="login-form" class="auth-form active">
+            <input
+              type="email"
+              id="login-email"
+              placeholder="Email"
+              required
+              autocomplete="email"
+              class="auth-input"
+            />
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="login-password"
+                placeholder="Contraseña"
+                required
+                autocomplete="current-password"
+                class="auth-input"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                aria-label="Mostrar contraseña"
+              >
+                👁️
+              </button>
+            </div>
+            <button
+              type="submit"
+              class="btn-primary auth-submit"
+              data-i18n="btn_login"
+            >
+              Iniciar Sesión
+            </button>
+            <p class="auth-switch">
+              ¿No tienes cuenta?
+              <a href="#" id="switch-to-register" data-i18n="link_register"
+                >Regístrate</a
+              >
+            </p>
+          </form>
+
+          <!-- Register Form -->
+          <form id="register-form" class="auth-form hidden">
+            <input
+              type="text"
+              id="register-username"
+              placeholder="Nombre de usuario"
+              required
+              autocomplete="username"
+              class="auth-input"
+            />
+            <input
+              type="email"
+              id="register-email"
+              placeholder="Email"
+              required
+              autocomplete="email"
+              class="auth-input"
+            />
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="register-password"
+                placeholder="Contraseña (min 6 chars)"
+                required
+                autocomplete="new-password"
+                class="auth-input"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                aria-label="Mostrar contraseña"
+              >
+                👁️
+              </button>
+            </div>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="register-password-confirm"
+                placeholder="Repetir Contraseña"
+                required
+                autocomplete="new-password"
+                class="auth-input"
+              />
+            </div>
+            <button
+              type="submit"
+              class="btn-primary auth-submit"
+              data-i18n="btn_register"
+            >
+              Crear Cuenta
+            </button>
+            <p class="auth-switch">
+              ¿Ya tienes cuenta?
+              <a href="#" id="switch-to-login" data-i18n="link_login"
+                >Inicia Sesión</a
+              >
+            </p>
+          </form>
+        </div>
+        <div id="auth-error-msg" class="error-msg hidden"></div>
+      </div>
+    </div>
+
+    <!-- PASSWORD CONFIRMATION MODAL -->
+    <div id="password-confirm-modal" class="modal-overlay hidden">
+      <div class="modal-content small-modal">
+        <h3 id="pwd-modal-title">Confirmar Contraseña</h3>
+        <p
+          id="pwd-modal-desc"
+          style="
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+          "
+        >
+          Para continuar, ingresa tu contraseña actual.
+        </p>
+
+        <!-- Generic Text Input (Hidden by default) -->
+        <input
+          type="text"
+          id="modal-text-input"
+          class="auth-input hidden"
+          placeholder="Nuevo valor"
+          style="margin-bottom: 10px"
+        />
+
+        <div class="password-wrapper">
+          <input
+            type="password"
+            id="confirm-password-input"
+            class="auth-input"
+            placeholder="Contraseña actual"
+          />
+          <button
+            class="toggle-password"
+            type="button"
+            tabindex="-1"
+            onclick="toggleAuthPassword(this)"
+          >
+            👁️
+          </button>
+        </div>
+
+        <div
+          id="new-password-container"
+          class="hidden"
+          style="margin-top: 10px"
+        >
+          <div class="password-wrapper" style="margin-bottom: 10px">
+            <input
+              type="password"
+              id="new-password-input"
+              class="auth-input"
+              placeholder="Nueva contraseña (mín 6 caracteres)"
+            />
+            <button
+              class="toggle-password"
+              type="button"
+              tabindex="-1"
+              onclick="toggleAuthPassword(this)"
+            >
+              👁️
+            </button>
+          </div>
+
+          <div class="password-wrapper">
+            <input
+              type="password"
+              id="verify-password-input"
+              class="auth-input"
+              placeholder="Repetir nueva contraseña"
+            />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-cancel-pwd" class="btn-secondary">Cancelar</button>
+          <button id="btn-confirm-pwd" class="btn-primary">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div id="logout-confirm-modal" class="modal-overlay hidden">
+      <div class="modal-content small-modal">
+        <h3>Cerrar Sesión</h3>
+        <p
+          style="
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+          "
+        >
+          ¿Estás seguro de que deseas salir?
+        </p>
+        <div class="modal-actions">
+          <button id="btn-cancel-logout-modal" class="btn-secondary">
+            Cancelar
+          </button>
+          <button id="btn-confirm-logout-modal" class="btn-danger">
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE ACCOUNT CONFIRMATION MODAL -->
+    <div id="delete-account-confirm-modal" class="modal-overlay hidden">
+      <div class="modal-content small-modal" style="border: 2px solid #ff5555">
+        <h3 style="color: #ff5555">⚠️ Última Advertencia</h3>
+        <p
+          style="
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+          "
+        >
+          Se borrará <b>todo tu progreso, estadísticas y ranking</b> para
+          siempre. Esta acción no se puede deshacer.
+        </p>
+        <div class="modal-actions">
+          <button id="btn-cancel-delete-modal" class="btn-secondary">
+            Cancelar
+          </button>
+          <button
+            id="btn-confirm-delete-modal"
+            class="btn-delete-danger"
+            style="background: #ff5555; color: white"
+          >
+            Borrar Todo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST MESSAGES -->
+    <div id="toast-container"></div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="js/home.js"></script>
+    <script type="module" src="js/auth.js"></script>
   </body>
 </html>

@@ -1073,9 +1073,32 @@ export function checkBoardCompletion() {
 
     // Delay advance
     setTimeout(() => {
+      // Timer Transition
+      gameManager.stopStageTimer();
+      gameManager.startStageTimer("sudoku");
+
       transitionToSudoku();
     }, 600);
   }
+
+  // SYNC STATE: Collect current board for persistence
+  syncJigsawState();
+  gameManager.save();
+}
+
+/**
+ * Reads the Jigsaw board and updates GameManager state
+ */
+export function syncJigsawState() {
+  const slots = Array.from(
+    boardContainer.querySelectorAll(".sudoku-chunk-slot"),
+  );
+  const placedChunks = slots.map((slot) => {
+    const content = slot.querySelector(".mini-sudoku-grid");
+    return content ? parseInt(content.dataset.chunkIndex) : -1;
+  });
+
+  gameManager.updateProgress("jigsaw", { placedChunks });
 }
 
 function clearBoardErrors() {

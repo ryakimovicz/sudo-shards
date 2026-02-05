@@ -1,6 +1,35 @@
 /* Main Menu Logic */
 import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
+import { showProfile, hideProfile } from "./profile.js";
+import { getDailySeed } from "./utils/random.js";
+import { gameManager } from "./game-manager.js";
+
+// Global UI Helpers
+window.toggleAuthPassword = function (btn) {
+  if (!btn) return;
+  try {
+    const wrapper = btn.closest(".password-wrapper");
+    const input = wrapper ? wrapper.querySelector("input") : null;
+    if (!input) return;
+
+    const isPassword = input.type === "password";
+
+    // Toggle Type
+    input.type = isPassword ? "text" : "password";
+
+    // Toggle Icon (👁️ = Show, 🙈 = Hide/Monkey)
+    btn.textContent = isPassword ? "🙈" : "👁️";
+
+    // Sync Logic for New Password -> Verify Password
+    if (input.id === "new-password-input") {
+      const verifyInput = document.getElementById("verify-password-input");
+      if (verifyInput) verifyInput.type = input.type;
+    }
+  } catch (e) {
+    console.error("Toggle error:", e);
+  }
+};
 
 export function initHome() {
   console.log("Jigsudo Home Module Loaded");
@@ -46,112 +75,127 @@ export function initHome() {
     });
   }
 
-  // Theme Logic
-  const themeToggle = document.getElementById("theme-toggle");
-  const autoThemeToggle = document.getElementById("auto-theme-toggle");
-  const manualOption = document.querySelector(".option-manual");
+  // --- Theme Logic (Segmented Control) ---
+  const themeInputs = document.querySelectorAll('input[name="theme"]');
   const body = document.body;
-  const STORAGE_KEY = "jigsudo_theme";
+  const THEME_KEY = "jigsudo_theme";
 
   // Helper: Apply visual theme
-  function applyVisualTheme(isDark) {
-    if (isDark) {
-      body.classList.add("dark-mode");
-      if (themeToggle) themeToggle.checked = true;
-    } else {
-      body.classList.remove("dark-mode");
-      if (themeToggle) themeToggle.checked = false;
-    }
-  }
-
-  // Core Logic: Load and Apply
-  function updateThemeState() {
-    const savedTheme = localStorage.getItem(STORAGE_KEY) || "auto";
-
-    if (savedTheme === "auto") {
-      // Auto Mode
-      if (autoThemeToggle) autoThemeToggle.checked = true;
-      if (themeToggle) themeToggle.disabled = true;
-      if (manualOption) manualOption.classList.add("disabled");
-
-      // Apply System Preference
+  function applyVisualTheme(theme) {
+    if (theme === "auto") {
       const systemPrefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)",
       ).matches;
-      applyVisualTheme(systemPrefersDark);
+      if (systemPrefersDark) {
+        body.classList.add("dark-mode");
+      } else {
+        body.classList.remove("dark-mode");
+      }
     } else {
-      // Manual Mode
-      if (autoThemeToggle) autoThemeToggle.checked = false;
-      if (themeToggle) themeToggle.disabled = false;
-      if (manualOption) manualOption.classList.remove("disabled");
-
-      // Apply Manual Preference
-      applyVisualTheme(savedTheme === "dark");
+      if (theme === "dark") {
+        body.classList.add("dark-mode");
+      } else {
+        body.classList.remove("dark-mode");
+      }
     }
   }
 
-  // 1. Initialize on Load
-  updateThemeState();
+  // 1. Initialize Theme on Load
+  const savedTheme = localStorage.getItem(THEME_KEY) || "auto";
+  applyVisualTheme(savedTheme);
 
-  // 2. Auto Toggle Listener
-  if (autoThemeToggle) {
-    autoThemeToggle.addEventListener("change", () => {
-      if (autoThemeToggle.checked) {
-        localStorage.setItem(STORAGE_KEY, "auto");
-      } else {
-        // When switching to manual, inherit current state
-        const isDarkCurrently = body.classList.contains("dark-mode");
-        localStorage.setItem(STORAGE_KEY, isDarkCurrently ? "dark" : "light");
-      }
-      updateThemeState();
-    });
-  }
+  // Set UI State (Radio Buttons)
+  const activeInput = document.querySelector(
+    `input[name="theme"][value="${savedTheme}"]`,
+  );
+  if (activeInput) activeInput.checked = true;
 
-  // 3. Manual Toggle Listener
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      // Only works if auto is NOT checked (which is handled by UI disabled state too)
-      if (!autoThemeToggle.checked) {
-        const isDark = themeToggle.checked;
-        localStorage.setItem(STORAGE_KEY, isDark ? "dark" : "light");
-        updateThemeState();
+  // 2. Listen for Changes
+  themeInputs.forEach((input) => {
+    input.addEventListener("change", (e) => {
+      if (e.target.checked) {
+        const newTheme = e.target.value;
+        localStorage.setItem(THEME_KEY, newTheme);
+        applyVisualTheme(newTheme);
       }
     });
-  }
+  });
 
-  // 4. System Preference Listener
+  // 3. System Preference Listener (for Auto mode)
   window
     .matchMedia("(prefers-color-scheme: dark)")
     .addEventListener("change", () => {
-      // Only react if we are in auto mode
-      if (localStorage.getItem(STORAGE_KEY) === "auto") {
-        updateThemeState();
-      }
-      if (localStorage.getItem(STORAGE_KEY) === "auto") {
-        updateThemeState();
+      if (localStorage.getItem(THEME_KEY) === "auto") {
+        applyVisualTheme("auto");
       }
     });
 
-  // 5. Quick Clear Toggle Logic
-  const confirmClearToggle = document.getElementById("confirm-clear-toggle");
-  if (confirmClearToggle) {
-    // Initialization: Check localStorage 'jigsudo_skip_clear_confirm'
-    // If 'true', it means SKIP confirmation -> Quick Clear ON (checked)
-    // If 'false' or null, it means ASK confirmation -> Quick Clear OFF (unchecked)
+  // --- Gameplay Settings ---
+
+  // 1. Confirm Clear (Positive Logic: Checked = Ask)
+  const confirmToggle = document.getElementById("confirm-clear-toggle");
+  if (confirmToggle) {
+    // Stored as "jigsudo_skip_clear_confirm": "true" (Skip) or "false" (Ask)
     const isSkipping =
       localStorage.getItem("jigsudo_skip_clear_confirm") === "true";
-    confirmClearToggle.checked = isSkipping;
 
-    // Listener
-    confirmClearToggle.addEventListener("change", () => {
-      // If Checked -> We want speed/skipping -> skip = true
-      // If Unchecked -> We want safety/asking -> skip = false
-      const wantSpeed = confirmClearToggle.checked;
+    // Toggle = "Confirmar Borrado". Checked means "Ask" (Not skipping)
+    confirmToggle.checked = !isSkipping;
+
+    confirmToggle.addEventListener("change", () => {
+      const wantConfirmation = confirmToggle.checked;
+      // If we want confirmation, skip is FALSE.
+      const shouldSkip = !wantConfirmation;
       localStorage.setItem(
         "jigsudo_skip_clear_confirm",
-        wantSpeed ? "true" : "false",
+        shouldSkip ? "true" : "false",
       );
     });
+  }
+
+  // 2. Sound Toggle
+  const soundToggle = document.getElementById("sound-toggle");
+  if (soundToggle) {
+    const soundOn = localStorage.getItem("jigsudo_sound") !== "false"; // Default ON
+    soundToggle.checked = soundOn;
+
+    soundToggle.addEventListener("change", () => {
+      const isOn = soundToggle.checked;
+      localStorage.setItem("jigsudo_sound", isOn ? "true" : "false");
+      // Update global config if available, or manager
+      // gameManager can read straight from LS or we can implement a setSound method later
+    });
+  }
+
+  // 3. Vibration Toggle (Mobile Only)
+  const vibToggle = document.getElementById("vibration-toggle");
+  const vibContainer = document.getElementById("setting-vibration-container");
+
+  // Strict check: API exists AND device is primarily touch (excludes Desktop)
+  const hasVibration = "vibrate" in navigator;
+  const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+  const showVibration = hasVibration && isTouchDevice;
+
+  if (vibContainer) {
+    if (!showVibration) {
+      // Hide on non-mobile devices
+      vibContainer.style.display = "none";
+    } else {
+      const vibOn = localStorage.getItem("jigsudo_vibration") !== "false"; // Default ON
+      vibToggle.checked = vibOn;
+
+      vibToggle.addEventListener("change", () => {
+        const isOn = vibToggle.checked;
+        localStorage.setItem("jigsudo_vibration", isOn ? "true" : "false");
+
+        // Haptic Feedback for the toggle itself
+        if (isOn && navigator.vibrate) {
+          try {
+            navigator.vibrate(20);
+          } catch (e) {}
+        }
+      });
+    }
   }
   // --- Header Info (Date & Challenge #) ---
   function updateHeaderInfo() {
@@ -286,9 +330,9 @@ export function initHome() {
   // Using direct onclick assignment to avoid listener stacking/loss
 
   // Define handler
-  const handleStart = () => {
+  const handleStart = async () => {
     if (currentMode === "daily") {
-      console.log("Starting Daily Game...");
+      console.log("Preparing Daily Game...");
 
       // Visual Feedback
       if (startBtn) {
@@ -296,41 +340,133 @@ export function initHome() {
         startBtn.disabled = true; // Prevent double-clicks
       }
 
-      import("./memory.js")
-        .then((module) => {
-          module.initMemoryGame();
-          // Note: initMemoryGame hides home, so button state reset isn't strictly needed immediately,
-          // but good practice if user comes back.
-          if (startBtn) {
-            startBtn.textContent =
-              translations[getCurrentLang()]?.btn_start || "EMPEZAR";
-            startBtn.disabled = false;
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to load Memory Game", err);
-          if (startBtn) {
-            startBtn.textContent = "Error";
-            startBtn.disabled = false;
-          }
-        });
+      try {
+        // 1. Refresh Seed & State (Ensures fresh date if tab was open)
+        await gameManager.prepareDaily();
+
+        // 2. Load Memory Game
+        const module = await import("./memory.js");
+        module.initMemoryGame();
+
+        // Note: initMemoryGame hides home, so button state reset isn't strictly needed immediately,
+        // but good practice if user comes back.
+        if (startBtn) {
+          startBtn.textContent =
+            translations[getCurrentLang()]?.btn_start || "EMPEZAR";
+          startBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error("Failed to start Memory Game", err);
+        if (startBtn) {
+          startBtn.textContent = "Error";
+          startBtn.disabled = false;
+        }
+      }
     } else {
       console.log("Starting Custom Game...");
       alert("Modo Personalizado: ¡Configura tu juego! (Próximamente)");
     }
   };
 
-  if (startBtn) {
-    startBtn.onclick = handleStart;
-  }
+  // Check if daily puzzle is already won
+  const checkDailyWin = () => {
+    try {
+      const stats = JSON.parse(
+        localStorage.getItem("jigsudo_user_stats") || "{}",
+      );
+      // ALWAYS use the actual today's seed for the button state
+      const realTodaySeed = getDailySeed();
+      const seedStr = realTodaySeed.toString();
+      const today = `${seedStr.substring(0, 4)}-${seedStr.substring(4, 6)}-${seedStr.substring(6, 8)}`;
+      return stats.history?.[today]?.status === "won";
+    } catch (e) {
+      return false;
+    }
+  };
 
-  // Enable button now that listeners are ready (if mode is valid)
-  if (currentMode === "daily" && startBtn) {
-    startBtn.disabled = false;
-  }
+  const refreshStartButton = () => {
+    if (!startBtn) return;
+    const isWon = checkDailyWin();
+
+    if (isWon && currentMode === "daily") {
+      startBtn.textContent = "¡Completado!";
+      startBtn.disabled = true;
+      startBtn.classList.add("btn-won");
+      startBtn.onclick = null;
+    } else {
+      startBtn.textContent =
+        translations[getCurrentLang()]?.btn_start || "EMPEZAR";
+      startBtn.disabled = false;
+      startBtn.classList.remove("btn-won");
+      startBtn.onclick = handleStart;
+    }
+  };
+
+  // Initial State
+  refreshStartButton();
+
+  // Re-check when coming back to the tab (midnight transition)
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refreshStartButton();
+    }
+  });
+
+  // REAL-TIME: If user stays on page, unlock exactly at midnight
+  const setupMidnightTimer = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    // Schedule refresh at midnight
+    setTimeout(() => {
+      console.log("Midnight reached! Refreshing daily game state.");
+      refreshStartButton();
+      // Schedule the next one
+      setupMidnightTimer();
+    }, msUntilMidnight + 100); // 100ms buffer
+  };
+  setupMidnightTimer();
 
   // Placeholders for other buttons
-  document.getElementById("btn-stats")?.addEventListener("click", () => {
-    alert("Estadísticas: Próximamente");
-  });
+  // Stats Button -> Profile Toggle
+  const btnStats = document.getElementById("btn-stats");
+  if (btnStats) {
+    btnStats.addEventListener("click", () => {
+      if (window.location.hash === "#profile") {
+        hideProfile();
+      } else {
+        showProfile();
+      }
+    });
+
+    // Ensure icon state matches initial load (if landing on #profile)
+    // Actual icon switching happens in profile.js _showProfileUI/_hideProfileUI
+  }
+
+  // Home Navigation (Title Click)
+  const appTitle = document.querySelector(".app-title");
+  if (appTitle) {
+    appTitle.style.cursor = "pointer";
+    appTitle.addEventListener("click", () => {
+      // 1. Close Profile
+      hideProfile();
+
+      // 2. Reset to Home (if in Game)
+      const menu = document.getElementById("menu-content");
+      const gameSection = document.getElementById("game-section");
+
+      if (menu) menu.classList.remove("hidden");
+      if (gameSection) gameSection.classList.add("hidden");
+
+      // 4. Refresh Button State (in case day changed or game was just won)
+      refreshStartButton();
+
+      // 3. Reset URL
+      window.location.hash = "";
+    });
+  }
 }

@@ -53,7 +53,7 @@ export function initLanguage() {
 function updateTexts() {
   const t = translations[currentLang];
   const jigsawMode = document
-    .getElementById("memory-game")
+    .getElementById("game-section")
     ?.classList.contains("jigsaw-mode");
 
   // 1. Text Content
@@ -92,7 +92,7 @@ function updateTexts() {
     if (tooltipDesc && t.jigsaw_help_desc)
       tooltipDesc.innerHTML = t.jigsaw_help_desc;
   } else if (
-    document.getElementById("memory-game")?.classList.contains("sudoku-mode")
+    document.getElementById("game-section")?.classList.contains("sudoku-mode")
   ) {
     const titleEl = document.querySelector(".header-title-container h2");
     if (titleEl && t.game_sudoku) titleEl.textContent = t.game_sudoku;
@@ -104,7 +104,7 @@ function updateTexts() {
     if (tooltipDesc && t.sudoku_help_desc)
       tooltipDesc.innerHTML = t.sudoku_help_desc;
   } else if (
-    document.getElementById("memory-game")?.classList.contains("peaks-mode")
+    document.getElementById("game-section")?.classList.contains("peaks-mode")
   ) {
     // Peaks Mode Override
     const titleEl = document.querySelector(".header-title-container h2");
@@ -117,7 +117,7 @@ function updateTexts() {
     if (tooltipDesc && t.peaks_help_desc)
       tooltipDesc.innerHTML = t.peaks_help_desc;
   } else if (
-    document.getElementById("memory-game")?.classList.contains("search-mode")
+    document.getElementById("game-section")?.classList.contains("search-mode")
   ) {
     // Search Mode Override
     const titleEl = document.querySelector(".header-title-container h2");
@@ -130,7 +130,7 @@ function updateTexts() {
     if (tooltipDesc && t.search_help_desc)
       tooltipDesc.innerHTML = t.search_help_desc;
   } else if (
-    document.getElementById("memory-game")?.classList.contains("code-mode")
+    document.getElementById("game-section")?.classList.contains("code-mode")
   ) {
     // Code Mode Override
     const titleEl = document.querySelector(".header-title-container h2");

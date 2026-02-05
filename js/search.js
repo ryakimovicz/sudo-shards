@@ -37,7 +37,7 @@ function renderTargets(data) {
   const existingContainer = document.getElementById("search-targets-container");
   if (existingContainer) existingContainer.remove();
 
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
 
   const container = document.createElement("div");
   container.id = "search-targets-container";
@@ -123,7 +123,7 @@ function attachSearchListeners() {
 }
 
 function startSelection(e) {
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   if (!gameSection || !gameSection.classList.contains("search-mode")) return;
 
   const cell = getTargetCell(e);
@@ -351,6 +351,11 @@ function handleFoundSequence(target) {
 
     setTimeout(() => {
       boardWrapper.classList.remove("search-win");
+
+      // Timer Transition
+      gameManager.stopStageTimer(); // End Search
+      gameManager.startStageTimer("code"); // Start Code
+
       gameManager.advanceStage(); // Advances to 'code'
       transitionToCode();
     }, 500);
@@ -385,7 +390,7 @@ function restoreFoundSequences(data) {
 export function transitionToSearch() {
   console.log("Transitioning to Number Search...");
 
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   if (!gameSection) return;
 
   // 1. Switch Mode Classes
@@ -454,7 +459,7 @@ export function provideSearchHint() {
 export function transitionToCode() {
   console.log("Transitioning to The Code...");
 
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   if (!gameSection) return;
 
   // 1. Switch Mode Classes
@@ -506,7 +511,7 @@ function triggerEasterEgg(overrideEmoji = null) {
   const emoji = overrideEmoji || (Math.random() < 0.5 ? "💜" : "❓");
   overlay.textContent = emoji;
 
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   if (gameSection) {
     gameSection.appendChild(overlay);
     // Remove after animation (2s)

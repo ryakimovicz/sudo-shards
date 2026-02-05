@@ -2,10 +2,111 @@ import { gameManager } from "./game-manager.js";
 import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
 import { transitionToPeaks } from "./peaks.js";
-
+// State
 let selectedCell = null;
 let pencilMode = false;
 let lockedNumber = null; // New State
+
+export function transitionToSudoku() {
+  console.log("Transitioning to Sudoku Stage...");
+  const lang = getCurrentLang();
+  const t = translations[lang];
+
+  // 1. Update Title
+  const titleEl = document.querySelector(".header-title-container h2");
+  if (titleEl) {
+    titleEl.style.transition = "opacity 0.5s ease";
+    titleEl.style.opacity = "0";
+    setTimeout(() => {
+      titleEl.textContent = t.game_sudoku || "Sudoku";
+      titleEl.style.opacity = "1";
+    }, 500);
+  }
+
+  // 2. Update Tooltip
+  const tooltipTitle = document.querySelector(".info-tooltip h3");
+  const tooltipDesc = document.querySelector(".info-tooltip p");
+  if (tooltipTitle && tooltipDesc) {
+    tooltipTitle.style.transition = "opacity 0.5s ease";
+    tooltipDesc.style.transition = "opacity 0.5s ease";
+    tooltipTitle.style.opacity = "0";
+    tooltipDesc.style.opacity = "0";
+    setTimeout(() => {
+      tooltipTitle.textContent = t.sudoku_help_title;
+      tooltipDesc.innerHTML = t.sudoku_help_desc;
+      tooltipTitle.style.opacity = "1";
+      tooltipDesc.style.opacity = "1";
+    }, 500);
+  }
+
+  // 3. Switch Mode
+  const gameSection = document.getElementById("game-section");
+  const sudokuControls = document.getElementById("sudoku-controls");
+
+  if (gameSection) {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        gameSection.classList.remove("jigsaw-mode");
+        gameSection.classList.add("sudoku-mode");
+
+        // CLEANUP JIGSAW STATE INTERNALLY
+        const board = document.getElementById("memory-board");
+        if (board) {
+          board.classList.remove("board-complete", "board-error");
+          // Remove leftover Jigsaw classes from slots if any (though usually fine)
+        }
+
+        if (sudokuControls) sudokuControls.classList.remove("hidden");
+
+        // Hide Collected Pieces (Performance)
+        const collectedWrapper = document.querySelector(".collected-wrapper");
+        if (collectedWrapper) collectedWrapper.style.display = "none";
+
+        // Update Title/Text instantly here so it cross-fades with the view transition
+        if (titleEl) {
+          titleEl.textContent = t.game_sudoku || "Sudoku";
+          titleEl.style.opacity = "1";
+        }
+        if (tooltipTitle && tooltipDesc) {
+          tooltipTitle.textContent = t.sudoku_help_title;
+          tooltipDesc.innerHTML = t.sudoku_help_desc;
+          tooltipTitle.style.opacity = "1";
+          tooltipDesc.style.opacity = "1";
+        }
+
+        gameManager.updateProgress("progress", { currentStage: "sudoku" });
+      });
+    } else {
+      // Fallback
+      gameSection.classList.remove("jigsaw-mode");
+      gameSection.classList.add("sudoku-mode");
+      if (sudokuControls) sudokuControls.classList.remove("hidden");
+
+      // CLEANUP BOARD STATE
+      const board = document.getElementById("memory-board");
+      if (board) {
+        board.classList.remove("board-complete", "board-error");
+      }
+
+      // Hide Collected Pieces
+      const collectedWrapper = document.querySelector(".collected-wrapper");
+      if (collectedWrapper) collectedWrapper.style.display = "none";
+
+      if (titleEl) {
+        titleEl.textContent = t.game_sudoku || "Sudoku";
+        titleEl.style.opacity = "1";
+      }
+      if (tooltipTitle && tooltipDesc) {
+        tooltipTitle.textContent = t.sudoku_help_title;
+        tooltipDesc.innerHTML = t.sudoku_help_desc;
+        tooltipTitle.style.opacity = "1";
+        tooltipDesc.style.opacity = "1";
+      }
+
+      gameManager.updateProgress("progress", { currentStage: "sudoku" });
+    }
+  }
+}
 
 export function initSudoku() {
   console.log("Initializing Sudoku Stage...");
@@ -159,7 +260,7 @@ export function initSudoku() {
 
   // Physical Keyboard Support
   document.addEventListener("keydown", (e) => {
-    const gameSection = document.getElementById("memory-game");
+    const gameSection = document.getElementById("game-section");
     if (!gameSection || !gameSection.classList.contains("sudoku-mode")) return;
 
     // Ignore if modal is open
@@ -209,65 +310,6 @@ export function initSudoku() {
       return;
     }
   });
-}
-
-export function transitionToSudoku() {
-  console.log("Transitioning to Sudoku...");
-  const lang = getCurrentLang();
-  const t = translations[lang];
-
-  const gameSection = document.getElementById("memory-game");
-  const controls = document.getElementById("sudoku-controls");
-
-  if (!gameSection || !controls) return;
-
-  // Change mode with forced reflow for smooth animation
-  gameSection.classList.remove("jigsaw-mode");
-  gameSection.classList.remove("selection-active");
-  gameSection.classList.remove("jigsaw-selection-active");
-
-  // Force reflow to capture the starting state for transitions
-  void gameSection.offsetWidth;
-
-  gameSection.classList.add("sudoku-mode");
-
-  // Show controls
-  controls.classList.remove("hidden");
-
-  // CLEANUP BOARD STATE: Remove jigsaw-related victory classes
-  const board = document.getElementById("memory-board");
-  if (board) {
-    board.classList.remove("board-complete", "board-error");
-  }
-
-  // Update header title/desc if needed via gameManager or manually
-  const headerTitle = gameSection.querySelector(".header-title-container h2");
-  if (headerTitle) {
-    headerTitle.textContent = t.game_sudoku || "Sudoku";
-  }
-
-  // Deselect any jigsaw pieces
-  document
-    .querySelectorAll(".selected")
-    .forEach((el) => el.classList.remove("selected"));
-
-  // Update Tooltip Info for Sudoku
-  const tooltipTitle = document.querySelector(".info-tooltip h3");
-  const tooltipDesc = document.querySelector(".info-tooltip p");
-
-  if (tooltipTitle && tooltipDesc) {
-    tooltipTitle.style.transition = "opacity 0.5s ease";
-    tooltipDesc.style.transition = "opacity 0.5s ease";
-    tooltipTitle.style.opacity = "0";
-    tooltipDesc.style.opacity = "0";
-
-    setTimeout(() => {
-      tooltipTitle.textContent = t.sudoku_help_title || "Sudoku";
-      tooltipDesc.innerHTML = t.sudoku_help_desc || "";
-      tooltipTitle.style.opacity = "1";
-      tooltipDesc.style.opacity = "1";
-    }, 500);
-  }
 }
 
 /* Keypad Feedback Helper */
@@ -385,7 +427,7 @@ function deselectCurrentCell() {
 
 function selectCell(cell, skipPaint = false) {
   // Guard: Only allow selection in Sudoku Mode
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   if (!gameSection || !gameSection.classList.contains("sudoku-mode")) {
     return;
   }
@@ -864,7 +906,7 @@ function promoteSingleCandidatesGlobal() {
 }
 
 function validateBoard() {
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   if (!gameSection || !gameSection.classList.contains("sudoku-mode")) return;
 
   const board = document.getElementById("memory-board");
@@ -905,6 +947,10 @@ function validateBoard() {
   if (!isFull) {
     if (missingCells < 5)
       console.log(`Sudoku: ${missingCells} cells remaining...`);
+
+    // SYNC STATE: Collect current board for persistence
+    syncSudokuState();
+    gameManager.save();
     return;
   }
 
@@ -915,8 +961,6 @@ function validateBoard() {
     );
     return;
   }
-
-  console.log("Sudoku Board Full - Validating Matrix...");
 
   console.log("Sudoku Board Full - Validating Matrix...");
 
@@ -945,6 +989,37 @@ function validateBoard() {
   }
 }
 
+/**
+ * Reads the board from DOM and updates GameManager state
+ */
+export function syncSudokuState() {
+  const board = document.getElementById("memory-board");
+  if (!board) return;
+
+  const slots = Array.from(board.querySelectorAll(".sudoku-chunk-slot"));
+  const currentBoard = Array(9)
+    .fill()
+    .map(() => Array(9).fill(0));
+
+  slots.forEach((slot, slotIndex) => {
+    const cells = Array.from(slot.querySelectorAll(".mini-cell"));
+    cells.forEach((cell, localIndex) => {
+      const row = Math.floor(slotIndex / 3) * 3 + Math.floor(localIndex / 3);
+      const col = (slotIndex % 3) * 3 + (localIndex % 3);
+      const val = cell.textContent.trim();
+
+      // If it has notes, it's effectively 0 in currentBoard logic
+      if (val && !cell.classList.contains("has-notes")) {
+        currentBoard[row][col] = parseInt(val) || 0;
+      } else {
+        currentBoard[row][col] = 0;
+      }
+    });
+  });
+
+  gameManager.updateProgress("sudoku", { currentBoard });
+}
+
 function handleSudokuWin() {
   // Deselect any active cell so it doesn't carry over to Peaks
   deselectCurrentCell();
@@ -956,6 +1031,10 @@ function handleSudokuWin() {
     // Advance Stage after animation
     setTimeout(() => {
       board.classList.remove("board-complete");
+
+      // Timer Transition
+      gameManager.stopStageTimer(); // End Sudoku
+      gameManager.startStageTimer("peaks"); // Start Peaks
 
       // Transition to Peaks
       transitionToPeaks();
@@ -974,66 +1053,6 @@ function handleSudokuWin() {
   }
 }
 
-export function provideHint() {
-  console.log("provideHint called");
-  const gameSection = document.getElementById("memory-game");
-  if (!gameSection || !gameSection.classList.contains("sudoku-mode")) return;
-
-  const board = document.getElementById("memory-board");
-  const slots = Array.from(board.querySelectorAll(".sudoku-chunk-slot"));
-
-  if (slots.length !== 9) return;
-
-  // Use Dynamic Solution (Symmetric)
-  const solution = gameManager.getTargetSolution();
-
-  // Find the first block that is not fully correct
-  const targetSlot = slots.find((slot) => {
-    const slotIndex = parseInt(slot.dataset.slotIndex);
-    const cells = Array.from(slot.querySelectorAll(".mini-cell"));
-
-    // Check if ANY cell in this slot is empty or incorrect
-    return cells.some((cell, localIndex) => {
-      const row = Math.floor(slotIndex / 3) * 3 + Math.floor(localIndex / 3);
-      const col = (slotIndex % 3) * 3 + (localIndex % 3);
-      const val = cell.textContent.trim();
-
-      const isIncorrect =
-        cell.classList.contains("user-filled") &&
-        parseInt(val) !== solution[row][col];
-      const isEmpty = val === "" || cell.classList.contains("has-notes");
-
-      return isEmpty || isIncorrect;
-    });
-  });
-
-  if (targetSlot) {
-    const slotIndex = parseInt(targetSlot.dataset.slotIndex);
-    const cells = Array.from(targetSlot.querySelectorAll(".mini-cell"));
-
-    // Fill the ENTIRE block
-    cells.forEach((cell, localIndex) => {
-      const row = Math.floor(slotIndex / 3) * 3 + Math.floor(localIndex / 3);
-      const col = (slotIndex % 3) * 3 + (localIndex % 3);
-      const correctVal = solution[row][col];
-
-      // Only update if not already correct (avoid unnecessary DOM writes)
-      const currentVal = cell.textContent.trim();
-      if (currentVal != correctVal) {
-        cell.textContent = correctVal;
-        cell.classList.add("user-filled");
-        cell.classList.remove("has-notes", "error");
-
-        // Clean up notes grid if any
-        const notesGrid = cell.querySelector(".notes-grid");
-        if (notesGrid) notesGrid.remove();
-      }
-    });
-
-    // Trigger validation to check for global win
-    validateBoard();
-  }
-}
 // Long Press Clear Board Logic
 function initiateClearBoard() {
   const skipConfirm =
@@ -1061,6 +1080,9 @@ function confirmClearBoard() {
   const dontAsk = document.getElementById("modal-dont-ask");
   if (dontAsk && dontAsk.checked) {
     localStorage.setItem("jigsudo_skip_clear_confirm", "true");
+    // Sync with settings menu (Logic: Checked = Ask, Unchecked = Skip)
+    const toggle = document.getElementById("confirm-clear-toggle");
+    if (toggle) toggle.checked = false;
   }
 
   clearBoard();
@@ -1109,5 +1131,88 @@ function clearBoard() {
   if (changesMade) {
     console.log("Board cleared by user.");
     validateBoard(); // Remove any global error states
+  }
+}
+
+// Helper for Debug/Hint Button
+// Helper for Debug/Hint Button
+export function provideHint() {
+  console.log("Debug: Solving Sudoku (Smart 3x3)...");
+  // Use the TRANSFORMED solution, not the raw one from state!
+  // This ensures we respect Jigsaw variations (LR, TB, HV)
+  const solution = gameManager.getTargetSolution();
+  if (!solution) {
+    console.error("No solution found via gameManager!");
+    return;
+  }
+
+  const board = document.getElementById("memory-board");
+  if (!board) return;
+
+  const slots = Array.from(board.querySelectorAll(".sudoku-chunk-slot"));
+
+  /* LOGIC: Find FIRST slot that is not fully correct */
+  const targetSlot = slots.find((slot) => {
+    const slotIndex = parseInt(slot.dataset.slotIndex);
+    const cells = Array.from(slot.querySelectorAll(".mini-cell"));
+
+    // Check if ANY cell in this slot is empty or incorrect
+    return cells.some((cell, localIndex) => {
+      const row = Math.floor(slotIndex / 3) * 3 + Math.floor(localIndex / 3);
+      const col = (slotIndex % 3) * 3 + (localIndex % 3);
+      const val = cell.textContent.trim();
+      const correctVal = solution[row][col];
+
+      const isIncorrect =
+        cell.classList.contains("user-filled") && parseInt(val) !== correctVal;
+      // Also strictly check against solution for pre-filled to be safe, though they should be correct.
+      // Actually pre-filled match solution.
+
+      const isEmpty = val === "" || cell.classList.contains("has-notes");
+
+      return isEmpty || isIncorrect;
+    });
+  });
+
+  if (targetSlot) {
+    const slotIndex = parseInt(targetSlot.dataset.slotIndex);
+    const cells = Array.from(targetSlot.querySelectorAll(".mini-cell"));
+
+    console.log(`Debug: Fixing Slot ${slotIndex}...`);
+
+    // Fill the ENTIRE block
+    cells.forEach((cell, localIndex) => {
+      const row = Math.floor(slotIndex / 3) * 3 + Math.floor(localIndex / 3);
+      const col = (slotIndex % 3) * 3 + (localIndex % 3);
+      const correctVal = solution[row][col];
+
+      // Only update if not already correct (avoid unnecessary DOM writes)
+      // Check content AND class state
+      const currentVal = cell.textContent.trim();
+      if (
+        currentVal != correctVal ||
+        cell.classList.contains("has-notes") ||
+        cell.classList.contains("error")
+      ) {
+        cell.textContent = correctVal;
+        cell.classList.add("user-filled");
+        cell.classList.remove(
+          "has-notes",
+          "error",
+          "selected-cell",
+          "highlight-match",
+        );
+
+        // Clean up notes grid if any
+        const notesGrid = cell.querySelector(".notes-grid");
+        if (notesGrid) notesGrid.remove();
+      }
+    });
+
+    // Validate immediately
+    validateBoard();
+  } else {
+    console.log("Debug: Board appears complete.");
+    validateBoard();
   }
 }

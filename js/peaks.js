@@ -21,6 +21,8 @@ export function initPeaks() {
   foundTargets = 0;
   currentHintRow = 0; // Reset hint progress
   updateErrorCounter();
+  // Sync Reset
+  gameManager.updateProgress("stats", { peaksErrors: 0 });
   updateRemainingCounter();
 
   // 2. Show Stats
@@ -52,7 +54,7 @@ export function initPeaks() {
 export function transitionToPeaks() {
   console.log("Transitioning to Peaks & Valleys...");
 
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   const sudokuControls = document.getElementById("sudoku-controls");
 
   if (!gameSection) return;
@@ -154,7 +156,7 @@ function updatePeaksTooltips() {
 }
 
 function handleBoardClick(e) {
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   if (!gameSection || !gameSection.classList.contains("peaks-mode")) return;
 
   const cell = e.target.closest(".mini-cell");
@@ -202,12 +204,19 @@ function handleCorrectClick(cell, type) {
 
   foundTargets++;
   updateRemainingCounter();
+
+  // SYNC STATE: Save progress
+  gameManager.save();
+
   checkPeaksVictory();
 }
 
 function handleIncorrectClick(cell) {
   peaksErrors++;
   updateErrorCounter();
+
+  // Sync with GameManager State
+  gameManager.updateProgress("stats", { peaksErrors: peaksErrors });
 
   // Shake animation on the NUMBER only
   const numSpan = cell.querySelector(".curr-number");
@@ -248,6 +257,11 @@ function checkPeaksVictory() {
     // Trigger Search Stage...
     setTimeout(() => {
       if (board) board.classList.remove("board-complete");
+
+      // Timer Transition
+      gameManager.stopStageTimer(); // End Peaks
+      gameManager.startStageTimer("search"); // Start Search
+
       transitionToSearch();
       // Also advance logic state
       gameManager.advanceStage("search");

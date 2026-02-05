@@ -52,6 +52,18 @@ export const translations = {
     profile_settings: "Ajustes",
     profile_quick_clear: "Borrado Rápido",
     profile_language: "Idioma",
+    settings_account: "Cuenta",
+    settings_title: "Configuración",
+    settings_appearance: "Apariencia",
+    settings_gameplay: "Jugabilidad",
+    // New Keys
+    theme_light: "Claro",
+    theme_auto: "Auto",
+    theme_dark: "Oscuro",
+    setting_sound: "Sonido",
+    setting_vibration: "Vibración",
+    setting_confirm_clear: "Confirmar Borrado",
+    greeting_prefix: "Hola,",
 
     // Footer
     footer_rights: "© 2026 Román Yakimovicz",
@@ -105,6 +117,20 @@ export const translations = {
       "Memoriza la secuencia numérica y repítela en las celdas correctas.<br>La secuencia crece en cada turno.",
     code_level_local: "Nivel",
     code_win: "¡CÓDIGO DESCIFRADO!",
+
+    // Authentication
+    login_title: "Cuenta Jigsudo",
+    btn_login: "Iniciar Sesión",
+    btn_login_menu: "Iniciar Sesión",
+    btn_logout: "Cerrar Sesión",
+    btn_change_password: "Cambiar Contraseña",
+    btn_change_username: "Cambiar Nombre",
+    btn_delete_account: "Eliminar Cuenta",
+    btn_register: "Crear Cuenta",
+    link_register: "Regístrate",
+    link_login: "Inicia Sesión",
+    auth_success: "¡Bienvenido!",
+    auth_logout: "Sesión cerrada",
   },
   en: {
     app_title: "JIGSUDO",
@@ -189,6 +215,26 @@ export const translations = {
     modal_clear_title: "Reset Board",
     modal_clear_body:
       "Are you sure you want to clear all numbers from the board?",
+    settings_title: "Settings",
+    settings_account: "Account",
+    settings_appearance: "Appearance",
+    settings_gameplay: "Gameplay",
+    // New Keys
+    theme_light: "Light",
+    theme_auto: "Auto",
+    theme_dark: "Dark",
+    setting_sound: "Sound",
+    setting_vibration: "Vibration",
+    setting_confirm_clear: "Confirm Clear",
+    greeting_prefix: "Hi,",
+    // New Keys
+    theme_light: "Light",
+    theme_auto: "Auto",
+    theme_dark: "Dark",
+    setting_sound: "Sound",
+    setting_vibration: "Vibration",
+    setting_confirm_clear: "Confirm Clear",
+    greeting_prefix: "Hello,",
     modal_dont_ask: "Don't ask again",
     btn_cancel: "Cancel",
     btn_clear: "Clear All",
@@ -209,5 +255,25 @@ export const translations = {
       "Memorize the number sequence and repeat it on the correct cells.<br>The sequence grows each turn.",
     code_level_local: "Level",
     code_win: "CODE CRACKED!",
+
+    // Authentication
+    login_title: "Jigsudo Account",
+    btn_login: "Log In",
+    btn_login_menu: "Log In",
+    btn_logout: "Log Out",
+    btn_change_password: "Change Password",
+    btn_change_username: "Change Username",
+    btn_delete_account: "Delete Account",
+    btn_register: "Create Account",
+    link_register: "Sign Up",
+    link_login: "Log In",
+    auth_success: "Welcome!",
+    auth_logout: "Logged out",
+
+    // Profile
+    profile_title_page: "My Profile",
+    btn_view_profile: "View Profile",
+    stat_days: "Levels Completed",
+    stat_streak: "Current Streak",
   },
 };

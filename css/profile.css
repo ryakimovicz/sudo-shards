@@ -1,0 +1,691 @@
+/* Profile Page Styles v2 */
+#profile-section {
+  display: flex;
+  flex-direction: column;
+  position: fixed; /* Overlay but constrained */
+  top: var(--header-height); /* Below Main Header */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 29000; /* Below Main Header (30000) */
+  background-color: var(--bg-paper);
+  overflow-y: auto;
+  margin-top: 0;
+}
+
+/* Custom Scrollbar */
+#profile-section::-webkit-scrollbar {
+  width: 10px;
+}
+
+#profile-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#profile-section::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  border: 3px solid transparent; /* Padding trick */
+  background-clip: content-box;
+}
+
+#profile-section::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode #profile-section::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode #profile-section::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+#profile-section .scrollable-content {
+  padding: 20px;
+  max-width: 800px; /* Increased from 600px to fit side-by-side panels */
+  margin: 0 auto;
+  width: 100%;
+  flex: 1; /* Take remaining space */
+  /* Overflow moved to parent */
+  padding-bottom: 80px; /* Space for footer/safe area */
+}
+
+/* Titles */
+.section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 24px 0 12px;
+}
+
+/* 1. Identity Card */
+.identity-card {
+  display: flex;
+  flex-direction: column; /* Stack vertically for focus */
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  gap: 16px;
+  border: 1px solid var(--glass-border);
+  background: white; /* Clean paper look */
+
+  /* Override glass-panel defaults */
+  opacity: 1 !important;
+  transform: none !important;
+  min-height: auto !important;
+  position: relative !important;
+  pointer-events: auto !important;
+}
+
+.profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  /* Light Mode: Use a lighter gray/blue (inverted from original dark slate) */
+  background-color: #e2e8f0;
+  color: var(--text-main); /* Dark text */
+  font-family: var(--font-paper);
+  font-size: 2.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.profile-identity h2 {
+  font-size: 1.8rem;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* Rank Display Styles */
+.rank-display {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px; /* Constrain width */
+  margin-top: 8px;
+}
+
+.rank-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.rank-icon {
+  font-size: 1.8rem;
+}
+
+.rank-title {
+  font-family: var(--font-header); /* Outfit */
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.rank-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.rank-progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.1); /* Track */
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Dark mode track */
+[data-theme="dark"] .rank-progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rank-progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--primary-main),
+    var(--secondary-main)
+  );
+  border-radius: 10px;
+  transition: width 0.5s ease-out;
+}
+
+.rank-details-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.rank-level {
+  font-weight: 700;
+  color: var(--primary-main);
+}
+
+/* 2. Stats Grid */
+/* 2. Stats Grid */
+.stats-grid {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.stats-grid.overview {
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 24px;
+}
+
+.stats-grid.details {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Detail Box (Mini Card) */
+.stat-detail-box {
+  background: var(--bg-paper);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.detail-value {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.detail-multi {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-sub {
+  font-size: 0.7rem;
+  color: var(--error);
+}
+
+.stat-box {
+  background: var(--bg-paper);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  font-family: var(--font-main);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* 3. Heatmap */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 12px;
+}
+
+.calendar-header .section-title {
+  margin: 0; /* Override default margin */
+}
+
+/* Base button is already define, add small var if needed... using icon-btn style from header */
+.icon-btn-small {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+/* Calendar Heatmap Container */
+.calendar-heatmap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center;
+  padding: 0 16px 16px 16px !important;
+  border-radius: 16px;
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--paper-shadow); /* Add shadow */
+
+  /* Force Visibility */
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  position: relative !important; /* Prevent absolute overlap */
+
+  width: 100%;
+  margin: 0 !important;
+}
+
+/* Daily Stats Container */
+.daily-time-report {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center;
+  padding: 0 16px 16px 16px !important; /* Zero top padding to match Calendar */
+  border-radius: 16px;
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--paper-shadow); /* Add shadow */
+
+  /* Force Visibility */
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  position: relative !important; /* Prevent absolute overlap */
+
+  width: 100%;
+  margin: 0 !important;
+}
+
+.calendar-header {
+  margin-top: 12px; /* Explicit top spacing */
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 36px); /* Fixed Emoji Size */
+  justify-content: center;
+  gap: 3px; /* Tightest gap */
+  width: 100%;
+  margin: 10px 0;
+  /* Fixed Height for 6 weeks (7 rows * 36px + 6 gaps * 3px = 270px) */
+  min-height: 270px;
+  align-content: start; /* Pack rows at top, don't spread */
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  min-height: 36px;
+  border-radius: 3px; /* Sharp "Pixel" corners */
+  background: #cbd5e1; /* Solid Opaque Gray (Slate 300) */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #64748b; /* Muted Text */
+  font-weight: 700;
+  border: none;
+  position: relative;
+}
+
+.calendar-day.empty {
+  background: transparent; /* Filler for start of month */
+}
+
+/* Header Day Style */
+.calendar-day.header-day {
+  background: transparent !important;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  border-radius: 0;
+  cursor: default;
+}
+
+/* Status Colors - Solid Blocks with superimposed text */
+.calendar-day.win {
+  background: #4ade80; /* Green */
+  color: #064e3b; /* Dark Green Text */
+}
+
+.calendar-day.loss {
+  background: #facc15; /* Yellow */
+  color: #713f12; /* Dark Brown Text */
+}
+
+/* 4. Footer Info */
+.profile-footer-info {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* Dark Mode Overrides */
+body.dark-mode .identity-card,
+body.dark-mode .calendar-heatmap {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .stat-box {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .calendar-day {
+  background: #334155; /* Solid Opaque Dark Gray (Slate 700) */
+  color: #94a3b8;
+  border: none;
+}
+
+body.dark-mode .calendar-day.win {
+  background: #22c55e;
+  color: white; /* White text on Green */
+}
+
+body.dark-mode .calendar-day.loss {
+  background: #ca8a04; /* Dark Gold */
+  color: white; /* White text on Gold */
+}
+
+#profile-section.hidden {
+  display: none;
+}
+
+/* Inverted Avatar for Dark Mode */
+body.dark-mode .profile-avatar-large {
+  background-color: rgba(0, 0, 0, 0.25) !important;
+  color: #e2e8f0;
+}
+
+/* Update Calendar Header for Vertical Layout */
+/* Update Calendar Header for Integrated Layout */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-bottom: 2px; /* Reduced from 8px */
+  margin-bottom: 0px; /* Reduced from 4px */
+}
+
+/* Update Calendar Grid spacing */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 36px);
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  margin: 10px 0 10px 0;
+}
+
+/* Ensure Profile Scrolls */
+
+/* History Grid (Calendar + Weekday Stats) */
+.history-grid {
+  display: flex !important;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 600px; /* Match other containers */
+  margin: 0 auto;
+}
+
+/* Weekday Stats Container */
+.daily-time-report {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  border-radius: 16px;
+  background-color: var(--bg-card);
+  width: 100%;
+}
+
+/* New Daily Stats Grid */
+.daily-time-chart {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.daily-stat-card {
+  background: var(--bg-paper);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+
+/* Center the last item (Saturday) */
+.daily-stat-card:last-child {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: 50%; /* Or auto/100% depending on preference */
+}
+
+.daily-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* 3-Column Metrics Row */
+.daily-metrics-grid {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  gap: 2px;
+}
+
+.metric-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.metric-icon {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-bottom: 2px;
+}
+
+.metric-val {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-color);
+  white-space: nowrap;
+}
+
+/* Desktop Layout */
+@media (min-width: 768px) {
+  .history-grid {
+    flex-direction: row;
+    align-items: flex-start;
+    max-width: 100%; /* Use available space */
+  }
+
+  .calendar-heatmap,
+  .weekday-stats {
+    flex: 1;
+    max-width: none; /* Reset individual max-widths */
+    /* height: 100%; Removed to prevent stretching */
+  }
+
+  /* Reset calendar top margin logic if it conflicts */
+  .calendar-heatmap {
+    margin: 0 !important;
+  }
+}
+
+/* History Row Grid */
+.stats-grid.history-grid-row {
+  grid-template-columns: 1fr; /* Mobile: Stacked */
+}
+
+@media (min-width: 768px) {
+  .stats-grid.history-grid-row {
+    grid-template-columns: repeat(
+      2,
+      1fr
+    ); /* Desktop: 50% Cal / 50% Stats (Equal Split) */
+  }
+}
+
+/* FIX: Centered Settings Title */
+#profile-section .section-title[data-i18n="settings_title"] {
+  text-align: center;
+  margin-top: 32px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  padding: 8px 0;
+  border-radius: 8px;
+}
+
+/* FIX: Centered & Narrow Account Buttons */
+.profile-actions {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center; /* Center children horizontally */
+  gap: 8px; /* Consistent spacing */
+}
+
+/* Base Button Style for Profile */
+.profile-actions button {
+  width: 90% !important;
+  max-width: 280px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  /* Aesthetics */
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-family: var(--font-header);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.profile-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.profile-actions button:active {
+  transform: translateY(0);
+}
+
+/* Specific Styles */
+
+/* Change Password & Username - "Ghost" / Secondary Primary */
+#btn-profile-change-pw,
+#btn-profile-change-name {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+}
+#btn-profile-change-pw:hover,
+#btn-profile-change-name:hover {
+  border-color: var(--primary-main);
+  color: var(--primary-main);
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+/* Logout - Soft Danger/Warning */
+#btn-profile-logout {
+  background: #dc2626; /* Red 600 - Better contrast for white text */
+  border: none;
+  color: white;
+  margin-top: 0 !important; /* Extra spacing */
+}
+#btn-profile-logout:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Delete - Minimalist Danger */
+#btn-profile-delete {
+  margin-top: 24px !important; /* Push to bottom */
+  background: transparent !important;
+  border: 1px dashed #dc2626 !important; /* Matched Red 600 */
+  color: #dc2626 !important; /* Matched Red 600 */
+  opacity: 0.8;
+  font-size: 0.8rem !important;
+  padding: 10px !important;
+  box-shadow: none !important;
+}
+#btn-profile-delete:hover {
+  opacity: 1;
+  background: rgba(220, 38, 38, 0.05) !important;
+}
+
+/* Dark Mode Adjustments */
+body.dark-mode #btn-profile-change-pw {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode #btn-profile-change-pw:hover {
+  border-color: var(--primary-light);
+  color: var(--primary-light);
+}
+
+/* Logout Button Text Color Override (User Request) */
+body.dark-mode #btn-profile-logout {
+  background: #7f1d1d; /* Deep Red (Red 900) */
+  color: #e2e8f0; /* Off-white text */
+  border: 1px solid #b91c1c; /* Slightly lighter border */
+}
+
+body.dark-mode #btn-profile-logout:hover {
+  background: #991b1b;
+  border-color: #ef4444;
+}

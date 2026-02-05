@@ -15,7 +15,7 @@ body.dark-mode {
   --card-text: #ffffff;
 }
 
-#memory-game {
+#game-section {
   width: 100%;
   flex: 1; /* Take remaining space */
   display: flex;
@@ -252,6 +252,7 @@ body.dark-mode .memory-timer {
 
 /* Board Styling */
 .memory-board {
+  view-transition-name: game-board;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
@@ -529,7 +530,7 @@ body.dark-mode .memory-card-back {
 /* Mobile Layout */
 @media (max-width: 768px) {
   /* Override global container padding to regain vertical space */
-  #memory-game {
+  #game-section {
     padding: 0;
     padding-top: var(--header-height); /* Only pad for the fixed header */
     padding-bottom: var(--footer-height); /* Zero safety, sit flush */

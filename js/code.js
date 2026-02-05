@@ -79,7 +79,7 @@ export function initCode() {
   attachCodeListeners();
 
   // Mark section for Debug Button detection
-  const memSection = document.getElementById("memory-game");
+  const memSection = document.getElementById("game-section");
   if (memSection) memSection.classList.add("code-mode");
 }
 
@@ -247,6 +247,9 @@ function handleCodeClick(e) {
   if (val === expectedVal) {
     stepInLevel++;
 
+    // SYNC STATE: Save progress
+    gameManager.save();
+
     // Check if we hit the limit of the CURRENT TARGET level
     if (stepInLevel >= currentLevel) {
       // Check absolute victory (Level 7 / Sequence Max)
@@ -328,7 +331,8 @@ function winGame() {
   console.log("CODE CRACKED! Starting Victory Animation...");
 
   // 1. STOP TIMER & ANIMATIONS IMMEDIATELY
-  stopTimer();
+  stopTimer(); // Global Wall Clock
+  gameManager.stopStageTimer(); // End Code Stage
   stopAnimation();
   clearIdleTimer();
 
@@ -342,7 +346,7 @@ function winGame() {
   }
 
   const values = sequence.slice(0, 7); // Use up to 7, or all
-  const gameSection = document.getElementById("memory-game");
+  const gameSection = document.getElementById("game-section");
   const board = document.getElementById("memory-board");
 
   // Create Animation Container (Centered)
@@ -527,6 +531,7 @@ function finalizeVictory() {
   console.log("Victory Animation Complete");
   // Ensure "Game Complete" state is saved
   gameManager.updateProgress("code", { completed: true });
+  gameManager.recordWin(); // <--- Record Stats
 }
 
 function updateStatusDisplay() {

@@ -141,7 +141,7 @@ export class GameManager {
       meta: {
         seed: meta.seed || this.currentSeed,
         version: meta.version || "unknown", // Capture version from JSON
-        startedAt: new Date().toISOString(),
+        startedAt: null, // Timer starts only when user clicks 'Play'
         lastPlayed: new Date().toISOString(),
         generatedBy: "static-server",
       },
@@ -739,11 +739,17 @@ export class GameManager {
 
   // Called when stage changes in main loop (needs hook)
   recordStageTime(stage, durationMs) {
-    if (!this.state) return;
+    if (!this.state) {
+      console.error("[Timer] Stats Error: State is null in recordStageTime");
+      return;
+    }
     if (!this.state.meta.stageTimes) this.state.meta.stageTimes = {};
 
     const current = this.state.meta.stageTimes[stage] || 0;
     this.state.meta.stageTimes[stage] = current + durationMs;
+    console.log(
+      `[Timer] Saved ${stage}: +${durationMs}ms (Total: ${this.state.meta.stageTimes[stage]}ms)`,
+    );
     this.save();
   }
 
@@ -765,264 +771,271 @@ export class GameManager {
   }
 
   // Updated to write to Global Storage
+  // Updated to write to Global Storage
   async recordWin() {
-    // 1. Load Global Stats
-    let stats = this.stats ||
-      JSON.parse(localStorage.getItem("jigsudo_user_stats")) || {
-        totalPlayed: 0,
-        wins: 0,
-        currentStreak: 0,
-        maxStreak: 0,
-        lastPlayedDate: null, // YYYY-MM-DD
-        currentRP: 0,
-        history: {},
-        lastDecayCheck: null,
-        // Optimized Cache Stats
-        bestTime: Infinity,
-        bestScore: 0, // Raw Score (0-100k) or Unified? Let's use Unified (0-10) for UI display, or Raw for precision? User said 0-10.
-        // Wait, bestScore calculation depends on if we store Raw or Unified.
-        // Profile calculates unified from max(raw).
-        // Let's store RAW max to be safe/consistent with daily score calculation, converting at view time if needed, OR store unified float.
-        // User request: "bestScore (float): ... (0-10)". Okay, so we store the 0-10 value.
-        // But recordWin gives raw dailyScore. We must convert using calculateRP.
-        totalTimeAccumulated: 0,
-        totalScoreAccumulated: 0, // Sum of unified RP? Or Sum of Raw? Sum of Unified is better for "Average Score: 9.5"
-        totalPeaksErrorsAccumulated: 0,
-        stageTimesAccumulated: {
-          memory: 0,
-          jigsaw: 0,
-          sudoku: 0,
-          peaks: 0,
-          search: 0,
-          code: 0,
-        },
-        stageWinsAccumulated: {
-          memory: 0,
-          jigsaw: 0,
-          sudoku: 0,
-          peaks: 0,
-          search: 0,
-          code: 0,
-        },
-        weekdayStatsAccumulated: {
-          0: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
-          1: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
-          2: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
-          3: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
-          4: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
-          5: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
-          6: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
-        },
-      };
+    try {
+      // 1. Load Global Stats
+      let stats = this.stats ||
+        JSON.parse(localStorage.getItem("jigsudo_user_stats")) || {
+          totalPlayed: 0,
+          wins: 0,
+          currentStreak: 0,
+          maxStreak: 0,
+          lastPlayedDate: null, // YYYY-MM-DD
+          currentRP: 0,
+          history: {},
+          lastDecayCheck: null,
+          // Optimized Cache Stats
+          bestTime: Infinity,
+          bestScore: 0,
+          totalTimeAccumulated: 0,
+          totalScoreAccumulated: 0,
+          totalPeaksErrorsAccumulated: 0,
+          stageTimesAccumulated: {
+            memory: 0,
+            jigsaw: 0,
+            sudoku: 0,
+            peaks: 0,
+            search: 0,
+            code: 0,
+          },
+          stageWinsAccumulated: {
+            memory: 0,
+            jigsaw: 0,
+            sudoku: 0,
+            peaks: 0,
+            search: 0,
+            code: 0,
+          },
+          weekdayStatsAccumulated: {
+            0: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
+            1: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
+            2: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
+            3: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
+            4: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
+            5: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
+            6: { sumTime: 0, sumErrors: 0, sumScore: 0, count: 0 },
+          },
+        };
 
-    // Use seed to determine the date (handles midnight crossing)
-    const seedStr = this.currentSeed.toString();
-    const today = `${seedStr.substring(0, 4)}-${seedStr.substring(4, 6)}-${seedStr.substring(6, 8)}`;
+      // SAFETY NET: Ensure nested objects exist if loading from partial corrupted/legacy storage
+      if (!stats.history) stats.history = {};
+      if (!stats.stageWinsAccumulated) stats.stageWinsAccumulated = {};
+      if (!stats.weekdayStatsAccumulated) stats.weekdayStatsAccumulated = {};
 
-    // Check if already won today
-    if (stats.history[today] && stats.history[today].status === "won") {
-      console.log("Already won today. Stats not incremented.");
-      return;
-    }
+      // Use seed to determine the date (handles midnight crossing)
+      const seedStr = this.currentSeed.toString();
+      const today = `${seedStr.substring(0, 4)}-${seedStr.substring(4, 6)}-${seedStr.substring(6, 8)}`;
 
-    console.log("🏆 RECORDING GLOBAL WIN!");
-
-    // Update Counters
-    stats.totalPlayed = (stats.totalPlayed || 0) + 1;
-    stats.wins = (stats.wins || 0) + 1;
-
-    // Streak Logic
-    const last = stats.lastPlayedDate;
-    if (last) {
-      const lastDate = new Date(last);
-      const currDate = new Date(today);
-      // Zero time components for safety
-      lastDate.setHours(0, 0, 0, 0);
-      currDate.setHours(0, 0, 0, 0);
-
-      const diffTime = currDate - lastDate;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 1) {
-        stats.currentStreak = (stats.currentStreak || 0) + 1;
-      } else if (diffDays > 1) {
-        stats.currentStreak = 1; // Broken
+      // Check if already won today
+      if (stats.history[today] && stats.history[today].status === "won") {
+        console.log("Already won today. UPDATING ANYWAY (DEBUG FIX).");
+        // return; // DISABLED: Allow overwriting for verification of fix
       }
-    } else {
-      stats.currentStreak = 1;
-    }
 
-    if (stats.currentStreak > (stats.maxStreak || 0)) {
-      stats.maxStreak = stats.currentStreak;
-    }
+      console.log("🏆 RECORDING GLOBAL WIN!");
 
-    // SCORING (Bonus Only)
-    const startStr = this.state.meta.startedAt;
-    const totalTimeMs = startStr
-      ? Date.now() - new Date(startStr).getTime()
-      : 0;
-    const totalSeconds = Math.floor(totalTimeMs / 1000);
+      // Update Counters
+      stats.totalPlayed = (stats.totalPlayed || 0) + 1;
+      stats.wins = (stats.wins || 0) + 1;
 
-    // Get Errors (Peaks) - tracking
-    const peaksErrors = this.state.stats?.peaksErrors || 0;
+      // Streak Logic
+      const last = stats.lastPlayedDate;
+      if (last) {
+        const lastDate = new Date(last);
+        const currDate = new Date(today);
+        lastDate.setHours(0, 0, 0, 0);
+        currDate.setHours(0, 0, 0, 0);
 
-    // 1. Calculate Time-Based Bonus (Linear 24h Decay)
-    const { calculateTimeBonus } = await import("./ranks.js");
-    const timeBonus = calculateTimeBonus(totalSeconds);
+        const diffTime = currDate - lastDate;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    console.log(
-      `[Score] Time: ${totalSeconds}s -> Bonus: ${timeBonus}/${SCORING.MAX_BONUS}`,
-    );
+        if (diffDays === 1) {
+          stats.currentStreak = (stats.currentStreak || 0) + 1;
+        } else if (diffDays > 1) {
+          stats.currentStreak = 1; // Broken
+        }
+      } else {
+        stats.currentStreak = 1;
+      }
 
-    // 2. Calculate Penalties
-    const penaltyPoints = peaksErrors * SCORING.ERROR_PENALTY_RP;
+      if (stats.currentStreak > (stats.maxStreak || 0)) {
+        stats.maxStreak = stats.currentStreak;
+      }
 
-    // 3. Final Calculation
-    // Total Gain Today = Fixed Points (4.0) + TimeBonus - Penalties
-    // We already added Fixed Points to currentRP incrementally.
-    // Now we add netChange.
+      // SCORING (Bonus Only)
+      const startStr = this.state.meta.startedAt;
+      const totalTimeMs = startStr
+        ? Date.now() - new Date(startStr).getTime()
+        : 0;
+      const totalSeconds = Math.floor(totalTimeMs / 1000);
 
-    let netChange = timeBonus - penaltyPoints;
+      // Get Errors (Peaks) - tracking
+      const peaksErrors = this.state.stats?.peaksErrors || 0;
 
-    // Store RAW precision for Leaderboards
-    // netChange = Number(netChange.toFixed(2));
+      // 1. Calculate Time-Based Bonus (Linear 24h Decay)
+      const { calculateTimeBonus } = await import("./ranks.js");
+      const timeBonus = calculateTimeBonus(totalSeconds);
 
-    // PROTECTION: Ensure we don't subtract from HISTORICAL points.
-    // The worst that can happen is you lose all the points you made TODAY.
-    // So 'Fixed Points (4.0) + netChange' must be >= 0.
+      console.log(
+        `[Score] Time: ${totalSeconds}s -> Bonus: ${timeBonus}/${SCORING.MAX_BONUS}`,
+      );
 
-    // Calculate what the theoretical total score is currently
-    const theoreticalTotal = 4.0 + netChange; // 4.0 is max fixed.
+      // 2. Calculate Penalties
+      const penaltyPoints = peaksErrors * SCORING.ERROR_PENALTY_RP;
 
-    if (theoreticalTotal < 0) {
-      // If errors are so huge that they eat all today's points and more...
-      // We cap the penalty so the total result is exactly 0.
-      // 4.0 + netChange = 0  =>  netChange = -4.0
-      netChange = -4.0;
-    }
+      // 3. Final Calculation
+      let netChange = timeBonus - penaltyPoints;
 
-    // Update Stats
-    stats.currentRP = (stats.currentRP || 0) + netChange;
-    // We do NOT round stats.currentRP to keep sorting precision
+      // PROTECTION: Ensure we don't subtract from HISTORICAL points.
+      const theoreticalTotal = 4.0 + netChange; // 4.0 is max fixed.
 
-    // Safety check (shouldn't be needed with logic above, but good for float drift)
-    if (stats.currentRP < 0) stats.currentRP = 0;
+      if (theoreticalTotal < 0) {
+        netChange = -4.0;
+      }
 
-    // Display Score can be rounded for UI, but logs/storage keep precision
-    const dailyScore = Math.max(0, 4.0 + netChange);
-    const rpEarned = netChange; // Log differential
+      // Update Stats
+      stats.currentRP = (stats.currentRP || 0) + netChange;
 
-    // --- Update Optimized Cache ---
-    // Initialize if missing (migration)
-    if (stats.bestTime === undefined) stats.bestTime = Infinity;
-    if (stats.bestScore === undefined) stats.bestScore = 0;
-    if (stats.totalTimeAccumulated === undefined)
-      stats.totalTimeAccumulated = 0;
-    if (stats.totalScoreAccumulated === undefined)
-      stats.totalScoreAccumulated = 0;
-    if (stats.totalPeaksErrorsAccumulated === undefined)
-      stats.totalPeaksErrorsAccumulated = 0;
+      // Safety check
+      if (stats.currentRP < 0) stats.currentRP = 0;
 
-    // Nested Objects Migration
-    if (!stats.stageTimesAccumulated) {
-      stats.stageTimesAccumulated = {
-        memory: 0,
-        jigsaw: 0,
-        sudoku: 0,
-        peaks: 0,
-        search: 0,
-        code: 0,
-      };
-    }
-    if (!stats.stageWinsAccumulated) {
-      stats.stageWinsAccumulated = {
-        memory: 0,
-        jigsaw: 0,
-        sudoku: 0,
-        peaks: 0,
-        search: 0,
-        code: 0,
-      };
-    }
-    if (!stats.weekdayStatsAccumulated) {
-      stats.weekdayStatsAccumulated = {};
-      for (let i = 0; i < 7; i++) {
-        stats.weekdayStatsAccumulated[i] = {
+      // Display Score
+      const dailyScore = Math.max(0, 4.0 + netChange);
+      const rpEarned = netChange;
+
+      // --- Update Optimized Cache ---
+      // Initialize if missing (migration)
+      if (stats.bestTime === undefined) stats.bestTime = Infinity;
+      if (stats.bestScore === undefined) stats.bestScore = 0;
+      if (stats.totalTimeAccumulated === undefined)
+        stats.totalTimeAccumulated = 0;
+      if (stats.totalScoreAccumulated === undefined)
+        stats.totalScoreAccumulated = 0;
+      if (stats.totalPeaksErrorsAccumulated === undefined)
+        stats.totalPeaksErrorsAccumulated = 0;
+
+      if (!stats.stageTimesAccumulated)
+        stats.stageTimesAccumulated = {
+          memory: 0,
+          jigsaw: 0,
+          sudoku: 0,
+          peaks: 0,
+          search: 0,
+          code: 0,
+        };
+      if (!stats.stageWinsAccumulated)
+        stats.stageWinsAccumulated = {
+          memory: 0,
+          jigsaw: 0,
+          sudoku: 0,
+          peaks: 0,
+          search: 0,
+          code: 0,
+        };
+      if (!stats.weekdayStatsAccumulated) {
+        stats.weekdayStatsAccumulated = {};
+        for (let i = 0; i < 7; i++)
+          stats.weekdayStatsAccumulated[i] = {
+            sumTime: 0,
+            sumErrors: 0,
+            sumScore: 0,
+            count: 0,
+          };
+      }
+
+      // Updates
+      if (totalTimeMs > 0 && totalTimeMs < stats.bestTime) {
+        stats.bestTime = totalTimeMs;
+      }
+      if (dailyScore > stats.bestScore) {
+        stats.bestScore = dailyScore;
+      }
+      stats.totalTimeAccumulated += totalTimeMs;
+      stats.totalScoreAccumulated += rpEarned;
+      stats.totalPeaksErrorsAccumulated += peaksErrors;
+
+      // Update Stage Accumulators
+      const st = this.state.meta.stageTimes || {};
+      for (const [stage, time] of Object.entries(st)) {
+        if (stats.stageTimesAccumulated[stage] !== undefined) {
+          stats.stageTimesAccumulated[stage] += time;
+
+          // Fix for NaN: Handle undefined or corrupt previous values
+          const currentWins = stats.stageWinsAccumulated[stage] || 0;
+          stats.stageWinsAccumulated[stage] = currentWins + 1;
+        }
+      }
+
+      // Update Weekday Accumulators
+      const dateObj = new Date(today + "T12:00:00");
+      const dayIdx = dateObj.getDay();
+
+      // Ensure main object exists (already done in init but extra safety)
+      if (!stats.weekdayStatsAccumulated) stats.weekdayStatsAccumulated = {};
+
+      // Ensure day bucket exists (Self-Healing)
+      if (
+        !stats.weekdayStatsAccumulated[dayIdx] ||
+        typeof stats.weekdayStatsAccumulated[dayIdx] !== "object"
+      ) {
+        stats.weekdayStatsAccumulated[dayIdx] = {
           sumTime: 0,
           sumErrors: 0,
           sumScore: 0,
           count: 0,
         };
       }
-    }
 
-    // Updates
-    if (totalTimeMs > 0 && totalTimeMs < stats.bestTime) {
-      stats.bestTime = totalTimeMs;
-    }
-    // FIX: Compare dailyScore (Total 10.0 scale) not just rpEarned (Bonus)
-    if (dailyScore > stats.bestScore) {
-      stats.bestScore = dailyScore;
-    }
-    stats.totalTimeAccumulated += totalTimeMs;
-    // FIX: Add rpEarned (Bonus) to total. Fixed points were already added via awardStagePoints!
-    // So here we only add the Bonus part to avoid double counting the Fixed part.
-    stats.totalScoreAccumulated += rpEarned;
-    stats.totalPeaksErrorsAccumulated += peaksErrors;
-
-    // Update Stage Accumulators
-    const st = this.state.meta.stageTimes || {};
-    for (const [stage, time] of Object.entries(st)) {
-      if (stats.stageTimesAccumulated[stage] !== undefined) {
-        stats.stageTimesAccumulated[stage] += time;
-        stats.stageWinsAccumulated[stage]++;
-      }
-    }
-
-    // Update Weekday Accumulators
-    // Fix: In JS getDay() for "2026-02-04" depends on timezone if not parsed correctly.
-    // In recordWin, 'today' is "YYYY-MM-DD" from new Date().toISOString()
-    // We should parse it as local or use the date object directly.
-    // Use the puzzle date for weekday stats to handle midnight crossing correctly
-    const dateObj = new Date(today + "T12:00:00");
-    const dayIdx = dateObj.getDay(); // 0=Sun, 6=Sat
-    if (stats.weekdayStatsAccumulated[dayIdx]) {
       const w = stats.weekdayStatsAccumulated[dayIdx];
       w.sumTime += totalTimeMs;
       w.sumErrors += peaksErrors;
-      w.sumScore += dailyScore; // Use TOTAL Daily Score for day averages
+      w.sumScore += dailyScore;
       w.count++;
+
+      console.log(
+        `[Score] Time: ${totalSeconds}s, Errors: ${peaksErrors} -> Score: ${dailyScore} -> RP: +${rpEarned}`,
+      );
+
+      stats.lastPlayedDate = today;
+      stats.lastDecayCheck = today;
+
+      // Save History Record
+      stats.history[today] = {
+        status: "won",
+        totalTime: totalTimeMs,
+        stageTimes: this.state.meta.stageTimes || {},
+        timestamp: Date.now(),
+        score: dailyScore,
+        peaksErrors: peaksErrors,
+      };
+
+      // Persist
+      this.stats = stats;
+      localStorage.setItem("jigsudo_user_stats", JSON.stringify(stats));
+
+      // Cloud Save
+      const { saveUserStats } = await import("./db.js");
+
+      // Stop Timer
+      const { stopTimer } = await import("./timer.js");
+      stopTimer();
+
+      const user = await import("./auth.js").then((m) => m.getCurrentUser());
+      if (user) {
+        saveUserStats(user.uid, stats);
+      }
+
+      this.forceCloudSave(); // Save game state too (marked completed)
+
+      // Debug Feedback
+      const { showToast } = await import("./ui.js");
+      showToast("¡Progreso Guardado! 💾🏆");
+    } catch (err) {
+      console.error("Critical Error saving stats:", err);
+      const { showToast } = await import("./ui.js");
+      showToast("Error guardando estadísticas: " + err.message);
     }
-
-    console.log(
-      `[Score] Time: ${totalSeconds}s, Errors: ${peaksErrors} -> Score: ${dailyScore} -> RP: +${rpEarned}`,
-    );
-
-    stats.lastPlayedDate = today;
-    stats.lastDecayCheck = today;
-
-    // Save History Record
-    stats.history[today] = {
-      status: "won",
-      totalTime: totalTimeMs,
-      stageTimes: this.state.meta.stageTimes || {},
-      timestamp: Date.now(),
-      score: dailyScore,
-      peaksErrors: peaksErrors,
-    };
-
-    // Persist
-    this.stats = stats;
-    localStorage.setItem("jigsudo_user_stats", JSON.stringify(stats));
-
-    // Cloud Save
-    const { saveUserStats } = await import("./db.js");
-    const user = await import("./auth.js").then((m) => m.getCurrentUser());
-    if (user) {
-      saveUserStats(user.uid, stats);
-    }
-
-    this.forceCloudSave(); // Save game state too (marked completed)
   }
 }
 

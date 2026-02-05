@@ -269,22 +269,35 @@ export function updateProfileData() {
     });
   }
 
-  // Format Helper
   const fmtTime = (ms) => {
-    if (ms === Infinity || ms === 0 || isNaN(ms)) return "--:--";
+    if (ms === Infinity || isNaN(ms)) return "--:--";
     const seq = Math.floor(ms / 1000);
     const m = Math.floor(seq / 60);
     const s = seq % 60;
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
+  // Helper for consistent localized numbers (e.g. 9,50 in AR vs 9.50 in US)
+  const fmtNumber = (num, decimals = 2) => {
+    if (num === undefined || num === null) return "0";
+    // Sync with Game Language (es -> es-ES, en -> en-US)
+    const lang = getCurrentLang() || "es";
+    return num.toLocaleString(lang, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+  };
+
+  console.log("[Profile] Stage Sums:", stageSums);
+  console.log("[Profile] Stage Counts:", stageCounts);
+
   // Set Values
   if (document.getElementById("stat-max-score")) {
     const bScore = stats.bestScore;
     document.getElementById("stat-max-score").textContent =
       bScore !== undefined && bScore > 0
-        ? bScore.toFixed(2)
-        : calculateRP(maxScore).toFixed(2);
+        ? fmtNumber(bScore, 2)
+        : fmtNumber(calculateRP(maxScore), 2);
   }
 
   if (document.getElementById("stat-best-time"))
@@ -347,12 +360,12 @@ export function updateProfileData() {
 
   if (progressFill) progressFill.style.width = `${rankData.progress}%`;
 
-  if (rpCurrentEl) rpCurrentEl.textContent = currentRP.toLocaleString();
+  if (rpCurrentEl) rpCurrentEl.textContent = fmtNumber(currentRP, 3);
   if (rpNextEl) {
     // If max rank, show infinite or current
     const nextGoal = rankData.nextRank ? rankData.nextRank.minRP : "MAX";
     rpNextEl.textContent =
-      typeof nextGoal === "number" ? nextGoal.toLocaleString() : nextGoal;
+      typeof nextGoal === "number" ? fmtNumber(nextGoal, 0) : nextGoal;
   }
 
   // 3. Render Calendar
@@ -406,7 +419,8 @@ function renderWeekdayStats(stats) {
   } else {
     // Fallback to History Iteration
     Object.entries(history).forEach(([dateStr, data]) => {
-      if (data.status === "won" && data.totalTime > 0) {
+      // Changed to >= 0 to include debug/instant wins
+      if (data.status === "won" && data.totalTime >= 0) {
         const parts = dateStr.split("-");
         if (parts.length === 3) {
           const [y, m, d] = parts.map(Number);

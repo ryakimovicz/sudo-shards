@@ -318,3 +318,45 @@ body.dark-mode .toast-notification {
   color: #fff;
   border: 1px solid #475569;
 }
+
+/* Debug Floating Action Button */
+.debug-fab {
+  position: fixed;
+  bottom: 80px; /* Elevated to avoid intersection */
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--accent-color); /* Orange/Yellow */
+  color: var(--bg-primary);
+  border: none;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 9999;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  display: flex !important; /* Visual flex */
+  justify-content: center;
+  align-items: center;
+}
+
+.debug-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.debug-fab:active {
+  transform: scale(0.95);
+}
+
+/* Beta Mode Visibility Control */
+body:not(.beta-mode) #debug-help-btn {
+  display: none !important;
+}
+
+/* Hide on Home Screen if needed (assuming home adds a class, or we manually hide in JS) */
+body.home-active #debug-help-btn {
+  display: none !important;
+}

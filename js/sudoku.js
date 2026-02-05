@@ -1048,7 +1048,8 @@ function handleSudokuWin() {
       // memory.js called transitionToSudoku() which called gameManager.updateProgress.
 
       // Let's call the manager here for correctness
-      gameManager.advanceStage();
+      gameManager.awardStagePoints("sudoku");
+      // gameManager.advanceStage(); // Avoid stale state issues
     }, 600);
   }
 }
@@ -1214,5 +1215,63 @@ export function provideHint() {
   } else {
     console.log("Debug: Board appears complete.");
     validateBoard();
+  }
+}
+// --- DEBUG / BETA HELP ---
+export function debugSolveSudoku() {
+  const board = document.getElementById("memory-board");
+  if (!board) return;
+
+  // We need to know which variant we are playing to get the right solution
+  // Assuming gameManager.getTargetSolutionWithVariation or similar is available or standard solution.
+  // Actually, standard sudoku is just 9x9.
+  // We need to find a 3x3 block that is NOT full.
+
+  const solution = gameManager.getTargetSolution(); // Returns 9x9 matrix
+
+  for (let blockIdx = 0; blockIdx < 9; blockIdx++) {
+    const slot = board.querySelector(
+      `.sudoku-chunk-slot[data-slot-index="${blockIdx}"]`,
+    );
+    if (!slot) continue;
+
+    // Check if this block has empty cells
+    const emptyCells = Array.from(slot.querySelectorAll(".mini-cell")).filter(
+      (c) => !c.textContent.trim(),
+    );
+
+    if (emptyCells.length > 0) {
+      // Fill this ENTIRE block
+      const cells = slot.querySelectorAll(".mini-cell");
+      cells.forEach((cell, cellIdx) => {
+        // Calculate row/col from blockIdx and cellIdx
+        // blockRow = Math.floor(blockIdx / 3)
+        // blockCol = blockIdx % 3
+        // cellRow inside block = Math.floor(cellIdx / 3)
+        // cellCol inside block = cellIdx % 3
+        // globalRow = blockRow * 3 + cellRow
+        // globalCol = blockCol * 3 + cellCol
+
+        const blockRow = Math.floor(blockIdx / 3);
+        const blockCol = blockIdx % 3;
+        const subRow = Math.floor(cellIdx / 3);
+        const subCol = cellIdx % 3;
+
+        const r = blockRow * 3 + subRow;
+        const c = blockCol * 3 + subCol;
+
+        const val = solution[r][c];
+        cell.textContent = val;
+        // Trigger any valid visuals?
+        cell.classList.add("solved-debug"); // Optional visual
+      });
+      console.log(`[Debug] Solved Sudoku Block ${blockIdx}`);
+
+      // Check win condition manually or wait for user interaction?
+      // Better to trigger a check.
+      // But sudoku usually checks on input.
+      // We can try to dispatch an event or just leave it visually filled.
+      return;
+    }
   }
 }

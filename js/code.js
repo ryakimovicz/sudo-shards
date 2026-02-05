@@ -529,6 +529,10 @@ function startResolving(elements, targetWord, chars) {
 
 function finalizeVictory() {
   console.log("Victory Animation Complete");
+  // Ensure we capture the final stage time (Code)
+  gameManager.stopStageTimer();
+  gameManager.awardStagePoints("code"); // Award RP
+
   // Ensure "Game Complete" state is saved
   gameManager.updateProgress("code", { completed: true });
   gameManager.recordWin(); // <--- Record Stats

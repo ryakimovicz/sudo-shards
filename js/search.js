@@ -356,7 +356,7 @@ function handleFoundSequence(target) {
       gameManager.stopStageTimer(); // End Search
       gameManager.startStageTimer("code"); // Start Code
 
-      gameManager.advanceStage(); // Advances to 'code'
+      gameManager.awardStagePoints("search"); // Advances to 'code'
       transitionToCode();
     }, 500);
   }
@@ -519,4 +519,9 @@ function triggerEasterEgg(overrideEmoji = null) {
       overlay.remove();
     }, 2000);
   }
+}
+
+// --- DEBUG / BETA HELP ---
+export function debugSolveSearch() {
+  provideSearchHint();
 }

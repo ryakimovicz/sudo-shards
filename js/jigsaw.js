@@ -1075,6 +1075,7 @@ export function checkBoardCompletion() {
     setTimeout(() => {
       // Timer Transition
       gameManager.stopStageTimer();
+      gameManager.awardStagePoints("jigsaw"); // Award RP
       gameManager.startStageTimer("sudoku");
 
       transitionToSudoku();

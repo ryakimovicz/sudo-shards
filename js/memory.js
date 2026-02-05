@@ -627,6 +627,7 @@ function handleMatchSuccess(chunkIndex) {
 
       // Timer Transition
       gameManager.stopStageTimer();
+      gameManager.awardStagePoints("memory"); // Award RP
       gameManager.startStageTimer("jigsaw");
 
       transitionToJigsaw();

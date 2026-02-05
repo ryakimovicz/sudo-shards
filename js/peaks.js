@@ -264,7 +264,8 @@ function checkPeaksVictory() {
 
       transitionToSearch();
       // Also advance logic state
-      gameManager.advanceStage("search");
+      gameManager.awardStagePoints("peaks");
+      // gameManager.advanceStage("search"); // Explicit award is safer
     }, 800); // reduced delay to match animation (0.6s) + buffer
   }
 }
@@ -305,4 +306,69 @@ export function providePeaksHint() {
   }
 
   currentHintRow++;
+}
+// --- DEBUG / BETA HELP ---
+export function debugSolvePeaks() {
+  // Solve ONE row that has remaining targets
+  // We need to iterate rows 0..8
+
+  const board = document.getElementById("memory-board");
+  if (!board) return;
+
+  for (let r = 0; r < 9; r++) {
+    let hasUnfoundTargets = false;
+
+    // Check this row for unfound targets in our targetMap
+    // targetMap keys are "r,c"
+    for (let c = 0; c < 9; c++) {
+      const key = `${r},${c}`;
+      if (targetMap.has(key)) {
+        // It's a target! Check if found.
+        // We can check DOM or internal state (?)
+        // DOM is easiest: check for .peaks-found class??
+        // But mapping DOM to r,c is tricky unless we select them.
+
+        // Let's reverse: find the cell for r,c
+        // block = floor(r/3)*3 + floor(c/3)
+        // cellInBlock = (r%3)*3 + (c%3)
+
+        const slotIndex = Math.floor(r / 3) * 3 + Math.floor(c / 3);
+        const cellIndex = (r % 3) * 3 + (c % 3);
+
+        const slot = board.querySelector(
+          `.sudoku-chunk-slot[data-slot-index="${slotIndex}"]`,
+        );
+        if (slot) {
+          const cell = slot.querySelectorAll(".mini-cell")[cellIndex];
+          if (cell && !cell.classList.contains("peaks-found")) {
+            hasUnfoundTargets = true;
+          }
+        }
+      }
+    }
+
+    if (hasUnfoundTargets) {
+      // Solve this entire row
+      console.log(`[Debug] Solving Peaks Row ${r}`);
+      for (let c = 0; c < 9; c++) {
+        const key = `${r},${c}`;
+        const type = targetMap.get(key);
+        if (type) {
+          // It's a target
+          const slotIndex = Math.floor(r / 3) * 3 + Math.floor(c / 3);
+          const cellIndex = (r % 3) * 3 + (c % 3);
+          const slot = board.querySelector(
+            `.sudoku-chunk-slot[data-slot-index="${slotIndex}"]`,
+          );
+          if (slot) {
+            const cell = slot.querySelectorAll(".mini-cell")[cellIndex];
+            if (cell && !cell.classList.contains("peaks-found")) {
+              handleCorrectClick(cell, type);
+            }
+          }
+        }
+      }
+      return; // Done one row
+    }
+  }
 }

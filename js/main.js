@@ -25,6 +25,10 @@ async function startApp() {
   // Handle Beta Mode (Help Button)
   if (CONFIG.betaMode) {
     document.body.classList.add("beta-mode");
+    const debugBtn = document.getElementById("debug-help-btn");
+
+    // Listener handling delegated to memory.js (debugAutoMatch) to avoid double-firing
+    // and "No solver for this state" warnings.
   }
 
   console.log("Jigsudo App Starting...");

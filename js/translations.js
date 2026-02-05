@@ -24,6 +24,10 @@ export const translations = {
     diff_hard: "Difícil",
     diff_extreme: "Extremo",
 
+    // Custom Tab Titles
+    custom_difficulty: "Dificultad",
+    custom_modes: "Modos de Juego",
+
     // Game Names
     game_memory: "Juego de Memoria",
     game_jigsaw: "Rompecabezas",
@@ -213,6 +217,21 @@ export const translations = {
     p_game_peaks: "Picos y Valles",
     p_game_search: "Sopa Números",
     p_game_code: "El Código",
+
+    // Support & Share
+    btn_report_bug: "Reportar Bug 🐛",
+    btn_share_app: "Compartir App 📢",
+    modal_bug_title: "Reportar Bug 🐛",
+    modal_bug_desc:
+      "Describe el problema que encontraste. Si es posible, menciona qué estabas haciendo cuando ocurrió.",
+    modal_bug_placeholder: "Escribe aquí los detalles...",
+    toast_bug_empty: "Por favor describe el problema.",
+    btn_bug_submitting: "Enviando...",
+    btn_bug_submit: "Enviar Reporte",
+    toast_bug_success: "¡Reporte enviado! Gracias. 🐛❤️",
+    share_text:
+      "¡Desafía tu mente con Jigsudo! 🧩✨ ¿Podrás resolver el puzzle del día?",
+    toast_share_success: "¡Enlace copiado al portapapeles! 📋✨",
   },
   en: {
     app_title: "JIGSUDO",
@@ -238,6 +257,10 @@ export const translations = {
     diff_normal: "Normal",
     diff_hard: "Hard",
     diff_extreme: "Extreme",
+
+    // Custom Tab Titles
+    custom_difficulty: "Difficulty",
+    custom_modes: "Game Modes",
 
     // Game Names
     game_memory: "Memory Game",
@@ -434,5 +457,20 @@ export const translations = {
     placeholder_current_pw: "Current password",
     placeholder_new_pw: "New password (min 6 chars)",
     placeholder_verify_pw: "Repeat new password",
+
+    // Support & Share
+    btn_report_bug: "Report Bug 🐛",
+    btn_share_app: "Share App 📢",
+    modal_bug_title: "Report Bug 🐛",
+    modal_bug_desc:
+      "Describe the issue you found. If possible, mention what you were doing when it happened.",
+    modal_bug_placeholder: "Write the details here...",
+    toast_bug_empty: "Please describe the problem.",
+    btn_bug_submitting: "Sending...",
+    btn_bug_submit: "Submit Report",
+    toast_bug_success: "Report sent! Thank you. 🐛❤️",
+    share_text:
+      "Challenge your mind with Jigsudo! 🧩✨ Can you solve today's puzzle?",
+    toast_share_success: "Link copied to clipboard! 📋✨",
   },
 };

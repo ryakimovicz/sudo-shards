@@ -260,10 +260,10 @@
 
                 <!-- SECTION: SUPPORT -->
                 <div class="settings-section" style="margin-top: 15px; text-align: center;">
-                  <button id="btn-report-bug" class="btn-report-bug" onclick="window.openBugReportModal()">
+                  <button id="btn-report-bug" class="btn-report-bug" data-i18n="btn_report_bug" onclick="window.openBugReportModal()">
                     Reportar Bug 🐛
                   </button>
-                  <button id="btn-share-app" class="btn-report-bug" onclick="window.shareApp()" style="margin-top: 10px; border-color: var(--accent-color); color: var(--accent-color);">
+                  <button id="btn-share-app" class="btn-report-bug" data-i18n="btn_share_app" onclick="window.shareApp()" style="margin-top: 10px; border-color: var(--accent-color); color: var(--accent-color);">
                     Compartir App 📢
                   </button>
                 </div>
@@ -1052,9 +1052,9 @@
 
     <!-- BUG REPORT MODAL -->
     <div id="report-bug-modal" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h3>Reportar Bug 🐛</h3>
-        <p class="modal-desc">
+      <div class="modal-content glass-panel">
+        <h3 data-i18n="modal_bug_title">Reportar Bug 🐛</h3>
+        <p class="modal-desc" data-i18n="modal_bug_desc">
           Describe el problema que encontraste. Si es posible, menciona qué
           estabas haciendo cuando ocurrió.
         </p>
@@ -1067,11 +1067,12 @@
             resize: vertical;
             font-family: inherit;
           "
+          data-i18n-placeholder="modal_bug_placeholder"
           placeholder="Escribe aquí los detalles..."
         ></textarea>
         <div class="modal-actions">
-          <button id="btn-cancel-bug" class="btn-secondary">Cancelar</button>
-          <button id="btn-submit-bug" class="btn-primary">Enviar Reporte</button>
+          <button id="btn-cancel-bug" class="btn-secondary" data-i18n="btn_cancel">Cancelar</button>
+          <button id="btn-submit-bug" class="btn-primary" data-i18n="btn_bug_submit">Enviar Reporte</button>
         </div>
       </div>
     </div>

@@ -80,6 +80,12 @@ export function updateTexts() {
     if (t[key]) el.setAttribute("aria-label", t[key]);
   });
 
+  // 4. Placeholders (for inputs/textareas)
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (t[key]) el.setAttribute("placeholder", t[key]);
+  });
+
   // Jigsaw/Sudoku Tooltip Special Case (Manual Override if in mode)
   if (jigsawMode) {
     const titleEl = document.querySelector(".header-title-container h2");

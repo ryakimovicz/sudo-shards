@@ -206,10 +206,11 @@ function attachAuthListeners() {
     errBox.classList.add("hidden");
 
     if (pass !== confirmPass) {
-      errBox.textContent =
-        document.documentElement.lang === "es"
-          ? "Las contraseñas no coinciden."
-          : "Passwords do not match.";
+      const { translations } = await import("./translations.js");
+      const { getCurrentLang } = await import("./i18n.js");
+      const lang = getCurrentLang();
+      const t = translations[lang];
+      errBox.textContent = t.toast_pw_mismatch || "Passwords do not match.";
       errBox.classList.remove("hidden");
       return;
     }
@@ -225,9 +226,14 @@ function attachAuthListeners() {
 
   // --- SOCIAL SHARE LOGIC ---
   window.shareApp = async function () {
+    const { translations } = await import("./translations.js");
+    const { getCurrentLang } = await import("./i18n.js");
+    const lang = getCurrentLang();
+    const t = translations[lang];
+
     const shareData = {
       title: "Jigsudo",
-      text: "¡Desafía tu mente con Jigsudo! 🧩✨ ¿Podrás resolver el puzzle del día?",
+      text: t.share_text,
       url: window.location.href, // Or hardcoded 'https://jigsudo.com'
     };
 
@@ -241,7 +247,7 @@ function attachAuthListeners() {
           `${shareData.text} Juega gratis aquí: ${shareData.url}`,
         );
         const { showToast } = await import("./ui.js");
-        showToast("¡Enlace copiado al portapapeles! 📋✨");
+        showToast(t.toast_share_success);
       }
     } catch (err) {
       console.error("Error sharing:", err);
@@ -272,30 +278,35 @@ function attachAuthListeners() {
 
       if (btnSubmit) {
         btnSubmit.onclick = async () => {
+          const { translations } = await import("./translations.js");
+          const { getCurrentLang } = await import("./i18n.js");
+          const lang = getCurrentLang();
+          const t = translations[lang];
+
           const desc = bugText ? bugText.value.trim() : "";
           if (!desc) {
-            alert("Por favor describe el problema.");
+            alert(t.toast_bug_empty);
             return;
           }
           btnSubmit.disabled = true;
-          btnSubmit.textContent = "Enviando...";
+          btnSubmit.textContent = t.btn_bug_submitting;
           try {
             const { submitBugReport } = await import("./db.js");
             const { getCurrentUser } = await import("./auth.js");
             const { showToast } = await import("./ui.js");
             const result = await submitBugReport(desc, getCurrentUser());
             if (result.success) {
-              showToast("¡Reporte enviado! Gracias. 🐛❤️");
+              showToast(t.toast_bug_success);
               modal.classList.add("hidden");
             } else {
-              showToast("Error al enviar: " + result.error);
+              showToast("Error: " + result.error);
             }
           } catch (e) {
             console.error(e);
-            alert("Error al enviar.");
+            alert("Error.");
           } finally {
             btnSubmit.disabled = false;
-            btnSubmit.textContent = "Enviar Reporte";
+            btnSubmit.textContent = t.btn_bug_submit;
           }
         };
       }

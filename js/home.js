@@ -5,6 +5,32 @@ import { showProfile, hideProfile } from "./profile.js";
 import { getDailySeed } from "./utils/random.js";
 import { gameManager } from "./game-manager.js";
 
+// Global UI Helpers
+window.toggleAuthPassword = function (btn) {
+  if (!btn) return;
+  try {
+    const wrapper = btn.closest(".password-wrapper");
+    const input = wrapper ? wrapper.querySelector("input") : null;
+    if (!input) return;
+
+    const isPassword = input.type === "password";
+
+    // Toggle Type
+    input.type = isPassword ? "text" : "password";
+
+    // Toggle Icon (👁️ = Show, 🙈 = Hide/Monkey)
+    btn.textContent = isPassword ? "🙈" : "👁️";
+
+    // Sync Logic for New Password -> Verify Password
+    if (input.id === "new-password-input") {
+      const verifyInput = document.getElementById("verify-password-input");
+      if (verifyInput) verifyInput.type = input.type;
+    }
+  } catch (e) {
+    console.error("Toggle error:", e);
+  }
+};
+
 export function initHome() {
   console.log("Jigsudo Home Module Loaded");
 

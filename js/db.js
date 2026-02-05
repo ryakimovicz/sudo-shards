@@ -8,6 +8,10 @@ import {
   serverTimestamp,
   deleteField,
   onSnapshot,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 import { gameManager } from "./game-manager.js";
 
@@ -70,23 +74,36 @@ export async function cleanupLegacyStats(userId) {
   }
 }
 
-export async function saveUserStats(userId, statsData) {
+export async function checkUsernameAvailability(username) {
+  if (!username) return false;
+  try {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("username", "==", username));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.empty; // True if no documents found (available)
+  } catch (error) {
+    console.error("Availability check failed:", error);
+    return true; // Fail open or closed? Let's fail open to avoid blocking if network issues, or handle error upstream.
+    // Ideally fail open but warn.
+  }
+}
+
+export async function saveUserStats(userId, statsData, username = null) {
   if (!userId) return;
   try {
     const userRef = doc(db, "users", userId);
 
-    // Auto-cleanup on save (one-time check could be better but this ensures consistency)
-    // We can just include the deletes here? No, better separate to avoid bloated writes every time.
-    // I'll call it once from GameManager init or similar.
+    const updateData = {
+      stats: statsData,
+      lastUpdated: serverTimestamp(),
+    };
 
-    await setDoc(
-      userRef,
-      {
-        stats: statsData,
-        lastUpdated: serverTimestamp(),
-      },
-      { merge: true },
-    );
+    // If username is provided, save it as a top-level searchable field
+    if (username) {
+      updateData.username = username;
+    }
+
+    await setDoc(userRef, updateData, { merge: true });
     console.log("Stats saved to cloud.");
   } catch (error) {
     console.error("Error saving stats:", error);
@@ -174,9 +191,7 @@ export async function wipeUserData(userId) {
     );
 
     console.warn(`🔥 User Game Data Wiped for ${userId}`);
-    alert("Progreso y estadísticas borrados. Tu cuenta sigue activa.");
   } catch (error) {
     console.error("Error wiping user data:", error);
-    alert("Error al borrar datos. Revisa la consola.");
   }
 }

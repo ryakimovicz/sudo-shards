@@ -236,17 +236,6 @@
                   </select>
                 </div>
               </div>
-
-              <!-- LOGOUT (Bottom) -->
-              <div id="logout-wrapper" class="logout-container hidden">
-                <button
-                  id="btn-logout"
-                  class="btn-logout-danger"
-                  data-i18n="btn_logout"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -570,14 +559,75 @@
 
           <!-- 4. Settings / Actions -->
           <div class="section-title" data-i18n="settings_title">Ajustes</div>
-          <div class="profile-actions">
-            <!-- Future: Change Password -->
+          <div class="profile-actions hidden">
+            <div
+              id="profile-email-display"
+              style="
+                text-align: center;
+                margin-bottom: 20px;
+                color: var(--text-muted);
+                font-size: 0.9rem;
+              "
+            ></div>
+
+            <button
+              id="btn-profile-change-name"
+              class="btn-secondary full-width"
+              data-i18n="btn_change_username"
+            >
+              Cambiar Nombre
+            </button>
+
+            <button
+              id="btn-profile-change-pw"
+              class="btn-secondary full-width"
+              data-i18n="btn_change_password"
+            >
+              Cambiar Contraseña
+            </button>
+
             <button
               id="btn-profile-logout"
               class="btn-danger full-width"
               data-i18n="btn_logout"
             >
               Cerrar Sesión
+            </button>
+
+            <button
+              id="btn-profile-delete"
+              class="btn-delete-danger full-width"
+              style="
+                margin-top: 25px;
+                border: 1px solid #ff5555;
+                background: transparent;
+                color: #ff5555;
+                opacity: 0.8;
+              "
+              data-i18n="btn_delete_account"
+            >
+              Eliminar Cuenta
+            </button>
+          </div>
+
+          <!-- Guest Actions (Visible only when logged out) -->
+          <div class="guest-actions hidden">
+            <div
+              style="
+                text-align: center;
+                margin-bottom: 20px;
+                color: var(--text-muted);
+                font-size: 0.9rem;
+              "
+            >
+              Inicia sesión para guardar tu progreso y aparecer en el ranking.
+            </div>
+            <button
+              id="btn-profile-login-guest"
+              class="btn-primary full-width"
+              style="margin-top: 10px"
+            >
+              Iniciar Sesión
             </button>
           </div>
 
@@ -834,9 +884,144 @@
       </div>
     </div>
 
-    <!-- Debug Help Button -->
-    <button id="debug-help-btn" class="debug-btn" data-i18n="btn_solve">
-      Resolver
-    </button>
+    <!-- PASSWORD CONFIRMATION MODAL -->
+    <div id="password-confirm-modal" class="modal-overlay hidden">
+      <div class="modal-content small-modal">
+        <h3 id="pwd-modal-title">Confirmar Contraseña</h3>
+        <p
+          id="pwd-modal-desc"
+          style="
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+          "
+        >
+          Para continuar, ingresa tu contraseña actual.
+        </p>
+
+        <!-- Generic Text Input (Hidden by default) -->
+        <input
+          type="text"
+          id="modal-text-input"
+          class="auth-input hidden"
+          placeholder="Nuevo valor"
+          style="margin-bottom: 10px"
+        />
+
+        <div class="password-wrapper">
+          <input
+            type="password"
+            id="confirm-password-input"
+            class="auth-input"
+            placeholder="Contraseña actual"
+          />
+          <button
+            class="toggle-password"
+            type="button"
+            tabindex="-1"
+            onclick="toggleAuthPassword(this)"
+          >
+            👁️
+          </button>
+        </div>
+
+        <div
+          id="new-password-container"
+          class="hidden"
+          style="margin-top: 10px"
+        >
+          <div class="password-wrapper" style="margin-bottom: 10px">
+            <input
+              type="password"
+              id="new-password-input"
+              class="auth-input"
+              placeholder="Nueva contraseña (mín 6 caracteres)"
+            />
+            <button
+              class="toggle-password"
+              type="button"
+              tabindex="-1"
+              onclick="toggleAuthPassword(this)"
+            >
+              👁️
+            </button>
+          </div>
+
+          <div class="password-wrapper">
+            <input
+              type="password"
+              id="verify-password-input"
+              class="auth-input"
+              placeholder="Repetir nueva contraseña"
+            />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-cancel-pwd" class="btn-secondary">Cancelar</button>
+          <button id="btn-confirm-pwd" class="btn-primary">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div id="logout-confirm-modal" class="modal-overlay hidden">
+      <div class="modal-content small-modal">
+        <h3>Cerrar Sesión</h3>
+        <p
+          style="
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+          "
+        >
+          ¿Estás seguro de que deseas salir?
+        </p>
+        <div class="modal-actions">
+          <button id="btn-cancel-logout-modal" class="btn-secondary">
+            Cancelar
+          </button>
+          <button id="btn-confirm-logout-modal" class="btn-danger">
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE ACCOUNT CONFIRMATION MODAL -->
+    <div id="delete-account-confirm-modal" class="modal-overlay hidden">
+      <div class="modal-content small-modal" style="border: 2px solid #ff5555">
+        <h3 style="color: #ff5555">⚠️ Última Advertencia</h3>
+        <p
+          style="
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+          "
+        >
+          Se borrará <b>todo tu progreso, estadísticas y ranking</b> para
+          siempre. Esta acción no se puede deshacer.
+        </p>
+        <div class="modal-actions">
+          <button id="btn-cancel-delete-modal" class="btn-secondary">
+            Cancelar
+          </button>
+          <button
+            id="btn-confirm-delete-modal"
+            class="btn-delete-danger"
+            style="background: #ff5555; color: white"
+          >
+            Borrar Todo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST MESSAGES -->
+    <div id="toast-container"></div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="js/home.js"></script>
+    <script type="module" src="js/auth.js"></script>
   </body>
 </html>

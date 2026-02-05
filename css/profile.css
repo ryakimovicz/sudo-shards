@@ -568,6 +568,124 @@ body.dark-mode .profile-avatar-large {
       2,
       1fr
     ); /* Desktop: 50% Cal / 50% Stats (Equal Split) */
-    align-items: stretch; /* Match Height */
   }
+}
+
+/* FIX: Centered Settings Title */
+#profile-section .section-title[data-i18n="settings_title"] {
+  text-align: center;
+  margin-top: 32px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  padding: 8px 0;
+  border-radius: 8px;
+}
+
+/* FIX: Centered & Narrow Account Buttons */
+.profile-actions {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center; /* Center children horizontally */
+  gap: 8px; /* Consistent spacing */
+}
+
+/* Base Button Style for Profile */
+.profile-actions button {
+  width: 90% !important;
+  max-width: 280px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  /* Aesthetics */
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-family: var(--font-header);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.profile-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.profile-actions button:active {
+  transform: translateY(0);
+}
+
+/* Specific Styles */
+
+/* Change Password & Username - "Ghost" / Secondary Primary */
+#btn-profile-change-pw,
+#btn-profile-change-name {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+}
+#btn-profile-change-pw:hover,
+#btn-profile-change-name:hover {
+  border-color: var(--primary-main);
+  color: var(--primary-main);
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+/* Logout - Soft Danger/Warning */
+#btn-profile-logout {
+  background: #dc2626; /* Red 600 - Better contrast for white text */
+  border: none;
+  color: white;
+  margin-top: 0 !important; /* Extra spacing */
+}
+#btn-profile-logout:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Delete - Minimalist Danger */
+#btn-profile-delete {
+  margin-top: 24px !important; /* Push to bottom */
+  background: transparent !important;
+  border: 1px dashed #dc2626 !important; /* Matched Red 600 */
+  color: #dc2626 !important; /* Matched Red 600 */
+  opacity: 0.8;
+  font-size: 0.8rem !important;
+  padding: 10px !important;
+  box-shadow: none !important;
+}
+#btn-profile-delete:hover {
+  opacity: 1;
+  background: rgba(220, 38, 38, 0.05) !important;
+}
+
+/* Dark Mode Adjustments */
+body.dark-mode #btn-profile-change-pw {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode #btn-profile-change-pw:hover {
+  border-color: var(--primary-light);
+  color: var(--primary-light);
+}
+
+/* Logout Button Text Color Override (User Request) */
+body.dark-mode #btn-profile-logout {
+  background: #7f1d1d; /* Deep Red (Red 900) */
+  color: #e2e8f0; /* Off-white text */
+  border: 1px solid #b91c1c; /* Slightly lighter border */
+}
+
+body.dark-mode #btn-profile-logout:hover {
+  background: #991b1b;
+  border-color: #ef4444;
 }

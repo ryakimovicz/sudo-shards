@@ -38,17 +38,7 @@ export function initProfile() {
     });
   }
 
-  // Logout Button
-  const logoutBtn = document.getElementById("btn-profile-logout");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      if (confirm("¿Cerrar sesión?")) {
-        await logoutUser();
-        // Redirect to home/login after logout
-        window.location.hash = "";
-      }
-    });
-  }
+  // Logout Button handled in auth.js via onclick/modal overrides
 }
 
 // Router Handler
@@ -111,7 +101,7 @@ function _hideProfileUI() {
   if (btnStats) btnStats.textContent = "📊";
 }
 
-function updateProfileData() {
+export function updateProfileData() {
   const user = getCurrentUser();
 
   // If no user, maybe redirect? For now, show "Guest"
@@ -141,6 +131,52 @@ function updateProfileData() {
     }
   }
 
+  // Explicitly manage Actions visibility to prevent Guest leaks
+  const profileActions = document.querySelector(".profile-actions");
+  const guestActions = document.querySelector(".guest-actions");
+
+  // Debug Log
+  console.log("UpdateProfileData User:", user ? user.uid : "Guest");
+
+  if (profileActions) {
+    if (user) {
+      profileActions.classList.remove("hidden");
+      profileActions.style.display = "";
+
+      if (guestActions) {
+        guestActions.classList.add("hidden");
+        guestActions.style.display = "none";
+      }
+    } else {
+      profileActions.classList.add("hidden");
+      profileActions.style.display = "none";
+
+      if (guestActions) {
+        guestActions.classList.remove("hidden");
+        guestActions.style.display = "";
+      }
+    }
+  }
+
+  // Double Check: Hide individual buttons if guest (Nuclear Option)
+  const sensitiveButtons = [
+    "btn-profile-change-name",
+    "btn-profile-change-pw",
+    "btn-profile-logout",
+    "btn-profile-delete",
+  ];
+
+  sensitiveButtons.forEach((id) => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      if (user) {
+        btn.style.display = ""; // Reset
+        btn.closest(".profile-actions").classList.remove("hidden"); // Ensure parent is shown if user exists
+      } else {
+        btn.style.display = "none"; // Hide element
+      }
+    }
+  });
   // Stats from Global Storage
   const statsStr = localStorage.getItem("jigsudo_user_stats");
   const stats = statsStr

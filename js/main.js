@@ -143,13 +143,8 @@ function attachAuthListeners() {
     });
   }
 
-  // Logout
-  if (btnLogout) {
-    btnLogout.addEventListener("click", async () => {
-      await logoutUser();
-      document.getElementById("profile-dropdown")?.classList.add("hidden");
-    });
-  }
+  // Logout - Removed from Menu
+  // Profile logout handled in profile.js
 
   // Toggle Password Visibility
   document.querySelectorAll(".toggle-password").forEach((btn) => {

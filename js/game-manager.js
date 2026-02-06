@@ -245,11 +245,11 @@ export class GameManager {
     return board;
   }
 
-  async save() {
+  async save(syncToCloud = true) {
     if (this.conflictBlocked || !this.state || this.isWiping) return;
     this.state.meta.lastPlayed = new Date().toISOString();
     localStorage.setItem(this.storageKey, JSON.stringify(this.state));
-    this.saveCloudDebounced();
+    if (syncToCloud) this.saveCloudDebounced();
   }
 
   saveCloudDebounced(delay = 5000) {
@@ -636,8 +636,11 @@ export class GameManager {
             return;
           }
           // If localTime is 0 (1970), we are in a fresh/stale state and MUST adopt remote.
-          if (localTime > 0 && localTime > remoteTime) {
-            console.log("[Sync] Local is newer than remote. Skipping sync.");
+          // If local >= remote, we already have this data or newer.
+          if (localTime > 0 && localTime >= remoteTime) {
+            console.log(
+              "[Sync] Local is newer or equal to remote. Skipping sync.",
+            );
             return;
           }
         }
@@ -646,7 +649,7 @@ export class GameManager {
       const remoteStage = hydratedProgress.progress?.currentStage || "unknown";
       console.log(`[Sync] Applying Cloud Progress. Stage: ${remoteStage}`);
       this.state = hydratedProgress;
-      this.save();
+      this.save(false); // Silent save: update localStorage but don't re-push to cloud
     }
   }
 

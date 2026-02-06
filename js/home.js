@@ -280,33 +280,14 @@ export function initHome() {
         currentMode = "daily";
         panelDaily.classList.add("active");
         panelCustom.classList.remove("active");
-
-        // Enable Start Button
-        const btn = document.getElementById("start-btn");
-        const lang = getCurrentLang();
-        if (btn) {
-          btn.dataset.i18n = "btn_start";
-          btn.textContent = translations[lang]
-            ? translations[lang].btn_start
-            : "EMPEZAR";
-          btn.disabled = false;
-        }
       } else {
         currentMode = "custom";
         panelCustom.classList.add("active");
         panelDaily.classList.remove("active");
-
-        // Disable Start Button
-        const btn = document.getElementById("start-btn");
-        const lang = getCurrentLang();
-        if (btn) {
-          btn.dataset.i18n = "btn_coming_soon";
-          btn.textContent = translations[lang]
-            ? translations[lang].btn_coming_soon
-            : "PRÓXIMAMENTE";
-          btn.disabled = true;
-        }
       }
+
+      // Update Start Button state based on the new mode and win status
+      refreshStartButton();
     });
   });
 
@@ -392,6 +373,33 @@ export function initHome() {
     }
   };
 
+  const handleViewResults = async () => {
+    try {
+      const stats = JSON.parse(
+        localStorage.getItem("jigsudo_user_stats") || "{}",
+      );
+      const seedStr = getDailySeed().toString();
+      const today = `${seedStr.substring(0, 4)}-${seedStr.substring(4, 6)}-${seedStr.substring(6, 8)}`;
+      const todayStats = stats.history?.[today];
+
+      if (todayStats) {
+        // Adapt saved history stats to the format expected by showVictorySummary
+        const sessionStats = {
+          totalTime: todayStats.totalTime,
+          score: todayStats.score,
+          streak: stats.currentStreak,
+          errors: todayStats.peaksErrors || 0,
+          stageTimes: todayStats.stageTimes || {},
+        };
+
+        const { showVictorySummary } = await import("./ui.js");
+        showVictorySummary(sessionStats, true);
+      }
+    } catch (e) {
+      console.error("Failed to view results:", e);
+    }
+  };
+
   // Check if daily puzzle is already won
   const checkDailyWin = () => {
     try {
@@ -411,16 +419,24 @@ export function initHome() {
   const refreshStartButton = () => {
     if (!startBtn) return;
     const isWon = checkDailyWin();
+    const lang = getCurrentLang();
 
     if (isWon && currentMode === "daily") {
-      startBtn.textContent = "¡Completado!";
-      startBtn.disabled = true;
-      startBtn.classList.add("btn-won");
-      startBtn.onclick = null;
-    } else {
+      startBtn.dataset.i18n = "btn_view_results";
       startBtn.textContent =
-        translations[getCurrentLang()]?.btn_start || "EMPEZAR";
+        translations[lang]?.btn_view_results || "Ver Resultado";
       startBtn.disabled = false;
+      startBtn.classList.add("btn-won");
+      startBtn.onclick = handleViewResults;
+    } else {
+      startBtn.dataset.i18n =
+        currentMode === "daily" ? "btn_start" : "btn_coming_soon";
+      startBtn.textContent = translations[lang]
+        ? translations[lang][startBtn.dataset.i18n]
+        : currentMode === "daily"
+          ? "EMPEZAR"
+          : "PRÓXIMAMENTE";
+      startBtn.disabled = currentMode !== "daily";
       startBtn.classList.remove("btn-won");
       startBtn.onclick = handleStart;
     }

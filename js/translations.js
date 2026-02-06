@@ -194,6 +194,27 @@ export const translations = {
     stats_title: "Estadísticas",
     no_data: "Sin datos suficientes",
 
+    // Victory Summary
+    victory_title: "¡Juego Completado!",
+    victory_desc: "Aquí tienes un resumen de tu partida de hoy.",
+    victory_stat_time: "Tiempo Total",
+    victory_stat_streak: "Racha Actual",
+    victory_stat_errors: "Errores",
+    victory_stat_score: "Puntaje",
+    victory_times_breakdown: "Tiempos por Minijuego",
+    btn_back_home: "Volver al Inicio",
+    btn_view_results: "Ver Resultado",
+    btn_close: "Cerrar",
+
+    stage_names: {
+      memory: "Memoria",
+      jigsaw: "Rompecabezas",
+      sudoku: "Sudoku",
+      peaks: "Picos",
+      search: "Sopa",
+      code: "Código",
+    },
+
     // Ranks (Spanish)
     rank_0: "Novato",
     rank_1: "Principiante",
@@ -396,6 +417,27 @@ export const translations = {
     daily_avg_title: "Daily Average",
     stats_title: "Statistics",
     no_data: "Not Enough Data",
+
+    // Victory Summary
+    victory_title: "Game Complete!",
+    victory_desc: "Here is a summary of your session today.",
+    victory_stat_time: "Total Time",
+    victory_stat_streak: "Current Streak",
+    victory_stat_errors: "Errors",
+    victory_stat_score: "Score",
+    victory_times_breakdown: "Times per Minigame",
+    btn_back_home: "Back Home",
+    btn_view_results: "View Results",
+    btn_close: "Close",
+
+    stage_names: {
+      memory: "Memory",
+      jigsaw: "Jigsaw",
+      sudoku: "Sudoku",
+      peaks: "Peaks",
+      search: "Search",
+      code: "Code",
+    },
 
     // Ranks
     rank_0: "Novice",

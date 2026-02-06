@@ -558,15 +558,23 @@ function startResolving(elements, targetWord, chars) {
   }, 50); // Slightly faster scramble
 }
 
-function finalizeVictory() {
+async function finalizeVictory() {
   console.log("Victory Animation Complete");
   // Ensure we capture the final stage time (Code)
   gameManager.stopStageTimer();
   gameManager.awardStagePoints("code"); // Award RP
 
+  // Record Win and capture session stats
+  const sessionStats = await gameManager.recordWin();
+
   // Ensure "Game Complete" state is saved
   gameManager.updateProgress("code", { completed: true });
-  gameManager.recordWin(); // <--- Record Stats
+
+  // Show Summary after a small delay to let the animation sink in
+  setTimeout(async () => {
+    const { showVictorySummary } = await import("./ui.js");
+    showVictorySummary(sessionStats, false);
+  }, 2000);
 }
 
 function updateStatusDisplay() {

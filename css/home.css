@@ -521,6 +521,19 @@ body.dark-mode .switch-row {
   box-shadow: 0 0 0 #c2410c; /* Animate to 0 offset instead of none */
 }
 
+.btn-primary.btn-won {
+  background: #059669; /* Emerald Green */
+  box-shadow: 0 4px 0 #047857;
+}
+
+.btn-primary.btn-won:hover {
+  background: #10b981;
+}
+
+.btn-primary.btn-won:active {
+  box-shadow: 0 0 0 #047857;
+}
+
 .btn-primary:disabled {
   background: var(--glass-border) !important; /* Lighter gray */
   color: var(--text-muted) !important;
@@ -562,6 +575,21 @@ body.dark-mode .btn-primary:hover {
 
 body.dark-mode .btn-primary:active {
   box-shadow: 0 0 0 #f57c00; /* Animate to 0 offset dark mode color */
+}
+
+/* Won Button Dark Mode Overrides */
+body.dark-mode .btn-primary.btn-won {
+  background: #059669; /* Emerald Green */
+  box-shadow: 0 4px 0 #047857;
+  color: #1e293b; /* Dark text for contrast in dark mode */
+}
+
+body.dark-mode .btn-primary.btn-won:hover {
+  background: #10b981;
+}
+
+body.dark-mode .btn-primary.btn-won:active {
+  box-shadow: 0 0 0 #047857;
 }
 
 /* Footer */
@@ -1335,5 +1363,114 @@ body.dark-mode .top-player {
 @media (max-width: 600px) {
   .ranking-header-main h3 {
     font-size: 1.4rem;
+  }
+}
+
+/* Victory Summary Modal */
+.victory-summary-content {
+  max-width: 500px !important;
+  padding: 30px !important;
+  text-align: center;
+}
+
+.victory-summary-header h2 {
+  color: var(--accent-color);
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+}
+
+.victory-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 25px 0;
+}
+
+.victory-stat-card {
+  background: rgba(var(--accent-rgb), 0.05);
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  border: 1px solid rgba(var(--accent-rgb), 0.1);
+}
+
+.victory-stat-card.highlight {
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-rgb), 0.1),
+    rgba(var(--accent-rgb), 0.2)
+  );
+  border: 1px solid var(--accent-color);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.victory-breakdown {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.victory-breakdown h3 {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  letter-spacing: 1px;
+}
+
+.stage-times-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.stage-time-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.stage-time-row .stage-name {
+  color: var(--text-muted);
+}
+
+.stage-time-row .stage-val {
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .victory-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .stage-times-grid {
+    grid-template-columns: 1fr;
   }
 }

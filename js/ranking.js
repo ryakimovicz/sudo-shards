@@ -27,8 +27,8 @@ export async function fetchRankings(forceRefresh = false) {
 
   console.log("[Ranking] Fetching fresh data from Firestore");
   const rankings = {
-    daily: await getTop10("dailyRP"),
-    monthly: await getTop10("monthlyRP"),
+    daily: await getTop10("dailyRP", true),
+    monthly: await getTop10("monthlyRP", true),
     allTime: await getTop10("totalRP"),
   };
 
@@ -39,11 +39,17 @@ export async function fetchRankings(forceRefresh = false) {
   return rankings;
 }
 
-async function getTop10(fieldName) {
+async function getTop10(fieldName, retryOnEmpty = false) {
   try {
     const usersRef = collection(db, "users");
     const q = query(usersRef, orderBy(fieldName, "desc"), limit(10));
-    const querySnapshot = await getDocs(q);
+    let querySnapshot = await getDocs(q);
+
+    if (retryOnEmpty && querySnapshot.empty) {
+      console.log(`[Ranking] ${fieldName} empty, retrying in 1.5s...`);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      querySnapshot = await getDocs(q);
+    }
 
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,

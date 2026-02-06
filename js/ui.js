@@ -1,3 +1,6 @@
+import { translations } from "./translations.js";
+import { getCurrentLang } from "./i18n.js";
+
 export function showToast(message, duration = 3000) {
   let container = document.getElementById("toast-container");
 
@@ -48,4 +51,84 @@ export function formatTime(ms) {
       .toString()
       .padStart(2, "0")}`;
   }
+}
+
+export function showVictorySummary(stats, isHome = false) {
+  if (!stats) return;
+
+  const modal = document.getElementById("victory-summary-modal");
+  const timeEl = document.getElementById("victory-total-time");
+  const streakEl = document.getElementById("victory-streak");
+  const errorsEl = document.getElementById("victory-errors");
+  const scoreEl = document.getElementById("victory-score");
+  const stageTimesContainer = document.getElementById("victory-stage-times");
+  const btnHome = document.getElementById("btn-victory-home");
+
+  if (!modal) return;
+
+  const lang = getCurrentLang();
+
+  // Update button text based on mode
+  if (btnHome) {
+    const btnKey = isHome ? "btn_close" : "btn_back_home";
+    btnHome.dataset.i18n = btnKey;
+    btnHome.textContent =
+      translations[lang][btnKey] || (isHome ? "Cerrar" : "Volver al Inicio");
+  }
+
+  // Populating main stats
+  if (timeEl) timeEl.textContent = formatTime(stats.totalTime);
+  if (streakEl) streakEl.textContent = stats.streak || "1";
+  if (errorsEl) errorsEl.textContent = stats.errors || "0";
+  if (scoreEl) scoreEl.textContent = `+${stats.score.toFixed(1)}`;
+
+  // Populating breakdown
+  if (stageTimesContainer) {
+    stageTimesContainer.innerHTML = "";
+
+    // Ordered categories for display
+    const stages = [
+      { key: "memory", icon: "🧠" },
+      { key: "jigsaw", icon: "🧩" },
+      { key: "sudoku", icon: "🔢" },
+      { key: "peaks", icon: "⛰️" },
+      { key: "search", icon: "🔍" },
+      { key: "code", icon: "📟" },
+    ];
+
+    stages.forEach((stage) => {
+      const timeMs = stats.stageTimes[stage.key] || 0;
+      const stageName = translations[lang].stage_names[stage.key] || stage.key;
+
+      const row = document.createElement("div");
+      row.className = "stage-time-row";
+      row.innerHTML = `
+        <span class="stage-name">${stage.icon} ${stageName}</span>
+        <span class="stage-val">${formatTime(timeMs)}</span>
+      `;
+      stageTimesContainer.appendChild(row);
+    });
+  }
+
+  // Home Button Logic
+  if (btnHome) {
+    btnHome.onclick = async () => {
+      modal.classList.add("hidden");
+
+      if (!isHome) {
+        // Clear ranking cache to ensure fresh data on reload
+        try {
+          const { clearRankingCache } = await import("./ranking.js");
+          clearRankingCache();
+        } catch (err) {
+          console.warn("Failed to clear ranking cache:", err);
+        }
+
+        window.location.reload(); // Simplest way to go back to Home state
+      }
+    };
+  }
+
+  // Show Modal
+  modal.classList.remove("hidden");
 }

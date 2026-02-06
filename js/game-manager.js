@@ -460,6 +460,10 @@ export class GameManager {
   async awardStagePoints(stage) {
     const points = SCORING.PARTIAL_RP[stage] || 0;
     if (points <= 0) return;
+
+    // Ensure RP reset logic (daily/monthly) runs before awarding partial points
+    await this._checkRankDecay();
+
     if (
       this.state.progress.stagesCompleted.includes(stage) &&
       !this._processingWin
@@ -470,7 +474,12 @@ export class GameManager {
       this.stats ||
       JSON.parse(localStorage.getItem("jigsudo_user_stats")) ||
       {};
+
+    // Synchronize points across all ranking categories
     stats.currentRP = (stats.currentRP || 0) + points;
+    stats.dailyRP = (stats.dailyRP || 0) + points;
+    stats.monthlyRP = (stats.monthlyRP || 0) + points;
+
     stats.totalScoreAccumulated = (stats.totalScoreAccumulated || 0) + points;
 
     if (!this._processingWin) {
@@ -527,27 +536,44 @@ export class GameManager {
     let stats =
       this.stats || JSON.parse(localStorage.getItem("jigsudo_user_stats"));
     if (!stats) return;
-    const today = new Date().toISOString().split("T")[0];
+
+    const seedStr = this.currentSeed.toString();
+    const today = `${seedStr.substring(0, 4)}-${seedStr.substring(4, 6)}-${seedStr.substring(6, 8)}`;
+    const currentMonth = today.substring(0, 7); // "YYYY-MM"
+
     const lastCheck = stats.lastDecayCheck || stats.lastPlayedDate;
+
     if (lastCheck && lastCheck !== today) {
-      const lastPlayed = stats.lastPlayedDate || today;
-      if (!stats.lastPlayedDate) return;
-      const lastDate = new Date(lastPlayed);
+      const lastDate = new Date(lastCheck);
       const currDate = new Date(today);
       lastDate.setHours(0, 0, 0, 0);
       currDate.setHours(0, 0, 0, 0);
       const diffTime = currDate - lastDate;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      // 1. Decay Penalty (Missed days)
       if (diffDays > 1) {
         const missed = diffDays - 1;
         const penalty = missed * SCORING.MISSED_DAY_RP;
         if (penalty > 0) {
           stats.currentRP = Math.max(0, (stats.currentRP || 0) - penalty);
-          stats.lastDecayCheck = today;
-          this.stats = stats;
-          localStorage.setItem("jigsudo_user_stats", JSON.stringify(stats));
         }
       }
+
+      // 2. Reset Daily RP
+      if (diffDays >= 1) {
+        stats.dailyRP = 0;
+      }
+
+      // 3. Reset Monthly RP
+      const lastMonth = lastCheck.substring(0, 7);
+      if (currentMonth !== lastMonth) {
+        stats.monthlyRP = 0;
+      }
+
+      stats.lastDecayCheck = today;
+      this.stats = stats;
+      localStorage.setItem("jigsudo_user_stats", JSON.stringify(stats));
     }
   }
 
@@ -661,6 +687,9 @@ export class GameManager {
 
   async recordWin() {
     try {
+      // 1. Ensure RP reset logic (daily/monthly) runs BEFORE loading stats into local variable
+      await this._checkRankDecay();
+
       let stats = this.stats ||
         JSON.parse(localStorage.getItem("jigsudo_user_stats")) || {
           totalPlayed: 0,
@@ -729,17 +758,9 @@ export class GameManager {
           stats.currentStreak = (stats.currentStreak || 0) + 1;
         } else if (diffDays > 0) {
           stats.currentStreak = 1;
-          stats.dailyRP = 0; // Reset Daily on first game of a new day
-        }
-
-        const lastMonth = last.substring(0, 7);
-        if (currentMonth !== lastMonth) {
-          stats.monthlyRP = 0; // Reset Monthly on first game of a new month
         }
       } else {
         stats.currentStreak = 1;
-        stats.dailyRP = 0;
-        stats.monthlyRP = 0;
       }
 
       if (stats.currentStreak > (stats.maxStreak || 0))
@@ -809,6 +830,14 @@ export class GameManager {
         peaksErrors,
       };
 
+      const sessionStats = {
+        totalTime: totalTimeMs,
+        score: dailyScore,
+        streak: stats.currentStreak,
+        errors: peaksErrors,
+        stageTimes: st,
+      };
+
       this.stats = stats;
       localStorage.setItem("jigsudo_user_stats", JSON.stringify(this.stats));
 
@@ -816,13 +845,15 @@ export class GameManager {
       const { stopTimer } = await import("./timer.js");
       stopTimer();
       const user = await import("./auth.js").then((m) => m.getCurrentUser());
-      if (user) saveUserStats(user.uid, stats);
-      this.forceCloudSave();
+      if (user) await saveUserStats(user.uid, stats);
+      await this.forceCloudSave();
 
       const { showToast } = await import("./ui.js");
       showToast("¡Progreso Guardado! 💾🏆");
+      return sessionStats;
     } catch (err) {
       console.error("Error saving stats:", err);
+      return null;
     }
   }
 }

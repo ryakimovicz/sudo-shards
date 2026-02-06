@@ -1078,6 +1078,60 @@
       </div>
     </div>
 
+    <!-- VICTORY SUMMARY MODAL -->
+    <div id="victory-summary-modal" class="modal-overlay hidden">
+      <div class="modal-content glass-panel victory-summary-content">
+        <div class="victory-summary-header">
+          <h2 data-i18n="victory_title">¡Juego Completado!</h2>
+          <p class="modal-desc" data-i18n="victory_desc">Aquí tienes un resumen de tu partida de hoy.</p>
+        </div>
+
+        <div class="victory-stats-grid">
+          <div class="victory-stat-card">
+            <span class="stat-icon">⏱️</span>
+            <div class="stat-info">
+              <span class="stat-label" data-i18n="victory_stat_time">Tiempo Total</span>
+              <span id="victory-total-time" class="stat-value">--:--</span>
+            </div>
+          </div>
+          <div class="victory-stat-card">
+            <span class="stat-icon">🔥</span>
+            <div class="stat-info">
+              <span class="stat-label" data-i18n="victory_stat_streak">Racha Actual</span>
+              <span id="victory-streak" class="stat-value">--</span>
+            </div>
+          </div>
+          <div class="victory-stat-card">
+            <span class="stat-icon">❌</span>
+            <div class="stat-info">
+              <span class="stat-label" data-i18n="victory_stat_errors">Errores</span>
+              <span id="victory-errors" class="stat-value">0</span>
+            </div>
+          </div>
+          <div class="victory-stat-card highlight">
+            <span class="stat-icon">🏆</span>
+            <div class="stat-info">
+              <span class="stat-label" data-i18n="victory_stat_score">Puntaje</span>
+              <span id="victory-score" class="stat-value">+0.0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="victory-breakdown">
+          <h3 data-i18n="victory_times_breakdown">Tiempos por Minijuego</h3>
+          <div id="victory-stage-times" class="stage-times-grid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-victory-home" class="btn-primary" data-i18n="btn_back_home" style="width: 100%;">
+            Volver al Inicio
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- BUG REPORT MODAL -->
     <div id="report-bug-modal" class="modal-overlay hidden">
       <div class="modal-content glass-panel">

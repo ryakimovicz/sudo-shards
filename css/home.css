@@ -1344,6 +1344,37 @@ body.dark-mode .top-player {
   background: rgba(245, 158, 11, 0.1);
 }
 
+.current-user-row {
+  background: rgba(252, 116, 44, 0.1) !important;
+  color: var(--accent-color);
+  font-weight: 700 !important;
+}
+
+body.dark-mode .current-user-row {
+  background: rgba(252, 116, 44, 0.15) !important;
+}
+
+.current-user-row td {
+  border-bottom: 2px solid var(--accent-color) !important;
+}
+
+.ranking-separator {
+  height: 30px;
+}
+
+.ranking-separator td {
+  text-align: center;
+  color: var(--text-muted);
+  font-weight: 900;
+  letter-spacing: 5px;
+  border-bottom: none !important;
+  padding: 5px 0 !important;
+}
+
+.personal-rank-row {
+  border-top: 1px dashed var(--glass-border);
+}
+
 .loader-small {
   width: 30px;
   height: 30px;

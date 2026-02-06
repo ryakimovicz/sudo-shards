@@ -13,6 +13,7 @@ import {
   where,
   getDocs,
   addDoc,
+  getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 import { gameManager } from "./game-manager.js";
 
@@ -218,5 +219,23 @@ export async function wipeUserData(userId) {
     console.warn(`🔥 User Game Data Wiped for ${userId}`);
   } catch (error) {
     console.error("Error wiping user data:", error);
+  }
+}
+
+/**
+ * Efficiently calculates the rank of a user by counting documents with a higher score.
+ * Cost: 1 document read.
+ */
+export async function getUserRank(fieldName, score) {
+  if (score === undefined || score === null) return null;
+  try {
+    const usersRef = collection(db, "users");
+    // Rank = (Number of users with score > current score) + 1
+    const q = query(usersRef, where(fieldName, ">", score));
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count + 1;
+  } catch (error) {
+    console.error(`[DB] Error calculating rank for ${fieldName}:`, error);
+    return null;
   }
 }

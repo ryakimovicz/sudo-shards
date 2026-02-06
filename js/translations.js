@@ -189,7 +189,8 @@ export const translations = {
     stat_max_score: "Puntaje Máx.",
     stat_best_time: "Tiempo Récord",
     stat_avg_time: "Tiempo Prom.",
-    stats_details_title: "Tiempos por Juego (Promedio)",
+    stat_avg_time: "Tiempo Promedio",
+    stats_details_title: "Tiempos promedio por nivel",
     daily_avg_title: "Promedio Diario",
     stats_title: "Estadísticas",
     no_data: "Sin datos suficientes",
@@ -235,11 +236,11 @@ export const translations = {
     rank_level_prefix: "Nvl.",
 
     // Minigame Names for Profile (Spanish)
-    p_game_memory: "Memoria",
+    p_game_memory: "Juego de Memoria",
     p_game_jigsaw: "Rompecabezas",
     p_game_sudoku: "Sudoku",
     p_game_peaks: "Picos y Valles",
-    p_game_search: "Sopa Números",
+    p_game_search: "Sopa de Números",
     p_game_code: "El Código",
 
     // Support & Share
@@ -256,6 +257,10 @@ export const translations = {
     share_text:
       "¡Desafía tu mente con Jigsudo! 🧩✨ ¿Podrás resolver el puzzle del día?",
     toast_share_success: "¡Enlace copiado al portapapeles! 📋✨",
+
+    // Stats Sharing
+    btn_share_stats: "Compartir Estadísticas",
+    share_stats_msg: "¡Mira mi progreso en Jigsudo! 🧩✨",
   },
   en: {
     app_title: "JIGSUDO",
@@ -413,7 +418,8 @@ export const translations = {
     stat_max_score: "Max Score",
     stat_best_time: "Best Time",
     stat_avg_time: "Avg Time",
-    stats_details_title: "Game Times (Average)",
+    stat_avg_time: "Avg Time",
+    stats_details_title: "Average Times per Level",
     daily_avg_title: "Daily Average",
     stats_title: "Statistics",
     no_data: "Not Enough Data",
@@ -518,7 +524,11 @@ export const translations = {
     btn_bug_submit: "Submit Report",
     toast_bug_success: "Report sent! Thank you. 🐛❤️",
     share_text:
-      "Challenge your mind with Jigsudo! 🧩✨ Can you solve today's puzzle?",
+      "Challenge your mind with Jigsudo! 🧩✨ Can you solve the puzzle of the day?",
     toast_share_success: "Link copied to clipboard! 📋✨",
+
+    // Stats Sharing
+    btn_share_stats: "Share Stats",
+    share_stats_msg: "Check out my progress in Jigsudo! 🧩✨",
   },
 };

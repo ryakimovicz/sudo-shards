@@ -48,7 +48,7 @@ export function calculateTimeBonus(totalSeconds) {
  * Helper to ensure float precision
  */
 export function calculateRP(score) {
-  return Number(score.toFixed(2));
+  return Number(score.toFixed(3));
 }
 
 /**

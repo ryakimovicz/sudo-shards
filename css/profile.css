@@ -721,3 +721,391 @@ body.dark-mode #btn-profile-logout:hover {
   background: #991b1b;
   border-color: #ef4444;
 }
+
+/* Share Styling */
+.profile-share-actions {
+  display: flex !important;
+  justify-content: center;
+  margin: 30px 0;
+  width: 100%;
+}
+
+.share-btn {
+  background: var(--accent-color) !important;
+  color: #1e293b !important; /* Dark text on orange */
+  max-width: 320px !important;
+  width: 90% !important;
+  font-size: 1.1rem !important;
+  padding: 15px !important;
+  box-shadow: 0 4px 0 #c2410c !important;
+}
+
+.share-btn:hover {
+  background: #ff9800 !important;
+  transform: translateY(-2px);
+}
+
+.share-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #c2410c !important;
+}
+
+/* Branding Header for Capture */
+.share-branding {
+  background: var(--bg-paper);
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--accent-color);
+  width: 100%;
+}
+
+.share-logo-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.share-logo {
+  height: 48px;
+  width: auto;
+}
+
+.share-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.share-app-title {
+  font-family: var(--font-header);
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.share-app-url {
+  font-size: 0.9rem;
+  color: var(--accent-color);
+  font-weight: 600;
+  margin: 0;
+}
+
+.share-user-info {
+  text-align: right;
+}
+
+.share-user-name {
+  font-family: var(--font-paper);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.share-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Visibility Control */
+.share-branding.hidden {
+  display: none !important;
+}
+
+/* Light/Dark Logos */
+.dark-only {
+  display: none;
+}
+body.dark-mode .dark-only {
+  display: block;
+}
+body.dark-mode .light-only {
+  display: block;
+  display: none;
+}
+
+/* SOCIAL CARD TEMPLATE (INSTAGRAM STORY FORMAT 9:16) */
+.social-card-template {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 1080px; /* Standard Story Width */
+  height: 1920px; /* Standard Story Height */
+  background: var(--bg-paper);
+  color: var(--text-main);
+  padding: 60px 60px 220px 60px; /* Shift everything higher to avoid IG bottom UI */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Tighter global gaps */
+  font-family: var(--font-paper);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.sc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end; /* Push content to the bottom of the header area */
+  padding: 120px 0 25px 0; /* Huge top padding to clear Instagram notch/UI */
+  border-bottom: 2px solid var(--accent-color);
+  margin-bottom: 20px;
+}
+
+.sc-branding {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.sc-logo-container {
+  height: 80px;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.sc-logo-container svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sc-app-title {
+  font-family: var(--font-main);
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1;
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+.sc-date {
+  font-size: 1.4rem;
+  color: var(--accent-color);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 5px;
+}
+
+.sc-user-box {
+  text-align: right;
+}
+
+.sc-username {
+  font-family: var(--font-main);
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.sc-rank-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  flex: 1;
+}
+
+/* 2x2 Grid Layout for Main Stats */
+.sc-stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.sc-stat-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 35px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.sc-stat-item.highlight {
+  border-color: var(--accent-color);
+  background: rgba(252, 116, 44, 0.05);
+}
+
+.sc-stat-val {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.sc-stat-lbl {
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+}
+
+/* 2-Column Grid for Statistics Sections */
+.sc-grid-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+}
+
+.sc-section-title {
+  font-size: 2.2rem;
+  text-transform: uppercase;
+  color: var(--accent-color);
+  margin-bottom: 15px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  border-left: 8px solid var(--accent-color);
+  padding-left: 20px;
+}
+
+.sc-stage-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.sc-weekday-chart {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+/* Card Style for both Levels and Weekdays */
+.sc-stage-item,
+.sc-weekday-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 18px 10px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  gap: 10px;
+  text-align: center;
+}
+
+.sc-item-label {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.sc-item-stats {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  width: 100%;
+}
+
+.sc-mini-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.sc-mini-icon {
+  font-size: 1.3rem;
+  opacity: 0.9;
+}
+
+.sc-mini-val {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-mini-rp {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--accent-color);
+}
+
+/* Center Saturday (7th element in grid) */
+.sc-weekday-item:nth-child(7) {
+  grid-column: 1 / span 2;
+  width: 50%;
+  margin: 0 auto;
+}
+
+.sc-weekday-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sc-weekday-icon {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  width: 20px;
+  display: inline-block;
+  text-align: center;
+}
+
+.sc-weekday-rp {
+  text-align: right;
+  font-weight: 800;
+  color: var(--accent-color);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Inline Logos */
+.light-only-inline {
+  display: inline-block !important;
+}
+.dark-only-inline {
+  display: none !important;
+}
+body.dark-mode .light-only-inline {
+  display: none !important;
+}
+body.dark-mode .dark-only-inline {
+  display: inline-block !important;
+}
+
+.sc-footer {
+  margin-top: 0; /* Tighten space with Saturday panel */
+  border-top: 2px solid var(--glass-border);
+  padding-top: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sc-invite {
+  font-size: 1.4rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.sc-tagline {
+  font-weight: 800;
+  color: var(--accent-color);
+  font-size: 1.6rem;
+}

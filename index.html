@@ -466,7 +466,23 @@
 
       <!-- Profile Section -->
       <section id="profile-section" class="hidden">
-        <div class="scrollable-content">
+        <div class="scrollable-content" id="profile-capture-area">
+          <!-- Capture Area Branding (Only visible during capture) -->
+          <div id="share-branding" class="share-branding hidden">
+            <div class="share-logo-group">
+              <img src="assets/images/logo_lightmode.svg" alt="Logo" class="share-logo light-only">
+              <img src="assets/images/logo_darkmode.svg" alt="Logo" class="share-logo dark-only">
+              <div class="share-text-group">
+                <h1 class="share-app-title">JIGSUDO</h1>
+                <p class="share-app-url">jigsudo.com</p>
+              </div>
+            </div>
+            <div class="share-user-info">
+              <p id="share-username-display" class="share-user-name"></p>
+              <p id="share-date-display" class="share-date"></p>
+            </div>
+          </div>
+
           <!-- 1. Identity Card -->
           <div class="profile-card identity-card glass-panel">
             <div class="profile-avatar-large" id="profile-avatar">U</div>
@@ -612,12 +628,18 @@
               >
                 <div class="section-title history-title" data-i18n="daily_avg_title">Promedio Diario</div>
               </div>
-              <div class="daily-time-chart" id="daily-time-chart">
-                <!-- Chart -->
+              <div class="daily-time-chart" id="daily-time-chart"></div>
               </div>
             </div>
           </div>
 
+          <!-- Share Button -->
+          <div class="profile-share-actions">
+            <button id="btn-share-stats" class="btn-primary share-btn" data-i18n="btn_share_stats">
+              Compartir Estadísticas
+            </button>
+          </div>
+ 
           <!-- 4. Settings / Actions -->
           <div class="section-title" data-i18n="settings_title">Ajustes</div>
           <div class="profile-actions hidden">
@@ -1168,8 +1190,69 @@
       🪄
     </button>
 
+    <div id="stats-social-card" class="social-card-template">
+      <div class="sc-header">
+        <div class="sc-branding">
+          <div id="sc-logo-container" class="sc-logo-container"></div>
+          <div class="sc-app-info">
+            <h1 class="sc-app-title">JIGSUDO</h1>
+            <p id="sc-date" class="sc-date">Febrero 2026</p>
+          </div>
+        </div>
+        <div class="sc-user-box">
+          <h2 id="sc-username" class="sc-username">Usuario</h2>
+          <p id="sc-rank" class="sc-rank-name">Novato</p>
+        </div>
+      </div>
+
+      <div class="sc-body">
+        <!-- Main Stats Row -->
+        <div class="sc-stats-row">
+          <div class="sc-stat-item">
+            <span class="sc-stat-val" id="sc-stat-played">0</span>
+            <span class="sc-stat-lbl" data-i18n="stat_days">Jugadas</span>
+          </div>
+          <div class="sc-stat-item">
+            <span class="sc-stat-val" id="sc-stat-streak">0</span>
+            <span class="sc-stat-lbl" data-i18n="stat_streak">Racha</span>
+          </div>
+          <div class="sc-stat-item">
+            <span class="sc-stat-val" id="sc-stat-avg-time-all">00:00</span>
+            <span class="sc-stat-lbl" data-i18n="stat_avg_time">Tiempo Promedio</span>
+          </div>
+          <div class="sc-stat-item highlight">
+            <span class="sc-stat-val" id="sc-stat-rp">0</span>
+            <span class="sc-stat-lbl">Puntos</span>
+          </div>
+        </div>
+
+        <!-- Two Column Grid for Breakdown -->
+        <div class="sc-grid-layout">
+          <div class="sc-col-left">
+            <h3 class="sc-section-title" data-i18n="stats_details_title">Tiempos promedio por nivel</h3>
+            <div id="sc-stage-list" class="sc-stage-list">
+              <!-- Dynamically filled -->
+            </div>
+          </div>
+          <div class="sc-col-right">
+             <h3 class="sc-section-title" data-i18n="daily_avg_title">Promedio Diario</h3>
+             <div id="sc-weekday-chart" class="sc-weekday-chart">
+               <!-- Dynamically filled -->
+             </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="sc-footer">
+        <p class="sc-invite">¡Desafía tu mente en el puzzle diario!</p>
+        <div class="sc-tagline">JIGSUDO.COM 🧩✨</div>
+      </div>
+    </div>
+
     <!-- SCRIPTS -->
     <script type="module" src="js/home.js"></script>
     <script type="module" src="js/auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   </body>
 </html>

@@ -48,6 +48,12 @@ export function initProfile() {
   }
 
   // Logout Button handled in auth.js via onclick/modal overrides
+
+  // Share Stats Button
+  const shareBtn = document.getElementById("btn-share-stats");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", () => handleShareStats());
+  }
 }
 
 // Router Handler
@@ -300,8 +306,8 @@ export function updateProfileData() {
     const bScore = stats.bestScore;
     document.getElementById("stat-max-score").textContent =
       bScore !== undefined && bScore > 0
-        ? fmtNumber(bScore, 2)
-        : fmtNumber(calculateRP(maxScore), 2);
+        ? fmtNumber(bScore, 3)
+        : fmtNumber(calculateRP(maxScore), 3);
   }
 
   if (document.getElementById("stat-best-time"))
@@ -515,7 +521,7 @@ function renderWeekdayStats(stats) {
     // Calculate raw avg first, then convert to RP scale? Or convert each?
     // Conversion is linear, so avg(RP) == convert(avg(Score))
     const avgScoreRaw = d.count > 0 ? d.sumScore / d.count : 0;
-    const avgScoreRP = d.count > 0 ? calculateRP(avgScoreRaw).toFixed(2) : "--";
+    const avgScoreRP = d.count > 0 ? calculateRP(avgScoreRaw).toFixed(3) : "--";
     const scoreCol = createMetricCol("⭐", avgScoreRP, "Puntaje Promedio");
 
     metricsGrid.appendChild(timeCol);
@@ -678,4 +684,312 @@ function renderCalendar(history = {}) {
     grid.innerHTML =
       "<div style='color:red; grid-column: 1/-1;'>Error cargando calendario</div>";
   }
+}
+
+async function handleShareStats() {
+  const card = document.getElementById("stats-social-card");
+  if (!card) return;
+
+  // html2canvas is loaded via CDN in index.html, it should be global
+  if (typeof html2canvas === "undefined") {
+    console.error("html2canvas not loaded");
+    const { showToast } = await import("./ui.js");
+    showToast("Error: html2canvas no está cargado ❌");
+    return;
+  }
+
+  try {
+    const { showToast } = await import("./ui.js");
+    showToast("Generando imagen... ⏳");
+
+    const lang = getCurrentLang();
+    const t = translations[lang] || translations["es"];
+    const user = getCurrentUser();
+
+    // 1. Populate Header & Basic Stats
+    const logoContainer = document.getElementById("sc-logo-container");
+    const usernameEl = document.getElementById("sc-username");
+    const rankEl = document.getElementById("sc-rank");
+    const dateEl = document.getElementById("sc-date");
+    const playedEl = document.getElementById("sc-stat-played");
+    const rpEl = document.getElementById("sc-stat-rp");
+    const streakEl = document.getElementById("sc-stat-streak");
+
+    // Handle Logo Injection (Inlined for reliability)
+    if (logoContainer) {
+      const isDarkMode = document.body.classList.contains("dark-mode");
+      const svgLight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"><text style="fill: rgb(252, 116, 44); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="216.831" y="128.255">1</text><line style="fill: none; stroke-width: 30px; stroke: rgb(30, 35, 41);" x1="166.576" y1="-1.106" x2="166.718" y2="500.154"/><line style="fill: none; stroke-width: 30px; stroke: rgb(30, 35, 41);" x1="333.588" y1="-1.106" x2="333.436" y2="500.154"/><line style="fill: none; stroke-width: 30px; stroke: rgb(30, 35, 41);" x1="0" y1="167.339" x2="500.154" y2="166.718"/><line style="fill: none; stroke-width: 30px; stroke: rgb(30, 35, 41);" x1="0" y1="333.479" x2="500.154" y2="333.436"/><text style="fill: rgb(24, 91, 147); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="49.191" y="125.381">J</text><text style="fill: rgb(252, 116, 44); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="381.02" y="125.859">6</text><text style="fill: rgb(252, 116, 44); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="31.317" y="302.394">5</text><text style="fill: rgb(24, 91, 147); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="204.759" y="302.394">U</text><text style="fill: rgb(24, 91, 147); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; stroke-width: 2px; white-space: pre;" x="198.205" y="479.26">D</text><text style="fill: rgb(252, 116, 44); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; stroke-width: 2px; white-space: pre;" x="381.95" y="479.26">0</text></svg>`;
+      const svgDark = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"><text style="fill: rgb(255, 167, 38); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="216.831" y="128.255">1</text><line style="fill: none; stroke-width: 30px; stroke: rgb(238, 238, 238);" x1="166.576" y1="-1.106" x2="166.718" y2="500.154"/><line style="fill: none; stroke-width: 30px; stroke: rgb(238, 238, 238);" x1="333.588" y1="-1.106" x2="333.436" y2="500.154"/><line style="fill: none; stroke-width: 30px; stroke: rgb(238, 238, 238);" x1="0" y1="167.339" x2="500.154" y2="166.718"/><line style="fill: none; stroke-width: 30px; stroke: rgb(238, 238, 238);" x1="0" y1="333.479" x2="500.154" y2="333.436"/><text style="fill: rgb(58, 136, 201); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="49.191" y="125.381">J</text><text style="fill: rgb(255, 167, 38); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="381.02" y="125.859">6</text><text style="fill: rgb(255, 167, 38); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="31.317" y="302.394">5</text><text style="fill: rgb(58, 136, 201); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; white-space: pre;" x="204.759" y="302.394">U</text><text style="fill: rgb(58, 136, 201); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; stroke-width: 2px; white-space: pre;" x="198.205" y="479.26">D</text><text style="fill: rgb(255, 167, 38); font-family: 'Century Gothic'; font-size: 140px; font-weight: 700; stroke-width: 2px; white-space: pre;" x="381.95" y="479.26">0</text></svg>`;
+      logoContainer.innerHTML = isDarkMode ? svgDark : svgLight;
+    }
+
+    if (usernameEl)
+      usernameEl.textContent = user
+        ? user.displayName || "Usuario"
+        : "Invitado";
+
+    const statsStr = localStorage.getItem("jigsudo_user_stats");
+    const stats = statsStr
+      ? JSON.parse(statsStr)
+      : { history: {}, totalPlayed: 0, currentStreak: 0, currentRP: 0 };
+
+    // RECALCULATE averages for the social card to ensure consistency
+    const stageSums = {
+      memory: 0,
+      jigsaw: 0,
+      sudoku: 0,
+      peaks: 0,
+      search: 0,
+      code: 0,
+    };
+    const stageCounts = {
+      memory: 0,
+      jigsaw: 0,
+      sudoku: 0,
+      peaks: 0,
+      search: 0,
+      code: 0,
+    };
+
+    if (stats.history) {
+      Object.values(stats.history).forEach((day) => {
+        if (day.stageTimes && day.status === "won") {
+          for (const [stage, time] of Object.entries(day.stageTimes)) {
+            if (stageSums[stage] !== undefined && time > 0) {
+              stageSums[stage] += time;
+              stageCounts[stage]++;
+            }
+          }
+        }
+      });
+    }
+    stats.avgTimesPerStage = {};
+    for (const s in stageSums) {
+      stats.avgTimesPerStage[s] = {
+        sumTime: stageSums[s],
+        count: stageCounts[s],
+      };
+    }
+    // Also need errors for peaks
+    let totalPeaksErrors = 0;
+    let peaksErrorCount = 0;
+    if (stats.history) {
+      Object.values(stats.history).forEach((day) => {
+        if (day.status === "won" && day.peaksErrors !== undefined) {
+          totalPeaksErrors += day.peaksErrors;
+          peaksErrorCount++;
+        }
+      });
+    }
+    if (stats.avgTimesPerStage.peaks) {
+      stats.avgTimesPerStage.peaks.sumErrors = totalPeaksErrors;
+    }
+
+    if (rankEl) {
+      const rankData = getRankData(stats.currentRP || 0);
+      const rankKey = rankData.rank.nameKey;
+      rankEl.textContent = t[rankKey] || rankKey;
+    }
+
+    if (dateEl) {
+      const locale = t.date_locale || "es-ES";
+      dateEl.textContent = new Date().toLocaleDateString(locale, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
+
+    if (playedEl) playedEl.textContent = stats.totalPlayed || 0;
+    if (rpEl)
+      rpEl.textContent = (stats.currentRP || 0).toLocaleString(lang, {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      });
+    if (streakEl) streakEl.textContent = stats.currentStreak || 0;
+
+    // Set Global Average Time (calculated from history)
+    const avgTimeEl = document.getElementById("sc-stat-avg-time-all");
+    if (avgTimeEl) {
+      let totalTime = 0;
+      let wonCount = 0;
+      if (stats.history) {
+        Object.values(stats.history).forEach((h) => {
+          if (h.status === "won" && h.totalTime > 0) {
+            totalTime += h.totalTime;
+            wonCount++;
+          }
+        });
+      }
+      avgTimeEl.textContent =
+        wonCount > 0 ? formatTime(totalTime / wonCount) : "--:--";
+    }
+
+    // 2. Populate Stage Times (Average) - REDESIGNED as Cards
+    const stageList = document.getElementById("sc-stage-list");
+    if (stageList) {
+      stageList.innerHTML = "";
+      const lang = getCurrentLang() || "es";
+
+      const stages = [
+        { id: "p_game_memory", key: "memory" },
+        { id: "p_game_jigsaw", key: "jigsaw" },
+        { id: "p_game_sudoku", key: "sudoku" },
+        { id: "p_game_peaks", key: "peaks" },
+        { id: "p_game_search", key: "search" },
+        { id: "p_game_code", key: "code" },
+      ];
+
+      stages.forEach((st) => {
+        const d = stats.avgTimesPerStage && stats.avgTimesPerStage[st.key];
+        const label = translations[lang][st.id] || st.id;
+        const card = document.createElement("div");
+        card.className = "sc-stage-item";
+
+        let statsHtml = "";
+        if (d && d.count > 0) {
+          const avgTime = d.sumTime / d.count;
+          statsHtml = `
+            <div class="sc-mini-stat">
+              <span class="sc-mini-icon">⏱️</span>
+              <span class="sc-mini-val">${formatTime(avgTime)}</span>
+            </div>
+          `;
+          // Add Errors for Picos y Valles
+          if (st.key === "peaks") {
+            const avgErrors =
+              d.sumErrors !== undefined ? d.sumErrors / d.count : 0;
+            statsHtml += `
+              <div class="sc-mini-stat">
+                <span class="sc-mini-icon">❌</span>
+                <span class="sc-mini-val">${avgErrors.toFixed(1)}</span>
+              </div>
+            `;
+          }
+        } else {
+          statsHtml = `<span class="sc-mini-val">--:--</span>`;
+        }
+
+        card.innerHTML = `
+          <span class="sc-item-label">${label}</span>
+          <div class="sc-item-stats">${statsHtml}</div>
+        `;
+        stageList.appendChild(card);
+      });
+    }
+
+    // 3. Populate Weekday Stats Chart - REDESIGNED as Cards
+    renderSocialWeekdayStats(stats);
+
+    // 4. Capture
+    // Increased delay to 500ms to ensure all assets (logos) and layouts settle
+    await new Promise((r) => setTimeout(r, 500));
+
+    const canvas = await html2canvas(card, {
+      backgroundColor:
+        getComputedStyle(document.body).getPropertyValue("--bg-paper") ||
+        "#f8fafc",
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      windowWidth: 1080,
+      windowHeight: 1920,
+    });
+
+    // 6. Share or Download
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      const file = new File([blob], "jigsudo-stats.png", { type: "image/png" });
+      const shareData = {
+        title: "Resumen Jigsudo",
+        text: t.share_stats_msg || "¡Mira mi progreso en Jigsudo! 🧩✨",
+        url: "https://jigsudo.com",
+        files: [file],
+      };
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share(shareData);
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            console.error("Share failed:", err);
+            downloadFallback(canvas);
+          }
+        }
+      } else {
+        downloadFallback(canvas);
+      }
+    }, "image/png");
+  } catch (err) {
+    console.error("Failed to generate social card:", err);
+    const { showToast } = await import("./ui.js");
+    showToast("Error al generar la imagen ❌");
+  }
+}
+
+function renderSocialWeekdayStats(stats) {
+  const container = document.getElementById("sc-weekday-chart");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const lang = getCurrentLang() || "es";
+  const formatter = new Intl.DateTimeFormat(lang, { weekday: "long" });
+  const cache = stats.weekdayStatsAccumulated;
+
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(2025, 0, 5 + i);
+    let label = formatter.format(d);
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    days.push({ label, sumTime: 0, sumScore: 0, sumErrors: 0, count: 0 });
+  }
+
+  if (cache) {
+    for (let i = 0; i < 7; i++) {
+      if (cache[i] && cache[i].count > 0) {
+        days[i].sumTime = cache[i].sumTime || 0;
+        days[i].sumScore = cache[i].sumScore || 0;
+        days[i].sumErrors = cache[i].sumErrors || 0;
+        days[i].count = cache[i].count;
+      }
+    }
+  }
+
+  days.forEach((d) => {
+    const card = document.createElement("div");
+    card.className = "sc-weekday-item";
+
+    const avgTime = d.count > 0 ? d.sumTime / d.count : 0;
+    const avgErrors = d.count > 0 ? d.sumErrors / d.count : 0;
+    const avgScoreRaw = d.count > 0 ? d.sumScore / d.count : 0;
+    const avgScoreRP = d.count > 0 ? calculateRP(avgScoreRaw) : 0;
+
+    card.innerHTML = `
+      <span class="sc-item-label">${d.label}</span>
+      <div class="sc-item-stats">
+        <div class="sc-mini-stat">
+          <span class="sc-mini-icon">⏱️</span>
+          <span class="sc-mini-val">${formatTime(avgTime)}</span>
+        </div>
+        <div class="sc-mini-stat">
+          <span class="sc-mini-icon">❌</span>
+          <span class="sc-mini-val">${d.count > 0 ? avgErrors.toFixed(1) : "0"}</span>
+        </div>
+        <div class="sc-mini-stat">
+          <span class="sc-mini-icon">⭐</span>
+          <span class="sc-mini-rp">${avgScoreRP.toLocaleString(lang, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</span>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function downloadFallback(canvas) {
+  const link = document.createElement("a");
+  link.href = canvas.toDataURL("image/png");
+  link.download = "jigsudo-stats.png";
+  link.click();
 }

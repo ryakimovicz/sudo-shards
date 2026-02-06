@@ -125,6 +125,10 @@ export async function saveUserStats(userId, statsData, username = null) {
       updateData.username = username;
     }
 
+    if (gameManager.isWiping) {
+      console.log("[DB] Update blocked: GM is wiping.");
+      return;
+    }
     await setDoc(userRef, updateData, { merge: true });
     console.log("Stats saved to cloud.");
   } catch (error) {
@@ -137,6 +141,10 @@ export async function saveUserProgress(userId, progressData) {
 
   try {
     const userRef = doc(db, "users", userId);
+    if (gameManager.isWiping) {
+      console.log("[DB] Update blocked: GM is wiping.");
+      return;
+    }
     await setDoc(
       userRef,
       {
@@ -146,7 +154,9 @@ export async function saveUserProgress(userId, progressData) {
       { merge: true },
     );
 
-    console.log("Progress saved to cloud.");
+    console.log(
+      `[DB] Progress saved to cloud for ${userId}. Stage: ${progressData.progress?.currentStage}`,
+    );
     showSaveIndicatorWithMessage("Guardado en nube");
   } catch (error) {
     console.error("Error saving progress:", error);
@@ -168,7 +178,7 @@ export async function loadUserProgress(userId) {
       console.log("Remote data found:", data);
 
       // Use GameManager to handle merge logic
-      gameManager.handleCloudSync(remoteProgress, remoteStats);
+      await gameManager.handleCloudSync(remoteProgress, remoteStats);
     } else {
       console.log("No remote progress found. Creating new entry on next save.");
     }

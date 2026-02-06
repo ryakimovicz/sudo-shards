@@ -4,6 +4,7 @@ import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
 import { transitionToSearch } from "./search.js";
 import { getAllTargets } from "./peaks-logic.js";
+import { resetUI } from "./memory.js";
 
 // State
 let peaksErrors = 0;
@@ -18,7 +19,7 @@ export function initPeaks() {
 
   // 1. Reset State
   peaksErrors = 0;
-  foundTargets = 0;
+  // foundTargets = 0; // REMOVED: Breaks hydration via resumePeaksState
   currentHintRow = 0; // Reset hint progress
   updateErrorCounter();
   // Sync Reset
@@ -51,7 +52,7 @@ export function initPeaks() {
   attachPeaksListeners();
 }
 
-export function transitionToPeaks() {
+export async function transitionToPeaks() {
   console.log("Transitioning to Peaks & Valleys...");
   window.isGameTransitioning = true;
 
@@ -60,7 +61,10 @@ export function transitionToPeaks() {
 
   if (!gameSection) return;
 
-  // 1. Hide Sudoku Controls
+  // 1. Global UI Cleanup
+  resetUI();
+
+  // 2. Hide Sudoku Controls
   if (sudokuControls) {
     sudokuControls.classList.add("hidden");
   }
@@ -105,6 +109,11 @@ export function transitionToPeaks() {
 
   // 6. Initialize Peaks Logic
   initPeaks();
+
+  // 7. Hydrate Previous Progress (Fix for login restoration)
+  const { resumeSudokuState } = await import("./sudoku.js");
+  resumeSudokuState();
+  resumePeaksState();
 }
 
 function prepareGameLogic() {
@@ -182,14 +191,14 @@ function handleBoardClick(e) {
 
   if (targetType) {
     // CORRECT!
-    handleCorrectClick(cell, targetType);
+    handleCorrectClick(cell, targetType, row, col);
   } else {
     // WRONG!
     handleIncorrectClick(cell);
   }
 }
 
-function handleCorrectClick(cell, type) {
+function handleCorrectClick(cell, type, row, col, silent = false) {
   cell.classList.add("peaks-found");
   // Visuals handled via CSS classes
   const lang = getCurrentLang();
@@ -207,9 +216,51 @@ function handleCorrectClick(cell, type) {
   updateRemainingCounter();
 
   // SYNC STATE: Save progress
+  const state = gameManager.getState();
+  if (!state.peaks.foundCoords) state.peaks.foundCoords = [];
+  const coordsKey = `${row},${col}`;
+  if (!state.peaks.foundCoords.includes(coordsKey)) {
+    state.peaks.foundCoords.push(coordsKey);
+  }
+
+  if (silent) return;
+
   gameManager.save();
 
   checkPeaksVictory();
+}
+
+/**
+ * Hydrates found peaks/valleys from saved state.
+ */
+export function resumePeaksState() {
+  const state = gameManager.getState();
+  const foundCoords = state.peaks?.foundCoords || [];
+
+  console.log(`[Peaks] Hydrating ${foundCoords.length} found targets.`);
+
+  const board = document.getElementById("memory-board");
+  if (!board) return;
+
+  // IMPORTANT: Reset foundTargets before hydration to avoid duplication
+  foundTargets = 0;
+  prepareGameLogic(); // Ensure targetMap is ready
+
+  foundCoords.forEach((key) => {
+    const [r, c] = key.split(",").map(Number);
+    const targetType = targetMap.get(key);
+
+    const slotIndex = Math.floor(r / 3) * 3 + Math.floor(c / 3);
+    const cellIndex = (r % 3) * 3 + (c % 3);
+
+    const slot = board.querySelector(`[data-slot-index="${slotIndex}"]`);
+    if (slot) {
+      const cell = slot.querySelectorAll(".mini-cell")[cellIndex];
+      if (cell) {
+        handleCorrectClick(cell, targetType, r, c, true);
+      }
+    }
+  });
 }
 
 function handleIncorrectClick(cell) {
@@ -242,6 +293,9 @@ function updateErrorCounter() {
 }
 
 function checkPeaksVictory() {
+  const currentState = gameManager.getState().progress.currentStage;
+  if (currentState !== "peaks") return;
+
   if (foundTargets >= totalTargets) {
     console.log("Peaks Stage Complete!");
 
@@ -300,7 +354,7 @@ export function providePeaksHint() {
         const cell = cells[cellIndexInSlot];
 
         if (cell && !cell.classList.contains("peaks-found")) {
-          handleCorrectClick(cell, targetType);
+          handleCorrectClick(cell, targetType, currentHintRow, col);
         }
       }
     }
@@ -364,7 +418,7 @@ export function debugSolvePeaks() {
           if (slot) {
             const cell = slot.querySelectorAll(".mini-cell")[cellIndex];
             if (cell && !cell.classList.contains("peaks-found")) {
-              handleCorrectClick(cell, type);
+              handleCorrectClick(cell, type, r, c);
             }
           }
         }

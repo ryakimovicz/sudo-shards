@@ -2,6 +2,7 @@ import { gameManager } from "./game-manager.js";
 import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
 import { transitionToPeaks } from "./peaks.js";
+import { createMiniGrid, getChunksFromBoard } from "./memory.js";
 // State
 let selectedCell = null;
 let pencilMode = false;
@@ -109,6 +110,9 @@ export function transitionToSudoku() {
       gameManager.updateProgress("progress", { currentStage: "sudoku" });
     }
   }
+
+  // 4. Hydrate Progress (Fix for login restoration)
+  resumeSudokuState();
 }
 
 export function initSudoku() {
@@ -293,7 +297,7 @@ export function initSudoku() {
     }
 
     // Custom Shortcuts (Q=Undo, W=Notes, E=Clear) - User Preference
-    const lowerKey = key.toLowerCase();
+    const lowerKey = key ? key.toLowerCase() : "";
 
     // Q -> Undo, Backspace (if just navigation)
     if (lowerKey === "q") {
@@ -950,12 +954,14 @@ function validateBoard() {
   if (!isFull) {
     if (missingCells < 5)
       console.log(`Sudoku: ${missingCells} cells remaining...`);
-
-    // SYNC STATE: Collect current board for persistence
-    syncSudokuState();
-    gameManager.save();
-    return;
   }
+
+  // ALWAYS SYNC STATE: Collect current board for persistence
+  // This ensures the win-state (full board) is also saved.
+  syncSudokuState();
+  gameManager.save();
+
+  if (!isFull) return;
 
   if (allCells.length !== 81) {
     console.warn(
@@ -1021,6 +1027,72 @@ export function syncSudokuState() {
   });
 
   gameManager.updateProgress("sudoku", { currentBoard });
+}
+
+/**
+ * Hydrates Sudoku cells from saved state.
+ */
+export function resumeSudokuState() {
+  const state = gameManager.getState();
+  const savedBoard = state.sudoku?.currentBoard;
+  const initialPuzzle = state.data?.initialPuzzle;
+
+  if (!savedBoard || !initialPuzzle) return;
+
+  console.log("[Sudoku] Hydrating board cells.");
+
+  const currentStage = state.progress.currentStage;
+  const isPostSudoku = ["peaks", "search", "code"].includes(currentStage);
+  const solution = isPostSudoku ? gameManager.getTargetSolution() : null;
+
+  const board = document.getElementById("memory-board");
+  if (!board) return;
+
+  const slots = Array.from(board.querySelectorAll(".sudoku-chunk-slot"));
+
+  slots.forEach((slot, slotIndex) => {
+    // If the slot is empty (e.g. pieces weren't moved in Jigsaw resumption),
+    // we MUST generate the content here so it's not a black square.
+    if (!slot.classList.contains("filled") || slot.innerHTML === "") {
+      const chunks = Array.isArray(initialPuzzle)
+        ? getChunksFromBoard(initialPuzzle)
+        : [];
+      if (chunks[slotIndex]) {
+        const content = createMiniGrid(chunks[slotIndex], slotIndex);
+        content.style.width = "100%";
+        content.style.height = "100%";
+        slot.innerHTML = "";
+        slot.appendChild(content);
+        slot.classList.add("filled");
+      }
+    }
+
+    const cells = Array.from(slot.querySelectorAll(".mini-cell"));
+    cells.forEach((cell, localIndex) => {
+      const row = Math.floor(slotIndex / 3) * 3 + Math.floor(localIndex / 3);
+      const col = (slotIndex % 3) * 3 + (localIndex % 3);
+
+      const val = savedBoard[row][col];
+      const initialVal = initialPuzzle[row][col];
+
+      if (val !== 0) {
+        cell.textContent = val;
+        // If it wasn't there initially, mark it as user-filled
+        if (initialVal === 0) {
+          cell.classList.add("user-filled");
+        }
+      } else if (isPostSudoku && solution) {
+        // FALLBACK: If we are in later stages, any empty cell must be filled from solution
+        const solVal = solution[row][col];
+        if (solVal !== 0) {
+          cell.textContent = solVal;
+          if (initialVal === 0) {
+            cell.classList.add("user-filled");
+          }
+        }
+      }
+    });
+  });
 }
 
 function handleSudokuWin() {

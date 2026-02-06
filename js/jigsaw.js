@@ -88,6 +88,20 @@ export function placeInPanel(chunkIndex) {
   const allPlaceholders = document.querySelectorAll(
     ".collected-piece.placeholder",
   );
+
+  // IDEMPOTENCY CHECK: Don't spawn if already exists in panel or board
+  // We use a more specific selector to avoid matching pieces currently visible on Memory Cards
+  const exists = Array.from(
+    document.querySelectorAll(
+      ".sudoku-chunk-slot .mini-sudoku-grid, .collected-piece .mini-sudoku-grid",
+    ),
+  ).some((el) => el.dataset.chunkIndex == chunkIndex);
+
+  if (exists) {
+    console.log(`[Jigsaw] Piece ${chunkIndex} already exists. Skipping spawn.`);
+    return;
+  }
+
   const available = Array.from(allPlaceholders).find((p) => !p.hasChildNodes());
 
   if (!available) {
@@ -1112,6 +1126,43 @@ export function syncJigsawState() {
   });
 
   gameManager.updateProgress("jigsaw", { placedChunks });
+}
+
+/**
+ * Hydrates pieces into the board slots from saved state.
+ */
+export function resumeJigsawState() {
+  const state = gameManager.getState();
+  const placedChunks = state.jigsaw?.placedChunks || [];
+
+  console.log(
+    `[Jigsaw] Hydrating ${placedChunks.filter((id) => id !== -1).length} placed pieces.`,
+  );
+
+  placedChunks.forEach((chunkIndex, slotIndex) => {
+    if (chunkIndex === -1) return;
+    if (chunkIndex === 4) return; // Handled by Memory (Center piece)
+
+    const slot = boardContainer.querySelector(
+      `[data-slot-index="${slotIndex}"]`,
+    );
+    const panelItem = Array.from(
+      document.querySelectorAll(".mini-sudoku-grid"),
+    ).find((el) => parseInt(el.dataset.chunkIndex) === chunkIndex);
+
+    if (slot && panelItem) {
+      // Move from panel to slot
+      const sourceParent = panelItem.parentElement;
+      slot.innerHTML = "";
+      slot.appendChild(panelItem);
+      slot.classList.add("filled");
+
+      if (sourceParent && sourceParent.classList.contains("collected-piece")) {
+        sourceParent.classList.add("placeholder");
+        delete sourceParent.dataset.chunkIndex;
+      }
+    }
+  });
 }
 
 function clearBoardErrors() {

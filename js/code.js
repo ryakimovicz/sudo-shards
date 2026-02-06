@@ -83,6 +83,17 @@ export function initCode() {
   if (memSection) memSection.classList.add("code-mode");
 }
 
+/**
+ * Hydrates progress from saved state.
+ */
+export function resumeCodeState() {
+  const state = gameManager.getState();
+  maxUnlockedLevel = state.code?.maxUnlockedLevel || 3;
+  currentLevel = state.progress.currentStage === "code" ? maxUnlockedLevel : 3;
+
+  console.log(`[Code] Hydrated max unlocked level: ${maxUnlockedLevel}`);
+}
+
 function generateFallbackSequence() {
   // Use daily seed to ensure same code for everyone
   const seed = getDailySeed();
@@ -205,6 +216,13 @@ function playSequence() {
   currentSequence.forEach((val, index) => {
     // Find all cells matching this value
     const matchData = simonData.filter((d) => d.value === val);
+
+    if (matchData.length === 0) {
+      console.error(
+        `[Code] ERROR: No cells found with value ${val}! Board might be empty.`,
+      );
+    }
+
     console.log(
       `[Code] Step ${index}: Value ${val}, Matches Found: ${matchData.length}`,
     );
@@ -248,6 +266,11 @@ function handleCodeClick(e) {
     stepInLevel++;
 
     // SYNC STATE: Save progress
+    const state = gameManager.getState();
+    state.code.maxUnlockedLevel = Math.max(
+      state.code.maxUnlockedLevel || 3,
+      currentLevel,
+    );
     gameManager.save();
 
     // Check if we hit the limit of the CURRENT TARGET level

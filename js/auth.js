@@ -15,19 +15,14 @@ import { gameManager } from "./game-manager.js";
 import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
 
-// ... (existing code)
-
 export async function updateUsername(newUsername) {
   const user = auth.currentUser;
   if (!user) return { success: false, error: "No user logged in." };
 
   try {
-    // 1. Check Uniqueness
-    // Dynamic import to avoid circular dependency issues if any
     const { checkUsernameAvailability, saveUserStats } =
       await import("./db.js");
 
-    // Skip check if name is same as current
     if (user.displayName === newUsername) return { success: true };
 
     const isAvailable = await checkUsernameAvailability(newUsername);
@@ -35,10 +30,8 @@ export async function updateUsername(newUsername) {
       return { success: false, error: "El nombre de usuario ya está en uso." };
     }
 
-    // 2. Update Auth Profile
     await updateProfile(user, { displayName: newUsername });
 
-    // 3. Sync to Firestore (to reserve the name)
     const currentStats = gameManager.state.stats;
     await saveUserStats(user.uid, currentStats, newUsername);
 
@@ -52,36 +45,93 @@ export async function updateUsername(newUsername) {
 }
 
 let currentUser = null;
+let isRegistering = false; // Flag to skip clearAllData during registration
 
 export function initAuth() {
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
-      // User is signed in
       currentUser = user;
       console.log("User signed in:", user.uid);
+
+      const storedUid = gameManager.getUserId();
+      console.log(
+        `[Auth] Checking context: storedUid=${storedUid}, firebaseUid=${user.uid}`,
+      );
+
+      if (isRegistering) {
+        console.log(
+          "[Auth] User registration: Preserving guest data for migration.",
+        );
+        gameManager.setUserId(user.uid);
+      } else if (storedUid && storedUid === user.uid) {
+        console.log("[Auth] Session resumed: Skipping data wipe.");
+      } else {
+        console.log(
+          `[Auth] Context switch (Mismatch: ${storedUid} -> ${user.uid}): Wiping local data.`,
+        );
+        gameManager.isWiping = true; // LOCK ON
+        await gameManager.clearAllData(false);
+        gameManager.setUserId(user.uid);
+      }
+
+      const wasPlaying = !document.body.classList.contains("home-active");
       updateUIForLogin(user);
 
-      // Load cloud save? handled by gameManager listener or explicit call
-      // gameManager.onUserLogin(user);
-      import("./db.js").then((module) => {
-        module.loadUserProgress(user.uid);
-        module.listenToUserProgress(user.uid); // Start Real-time Conflict Detection
-      });
+      // 2. LOAD SYNC
+      document.body.classList.add("syncing-account");
+      try {
+        console.log(`[Auth] Step 2: Syncing account data for ${user.uid}...`);
+        const { loadUserProgress, listenToUserProgress } =
+          await import("./db.js");
+
+        // Await the fetch and the handleCloudSync call inside it
+        await loadUserProgress(user.uid);
+
+        console.log(
+          `[Auth] Sync phase complete. Local state exists:`,
+          !!gameManager.getState(),
+        );
+
+        listenToUserProgress(user.uid); // Start Real-time Conflict Detection
+
+        if (!gameManager.getState()) {
+          console.log(
+            "[Auth] No compatible cloud progress found. Initializing fresh daily game.",
+          );
+          await gameManager.prepareDaily();
+        }
+
+        const isNowPlaying = !document.body.classList.contains("home-active");
+        if (wasPlaying || isNowPlaying) {
+          const state = gameManager.getState();
+          const currentStage = state.progress.currentStage || "memory";
+          console.log(`[Auth] Routing to stage: ${currentStage}`);
+          const memoryModule = await import("./memory.js");
+          memoryModule.resumeToStage(currentStage);
+        }
+      } catch (err) {
+        console.error("[Auth] Error during sync phase:", err);
+        if (!gameManager.getState()) await gameManager.prepareDaily();
+      } finally {
+        gameManager.isWiping = false; // LOCK OFF
+        document.body.classList.remove("syncing-account");
+        console.log("[Auth] Session initialization complete. Lock released.");
+      }
     } else {
-      // User is signed out
       currentUser = null;
       console.log("User signed out");
       updateUIForLogout();
+      // Ensure we clear any lingering user ID if logout is explicit
+      gameManager.setUserId(null);
     }
   });
 }
 
 export async function registerUser(email, password, username) {
+  isRegistering = true;
   try {
     const { checkUsernameAvailability, saveUserStats } =
       await import("./db.js");
-
-    // 1. Create User (Optimistic - Authenticates the user)
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -89,36 +139,46 @@ export async function registerUser(email, password, username) {
     );
     const user = userCredential.user;
 
-    // 2. Check Username Uniqueness (Now Authenticated)
     const isAvailable = await checkUsernameAvailability(username);
     if (!isAvailable) {
-      // Rollback: Delete the just-created user
       try {
         await deleteUser(user);
-        console.log("Rolled back user creation due to duplicate username.");
       } catch (rollbackError) {
         console.error("Rollback failed:", rollbackError);
-        // We might be in a state where user exists but shouldn't.
-        // But for MVP, we return the error associated with the username.
       }
       return { success: false, error: "El nombre de usuario ya está en uso." };
     }
 
-    // 3. Set Display Name
-    await updateProfile(user, {
-      displayName: username,
-    });
-
-    // Force UI Update with new name (fix race condition)
+    await updateProfile(user, { displayName: username });
     updateUIForLogin(user);
-
-    // 4. Index Username in Firestore immediately
     await saveUserStats(user.uid, { registeredAt: new Date() }, username);
+
+    const guestStatsStr = localStorage.getItem("jigsudo_user_stats");
+    if (guestStatsStr) {
+      try {
+        const guestStats = JSON.parse(guestStatsStr);
+        if (guestStats.currentRP > 0 || guestStats.wins > 0) {
+          await saveUserStats(user.uid, guestStats, username);
+        }
+      } catch (e) {
+        console.warn("[Auth] Failed to migrate guest stats:", e);
+      }
+    }
+
+    try {
+      await gameManager.forceCloudSave(user.uid);
+    } catch (e) {
+      console.warn("[Auth] Failed to migrate guest state:", e);
+    }
 
     return { success: true, user };
   } catch (error) {
     console.error("Registration Error:", error.code, error.message);
     return { success: false, error: translateAuthError(error.code) };
+  } finally {
+    setTimeout(() => {
+      isRegistering = false;
+    }, 1000);
   }
 }
 
@@ -138,6 +198,17 @@ export async function loginUser(email, password) {
 
 export async function logoutUser() {
   try {
+    const { stopListeningAndCleanup } = await import("./db.js");
+    stopListeningAndCleanup();
+
+    // Force sync before wiping local data
+    try {
+      await gameManager.forceCloudSave();
+    } catch (e) {
+      console.warn("[Auth] Cloud save before logout failed:", e);
+    }
+
+    await gameManager.clearAllData();
     await signOut(auth);
     return { success: true };
   } catch (error) {
@@ -145,14 +216,12 @@ export async function logoutUser() {
   }
 }
 
-// Sensitive Actions Helpers
 async function reauthenticateUser(user, currentPassword) {
   const credential = EmailAuthProvider.credential(user.email, currentPassword);
   try {
     await reauthenticateWithCredential(user, credential);
     return { success: true };
   } catch (error) {
-    // Fail silently in console, return error to UI
     return { success: false, error: translateAuthError(error.code) };
   }
 }
@@ -161,11 +230,9 @@ export async function updateUserPassword(currentPassword, newPassword) {
   const user = auth.currentUser;
   if (!user) return { success: false, error: "No user logged in." };
 
-  // 1. Re-authenticate
   const authResult = await reauthenticateUser(user, currentPassword);
   if (!authResult.success) return authResult;
 
-  // 2. Update Password
   try {
     await updatePassword(user, newPassword);
     return { success: true };
@@ -178,11 +245,15 @@ export async function deleteUserAccount(currentPassword) {
   const user = auth.currentUser;
   if (!user) return { success: false, error: "No user logged in." };
 
-  // 1. Re-authenticate
-  const authResult = await reauthenticateUser(user, currentPassword);
-  if (!authResult.success) return authResult;
+  // CRITICAL: Block all background saves during the deletion process
+  gameManager.isWiping = true;
 
-  // 2. Wipe Firestore Data (Import dynamic to avoid circular dep if possible, or assume it's safe)
+  const authResult = await reauthenticateUser(user, currentPassword);
+  if (!authResult.success) {
+    gameManager.isWiping = false; // Reset if auth fails
+    return authResult;
+  }
+
   try {
     const { wipeUserData } = await import("./db.js");
     await wipeUserData(user.uid);
@@ -190,9 +261,10 @@ export async function deleteUserAccount(currentPassword) {
     console.error("Wipe data failed, proceeding to delete account anyway:", e);
   }
 
-  // 3. Delete Auth Account
   try {
     await deleteUser(user);
+    // CRITICAL: Wipe local data after account deletion so the resulting guest session starts clean.
+    await gameManager.clearAllData();
     return { success: true };
   } catch (error) {
     return { success: false, error: translateAuthError(error.code) };
@@ -203,26 +275,19 @@ export function getCurrentUser() {
   return currentUser;
 }
 
-// UI Helpers
 function updateUIForLogin(user) {
-  const profileBtn = document.getElementById("btn-profile"); // Correct ID
-  if (profileBtn) {
-    profileBtn.classList.add("authenticated");
-  }
+  const profileBtn = document.getElementById("btn-profile");
+  if (profileBtn) profileBtn.classList.add("authenticated");
 
   const loginModal = document.getElementById("login-modal");
   if (loginModal) loginModal.classList.add("hidden");
 
-  // Show Sidebar Profile Actions
   const profileActions = document.querySelector(".profile-actions");
   if (profileActions) profileActions.classList.remove("hidden");
 
-  // Hide Guest Actions
   const guestActions = document.querySelector(".guest-actions");
   if (guestActions) guestActions.classList.add("hidden");
 
-  // Update Dropdown UI
-  // Update Dropdown UI
   const loginWrapper = document.getElementById("login-wrapper");
   const loggedInView = document.getElementById("logged-in-view");
   const nameSpan = document.getElementById("user-display-name");
@@ -231,52 +296,48 @@ function updateUIForLogin(user) {
   if (loggedInView) loggedInView.classList.remove("hidden");
 
   if (nameSpan) {
-    // Use displayName if available, otherwise email prefix
     const displayName = user.displayName || user.email.split("@")[0];
     nameSpan.textContent = displayName;
   }
 
-  // Update Profile Sidebar Email
+  const menu = document.getElementById("menu-content");
+  const gameSection = document.getElementById("game-section");
+  if (menu) menu.classList.remove("hidden");
+  if (gameSection) {
+    gameSection.classList.add("hidden");
+    document.body.classList.add("home-active");
+    gameSection.classList.remove(
+      "memory-mode",
+      "jigsaw-mode",
+      "sudoku-mode",
+      "peaks-mode",
+      "search-mode",
+      "code-mode",
+    );
+  }
+
   const profileEmail = document.getElementById("profile-email-display");
-  const profileEmailSmall = document.getElementById("profile-email-small");
   const profileNameLarge = document.getElementById("profile-name-large");
 
   if (profileEmail) profileEmail.textContent = user.email;
-  // Use display name or default to 'Usuario'
-  if (profileNameLarge) {
+  if (profileNameLarge)
     profileNameLarge.textContent = user.displayName || "Usuario";
-  }
 
-  if (profileEmailSmall) profileEmailSmall.textContent = "";
-
-  // Wire up Buttons (Profile Sidebar)
   const btnChangeName = document.getElementById("btn-profile-change-name");
-  if (btnChangeName) {
-    btnChangeName.onclick = () => {
-      showPasswordModal("change_username");
-    };
-  }
+  if (btnChangeName)
+    btnChangeName.onclick = () => showPasswordModal("change_username");
 
   const btnChangePass = document.getElementById("btn-profile-change-pw");
-  if (btnChangePass) {
-    btnChangePass.onclick = () => {
-      showPasswordModal("change_password");
-    };
-  }
+  if (btnChangePass)
+    btnChangePass.onclick = () => showPasswordModal("change_password");
 
   const btnDelete = document.getElementById("btn-profile-delete");
-  if (btnDelete) {
-    btnDelete.onclick = () => {
-      showPasswordModal("delete_account");
-    };
-  }
+  if (btnDelete) btnDelete.onclick = () => showPasswordModal("delete_account");
 
-  // Refresh Main Profile Card
   import("./profile.js").then((module) => {
     module.updateProfileData();
   });
 
-  // Wire Logout Button (Custom Modal)
   const btnLogout = document.getElementById("btn-profile-logout");
   if (btnLogout) {
     btnLogout.onclick = () => {
@@ -285,7 +346,6 @@ function updateUIForLogin(user) {
     };
   }
 
-  // Wire Logout Modal Buttons
   const btnCancelLogout = document.getElementById("btn-cancel-logout-modal");
   const btnConfirmLogout = document.getElementById("btn-confirm-logout-modal");
   const logoutModal = document.getElementById("logout-confirm-modal");
@@ -301,55 +361,59 @@ function updateUIForLogin(user) {
       const { showToast } = await import("./ui.js");
       btnConfirmLogout.textContent = "Saliendo...";
       btnConfirmLogout.disabled = true;
-
       const result = await logoutUser();
-
       btnConfirmLogout.textContent = "Cerrar Sesión";
       btnConfirmLogout.disabled = false;
       logoutModal.classList.add("hidden");
-
-      if (result.success) {
-        showToast("Sesión cerrada correctamente.");
-      } else {
-        showToast("Error al cerrar sesión: " + result.error);
-      }
+      if (result.success) showToast("Sesión cerrada correctamente.");
+      else showToast("Error al cerrar sesión: " + result.error);
     };
   }
 }
 
 function updateUIForLogout() {
-  const profileBtn = document.getElementById("btn-profile"); // Correct ID
-  if (profileBtn) {
-    profileBtn.classList.remove("authenticated");
-  }
+  const profileBtn = document.getElementById("btn-profile");
+  if (profileBtn) profileBtn.classList.remove("authenticated");
 
-  // Update Dropdown UI
   const loginWrapper = document.getElementById("login-wrapper");
   const loggedInView = document.getElementById("logged-in-view");
 
   if (loginWrapper) loginWrapper.classList.remove("hidden");
   if (loggedInView) loggedInView.classList.add("hidden");
 
-  // Clear Sidebar Email (explicit force)
   const profileEmail = document.getElementById("profile-email-display");
   if (profileEmail) profileEmail.textContent = "";
 
-  // Stop Listener
   import("./db.js").then((module) => {
     module.stopListeningAndCleanup();
   });
 
-  // Show Guest Actions
   const guestActions = document.querySelector(".guest-actions");
   if (guestActions) guestActions.classList.remove("hidden");
 
-  // Refresh Main Profile Card (to Guest state)
   import("./profile.js").then((module) => {
     module.updateProfileData();
   });
 
-  // Wire Guest Login Button (if not already wired)
-  // Logic usually goes in initAuth, but ensuring it here or somewhere safe is good.
+  const menu = document.getElementById("menu-content");
+  const gameSection = document.getElementById("game-section");
+  if (menu) menu.classList.remove("hidden");
+  if (gameSection) {
+    gameSection.classList.add("hidden");
+    document.body.classList.add("home-active");
+    gameSection.classList.remove(
+      "memory-mode",
+      "jigsaw-mode",
+      "sudoku-mode",
+      "peaks-mode",
+      "search-mode",
+      "code-mode",
+    );
+  }
+
+  const debugBtn = document.getElementById("debug-help-btn");
+  if (debugBtn) debugBtn.style.display = "none";
+
   const btnGuestLogin = document.getElementById("btn-profile-login-guest");
   if (btnGuestLogin) {
     btnGuestLogin.onclick = () => {
@@ -379,7 +443,6 @@ function translateAuthError(code) {
   }
 }
 
-// Modal Logic
 function showPasswordModal(actionType) {
   const modal = document.getElementById("password-confirm-modal");
   const title = document.getElementById("pwd-modal-title");
@@ -394,34 +457,24 @@ function showPasswordModal(actionType) {
 
   if (!modal) return;
 
-  // Reset fields
   confirmInput.value = "";
   newPassInput.value = "";
   if (verifyPassInput) verifyPassInput.value = "";
   modal.classList.remove("hidden");
 
-  // Setup Visibility Toggles (Event Delegation - Robust)
-  // Check if we already attached the listener to avoid duplicates
   if (!modal.dataset.toggleListenerAttached) {
     modal.addEventListener("click", (e) => {
       const btn = e.target.closest(".toggle-password");
       if (!btn) return;
-
       e.preventDefault();
       e.stopPropagation();
-
       const wrapper = btn.closest(".password-wrapper");
       const input = wrapper ? wrapper.querySelector("input") : null;
-
       if (input) {
         const isPassword = input.type === "password";
         const newType = isPassword ? "text" : "password";
-
         input.type = newType;
-        // Icon: 👁️ = Show, 🙈 = Hide (Monkey covering eyes)
         btn.textContent = isPassword ? "🙈" : "👁️";
-
-        // Link Logic
         const verifyPassInputRef = document.getElementById(
           "verify-password-input",
         );
@@ -433,33 +486,27 @@ function showPasswordModal(actionType) {
     modal.dataset.toggleListenerAttached = "true";
   }
 
-  // Determine Language
   const lang = getCurrentLang() || "es";
   const t = translations[lang] || translations["es"];
 
-  // Configure based on action
   if (actionType === "change_username") {
     title.textContent = t.modal_change_name_title;
     desc.textContent = t.modal_change_name_desc;
     newPassContainer.classList.add("hidden");
-    // Hide wrapper to hide icon too
     if (confirmInput.closest(".password-wrapper")) {
       confirmInput.closest(".password-wrapper").classList.add("hidden");
     } else {
       confirmInput.classList.add("hidden");
     }
-
     if (textInput) {
       textInput.classList.remove("hidden");
       textInput.placeholder = t.modal_new_name_placeholder;
       textInput.value = auth.currentUser.displayName || "";
       textInput.focus();
     }
-
     const newBtnConfirm = btnConfirm.cloneNode(true);
     btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
-    newBtnConfirm.textContent = t.btn_confirm; // Reset text
-
+    newBtnConfirm.textContent = t.btn_confirm;
     newBtnConfirm.onclick = async () => {
       const { showToast } = await import("./ui.js");
       const newName = textInput ? textInput.value.trim() : "";
@@ -467,26 +514,18 @@ function showPasswordModal(actionType) {
         showToast(t.toast_name_empty);
         return;
       }
-
       newBtnConfirm.disabled = true;
       newBtnConfirm.textContent = t.btn_saving;
-
       const result = await updateUsername(newName);
-
       newBtnConfirm.disabled = false;
       newBtnConfirm.textContent = t.btn_confirm;
-
       if (result.success) {
         showToast(t.toast_name_success);
         modal.classList.add("hidden");
-        // Sync Header
         const nameSpan = document.getElementById("user-display-name");
         if (nameSpan) nameSpan.textContent = newName;
-        // Sync Profile Sidebar
         const profileNameLarge = document.getElementById("profile-name-large");
         if (profileNameLarge) profileNameLarge.textContent = newName;
-
-        // Sync Rank Card (Avatar/Name)
         try {
           const { updateProfileData } = await import("./profile.js");
           updateProfileData();
@@ -501,33 +540,21 @@ function showPasswordModal(actionType) {
     title.textContent = t.modal_change_pw_title;
     desc.textContent = t.modal_change_pw_desc;
     newPassContainer.classList.remove("hidden");
-
-    // Show wrapper
     const currentWrapper = confirmInput.closest(".password-wrapper");
-    if (currentWrapper) {
-      currentWrapper.classList.remove("hidden");
-    } else {
-      confirmInput.classList.remove("hidden");
-    }
-
-    // Update Placeholders
+    if (currentWrapper) currentWrapper.classList.remove("hidden");
+    else confirmInput.classList.remove("hidden");
     confirmInput.placeholder = t.placeholder_current_pw;
     newPassInput.placeholder = t.placeholder_new_pw;
     if (verifyPassInput) verifyPassInput.placeholder = t.placeholder_verify_pw;
-
     if (textInput) textInput.classList.add("hidden");
-
-    // Clone to remove old listeners
     const newBtnConfirm = btnConfirm.cloneNode(true);
     btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
     newBtnConfirm.textContent = t.btn_confirm;
-
     newBtnConfirm.onclick = async () => {
       const { showToast } = await import("./ui.js");
       const currentPass = confirmInput.value;
       const newPass = newPassInput.value;
       const verifyPass = verifyPassInput ? verifyPassInput.value : "";
-
       if (!currentPass || !newPass || !verifyPass) {
         showToast(t.toast_pw_empty);
         return;
@@ -540,15 +567,11 @@ function showPasswordModal(actionType) {
         showToast(t.toast_pw_short);
         return;
       }
-
       newBtnConfirm.disabled = true;
       newBtnConfirm.textContent = t.btn_processing;
-
       const result = await updateUserPassword(currentPass, newPass);
-
       newBtnConfirm.disabled = false;
       newBtnConfirm.textContent = t.btn_confirm;
-
       if (result.success) {
         showToast(t.toast_pw_success);
         modal.classList.add("hidden");
@@ -561,24 +584,14 @@ function showPasswordModal(actionType) {
     desc.textContent = t.modal_delete_account_desc;
     title.style.color = "#ff5555";
     newPassContainer.classList.add("hidden");
-
-    // Explicitly Reset Inputs (Fix for zombie state from Change Name)
     const currentWrapper = confirmInput.closest(".password-wrapper");
-    if (currentWrapper) {
-      currentWrapper.classList.remove("hidden");
-    } else {
-      confirmInput.classList.remove("hidden");
-    }
-
-    // Update Placeholder
+    if (currentWrapper) currentWrapper.classList.remove("hidden");
+    else confirmInput.classList.remove("hidden");
     confirmInput.placeholder = t.placeholder_current_pw;
-
     if (textInput) textInput.classList.add("hidden");
-
     const newBtnConfirm = btnConfirm.cloneNode(true);
     btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
     newBtnConfirm.textContent = t.btn_confirm;
-
     newBtnConfirm.onclick = async () => {
       const { showToast } = await import("./ui.js");
       const currentPass = confirmInput.value;
@@ -586,8 +599,6 @@ function showPasswordModal(actionType) {
         showToast(t.toast_pw_enter);
         return;
       }
-
-      /* Native Confirm Removed - Using Custom Modal */
       const deleteModal = document.getElementById(
         "delete-account-confirm-modal",
       );
@@ -597,25 +608,17 @@ function showPasswordModal(actionType) {
       const btnConfirmDelete = document.getElementById(
         "btn-confirm-delete-modal",
       );
-
       if (deleteModal) {
         deleteModal.classList.remove("hidden");
-
-        // Wire Cancel
-        if (btnCancelDelete) {
+        if (btnCancelDelete)
           btnCancelDelete.onclick = () => {
             deleteModal.classList.add("hidden");
           };
-        }
-
-        // Wire Confirm
         if (btnConfirmDelete) {
           btnConfirmDelete.onclick = async () => {
             btnConfirmDelete.disabled = true;
             btnConfirmDelete.textContent = t.btn_deleting;
-
             const result = await deleteUserAccount(currentPass);
-
             if (result.success) {
               showToast(t.toast_delete_success);
               setTimeout(() => window.location.reload(), 2000);
@@ -630,8 +633,6 @@ function showPasswordModal(actionType) {
       }
     };
   }
-
-  // Wiring Cancel
   btnCancel.onclick = () => {
     modal.classList.add("hidden");
     title.style.color = "";

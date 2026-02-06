@@ -4,6 +4,7 @@ import { translations } from "./translations.js";
 import { getCurrentLang } from "./i18n.js";
 import { isPeakOrValley, getNeighbors } from "./peaks-logic.js";
 import { initCode } from "./code.js";
+import { resetUI } from "./memory.js";
 
 let isSelecting = false;
 let currentPath = []; // Array of {r, c}
@@ -387,15 +388,17 @@ function restoreFoundSequences(data) {
   });
 }
 
-export function transitionToSearch() {
+export async function transitionToSearch() {
   console.log("Transitioning to Number Search...");
   window.isGameTransitioning = true;
 
   const gameSection = document.getElementById("game-section");
   if (!gameSection) return;
 
-  // 1. Switch Mode Classes
-  gameSection.classList.remove("peaks-mode");
+  // 1. Global UI Cleanup
+  resetUI();
+
+  // 1.5 Switch Mode Classes
   gameSection.classList.add("search-mode");
 
   // 2. Update Title
@@ -427,12 +430,19 @@ export function transitionToSearch() {
     }, 500);
   }
 
-  // 5. Hide Peaks Stats
-  const statsEl = document.getElementById("peaks-stats");
-  if (statsEl) statsEl.classList.add("hidden");
-
   // 6. Initialize Search Logic
   initSearch();
+
+  // 6.5 Update Stage in State
+  if (gameManager.getState().progress.currentStage !== "search") {
+    gameManager.updateProgress("progress", { currentStage: "search" });
+  }
+
+  // 7. Hydrate Previous Progress (Fix for login restoration)
+  const { resumeSudokuState } = await import("./sudoku.js");
+  const { resumePeaksState } = await import("./peaks.js");
+  resumeSudokuState();
+  resumePeaksState();
 }
 
 export function provideSearchHint() {
@@ -456,15 +466,17 @@ export function provideSearchHint() {
   }
 }
 
-export function transitionToCode() {
+export async function transitionToCode() {
   console.log("Transitioning to The Code...");
   window.isGameTransitioning = true;
 
   const gameSection = document.getElementById("game-section");
   if (!gameSection) return;
 
-  // 1. Switch Mode Classes
-  gameSection.classList.remove("search-mode");
+  // 1. Global UI Cleanup
+  resetUI();
+
+  // 1.5 Switch Mode Classes
   gameSection.classList.add("code-mode");
 
   // 2. Hide Search UI
@@ -496,13 +508,28 @@ export function transitionToCode() {
       tooltipTitle.textContent = t.code_help_title || "El Código";
       tooltipDesc.innerHTML = t.code_help_desc || "Memoriza la secuencia.";
       tooltipTitle.style.opacity = "1";
+      tooltipTitle.style.opacity = "1";
       tooltipDesc.style.opacity = "1";
       // Unlock
       window.isGameTransitioning = false;
     }, 500);
   }
 
-  // 5. Initialize Code Game
+  // 5.5 Update Stage in State
+  if (gameManager.getState().progress.currentStage !== "code") {
+    gameManager.updateProgress("progress", { currentStage: "code" });
+  }
+
+  // 6. Hydrate Previous Progress (Fix for login restoration)
+  const { resumeSudokuState } = await import("./sudoku.js");
+  const { resumePeaksState } = await import("./peaks.js");
+  const { resumeCodeState } = await import("./code.js");
+
+  await resumeSudokuState();
+  await resumePeaksState();
+  await resumeCodeState();
+
+  // 7. Initialize Code Game AFTER hydration
   initCode();
 }
 

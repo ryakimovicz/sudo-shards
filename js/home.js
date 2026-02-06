@@ -344,15 +344,32 @@ export function initHome() {
       }
 
       try {
+        if (gameManager.isWiping) {
+          console.warn("[Home] Sync in progress. Blocking start.");
+          return;
+        }
         // 1. Refresh Seed & State (Ensures fresh date if tab was open)
         await gameManager.prepareDaily();
 
         // Remove Home State
         document.body.classList.remove("home-active");
 
-        // 2. Load Memory Game
+        // 2. Load Memory Game (Routing)
+        const state = gameManager.getState();
+        const currentStage = state.progress.currentStage || "memory";
         const module = await import("./memory.js");
-        module.initMemoryGame();
+
+        if (currentStage === "memory") {
+          module.initMemoryGame();
+        } else {
+          console.log(`[Home] Resuming session at stage: ${currentStage}`);
+          if (module.resumeToStage) {
+            module.resumeToStage(currentStage);
+          } else {
+            // Fallback (should not happen if all stages implemented)
+            module.initMemoryGame();
+          }
+        }
 
         // Note: initMemoryGame hides home, so button state reset isn't strictly needed immediately,
         // but good practice if user comes back.

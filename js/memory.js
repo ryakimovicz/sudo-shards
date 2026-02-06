@@ -15,7 +15,10 @@ import { provideSearchHint } from "./search.js";
 import { gameManager } from "./game-manager.js";
 import { CONFIG } from "./config.js";
 import { startTimer } from "./timer.js";
-import { debugSolveCode } from "./code.js";
+import { debugSolveCode, resumeCodeState } from "./code.js";
+import { resumeSudokuState } from "./sudoku.js";
+import { resumePeaksState } from "./peaks.js";
+import { updateTexts } from "./i18n.js";
 
 // DOM Elements
 let memorySection;
@@ -40,9 +43,21 @@ export function initMemoryGame() {
   // Show Solve button (restore CSS control)
   const solveBtn = document.getElementById("debug-help-btn");
   if (solveBtn) solveBtn.style.display = ""; // Let CSS (debug-mode) handle it
+
   memorySection = document.getElementById("game-section"); // FIXED ID
   boardContainer = document.getElementById("memory-board");
+
+  // CLEANUP: Reset Board (remove Jigsaw leftovers)
+  if (boardContainer) boardContainer.innerHTML = "";
+
+  resetUI();
+  if (memorySection) memorySection.classList.add("memory-mode");
+
   cardsContainer = document.getElementById("memory-cards");
+  if (cardsContainer) {
+    cardsContainer.classList.remove("cards-hidden");
+    cardsContainer.style.opacity = ""; // Force clear any lingering inline opacity
+  }
   collectedLeft = document.getElementById("collected-left");
   collectedRight = document.getElementById("collected-right");
 
@@ -90,7 +105,7 @@ export function initMemoryGame() {
     cards = [];
     flippedCards = [];
     isLocked = false;
-    matchesFound = 0;
+    matchesFound = state.memory?.pairsFound || 0;
     cardsContainer.innerHTML = "";
     collectedLeft.innerHTML = "";
     collectedRight.innerHTML = "";
@@ -105,11 +120,22 @@ export function initMemoryGame() {
 
     // Initialize Resizing
     fitCollectedPieces(); // Imported
-    fitMemoryCards();
+
+    // Use requestAnimationFrame to ensure the section is visible and measurable
+    requestAnimationFrame(() => {
+      fitMemoryCards();
+      fitCollectedPieces();
+    });
+
     window.addEventListener("resize", () => {
       fitCollectedPieces();
       fitMemoryCards();
     });
+
+    // 6. Resume matches if any
+    if (matchesFound > 0) {
+      resumeMemoryState();
+    }
   } catch (err) {
     console.error("[Memory] Initialization Failed:", err);
     alert("Error iniciando juego: " + err.message);
@@ -130,6 +156,178 @@ export function initMemoryGame() {
       console.log("Debug button clicked");
       debugAutoMatch();
     };
+  }
+}
+
+/**
+ * Routes the application to a specific stage during resumption.
+ */
+export function resumeToStage(stage) {
+  console.log(`[Memory] Resuming to stage: ${stage}`);
+
+  if (stage === "memory") {
+    initMemoryGame();
+    return;
+  }
+
+  resetUI();
+
+  // 1. Initialize logic references (Jigsaw, Timer, etc.)
+  memorySection = document.getElementById("game-section");
+  boardContainer = document.getElementById("memory-board");
+  cardsContainer = document.getElementById("memory-cards");
+  collectedLeft = document.getElementById("collected-left");
+  collectedRight = document.getElementById("collected-right");
+
+  initJigsaw({
+    memorySection,
+    boardContainer,
+    collectedLeft,
+    collectedRight,
+  });
+
+  // 2. Hide Home & Show Game
+  if (memorySection) memorySection.classList.remove("hidden");
+  document.getElementById("menu-content")?.classList.add("hidden");
+
+  // 3. Setup Board (Empty slots for Jigsaw/Sudoku/etc)
+  const state = gameManager.getState();
+  if (state.data?.initialPuzzle) {
+    setupBoard(state.data.initialPuzzle);
+    createPanelPlaceholders();
+  }
+
+  // 4. Hydrate Previous Stages
+  // Even if we are in Sudoku, we need Jigsaw pieces in slots / Memory pieces in panel
+  resumeMemoryState();
+
+  if (stage === "jigsaw") {
+    import("./jigsaw.js").then((m) => {
+      m.resumeJigsawState();
+      m.transitionToJigsaw();
+    });
+  } else if (stage === "sudoku") {
+    import("./jigsaw.js").then((m) => m.resumeJigsawState());
+    import("./sudoku.js").then((m) => {
+      m.resumeSudokuState();
+      m.transitionToSudoku();
+    });
+  } else if (stage === "peaks") {
+    import("./jigsaw.js").then((m) => m.resumeJigsawState());
+    import("./peaks.js").then((m) => {
+      m.transitionToPeaks();
+    });
+  } else if (stage === "search") {
+    import("./jigsaw.js").then((m) => m.resumeJigsawState());
+    import("./search.js").then((m) => {
+      m.transitionToSearch();
+    });
+  } else if (stage === "code") {
+    import("./jigsaw.js").then((m) => m.resumeJigsawState());
+    import("./search.js").then((m) => {
+      m.transitionToCode();
+    });
+  }
+
+  // 5. Start Global Timer
+  initTimer();
+}
+
+/**
+ * Global cleanup to prevent UI leakage between stages.
+ */
+export function resetUI() {
+  console.log("[UI] Resetting stage UI...");
+
+  const stageClasses = [
+    "memory-mode",
+    "jigsaw-mode",
+    "sudoku-mode",
+    "peaks-mode",
+    "search-mode",
+    "code-mode",
+  ];
+
+  // 1. Clear Classes
+  document.body.classList.remove(...stageClasses);
+  const gameSection = document.getElementById("game-section");
+  if (gameSection) gameSection.classList.remove(...stageClasses);
+
+  // 2. Hide Specific Controls
+  const sudokuControls = document.getElementById("sudoku-controls");
+  const peaksStats = document.getElementById("peaks-stats");
+  const searchTargets = document.getElementById("search-targets-container");
+
+  if (sudokuControls) sudokuControls.classList.add("hidden");
+  if (peaksStats) peaksStats.classList.add("hidden");
+  if (searchTargets) searchTargets.remove();
+
+  // 1.5 AGGRESSIVE BOARD CLEANUP (Ghosting Fix)
+  const board = document.getElementById("memory-board");
+  if (board) {
+    // Clear all stage-specific cell markers
+    const allCells = board.querySelectorAll(".mini-cell");
+    allCells.forEach((cell) => {
+      cell.classList.remove(
+        "peaks-found",
+        "peak-found",
+        "valley-found",
+        "correct-search-path",
+        "search-selecting",
+        "search-selected",
+        "search-found-cell",
+        "code-cell",
+        "code-active",
+        "code-error",
+        "code-correct",
+      );
+      cell.title = ""; // Clear tooltips
+    });
+  }
+
+  // 3. Reset Header/Tooltip state
+  const titleContainer = document.querySelector(".header-title-container");
+  if (titleContainer) titleContainer.classList.remove("active");
+
+  // 4. Localized Texts (Sync title with current stage)
+  updateTexts();
+}
+
+/**
+ * Hydrates pieces into the panel/board based on past Memory matches.
+ */
+export function resumeMemoryState() {
+  const state = gameManager.getState();
+  // 1. Normalize and Deduplicate indices (ensure they are strings)
+  const rawIndices = (state.memory && state.memory.matchedIndices) || [];
+  const matchedIndices = [...new Set(rawIndices.map(String))];
+
+  console.log(`[Memory] Hydrating ${matchedIndices.length} unique matches.`);
+  matchesFound = matchedIndices.length;
+
+  matchedIndices.forEach((idx) => {
+    // Re-place the pieces
+    if (parseInt(idx) === 4) {
+      placeInBoard(idx);
+    } else {
+      placeInPanel(idx);
+    }
+
+    // Flip/Mark the cards
+    const cardElements = document.querySelectorAll(
+      `.memory-card[data-chunk-index="${idx}"]`,
+    );
+    cardElements.forEach((card) => {
+      card.classList.add("flipped", "matched");
+      card.style.pointerEvents = "none";
+    });
+  });
+
+  // Check if we should even show cards
+  if (state.progress.currentStage !== "memory") {
+    if (cardsContainer) cardsContainer.classList.add("cards-hidden");
+  } else {
+    if (cardsContainer) cardsContainer.classList.remove("cards-hidden");
   }
 }
 
@@ -389,6 +587,7 @@ function previewCards() {
   isLocked = true;
   // Staggered Flip UP
   cards.forEach((card, i) => {
+    if (card.classList.contains("matched")) return;
     setTimeout(() => {
       card.classList.add("flipped");
     }, i * 30); // Fast ripple (30ms per card)
@@ -397,6 +596,7 @@ function previewCards() {
   setTimeout(() => {
     // Staggered Flip DOWN
     cards.forEach((card, i) => {
+      if (card.classList.contains("matched")) return;
       setTimeout(() => {
         card.classList.remove("flipped");
       }, i * 30);
@@ -416,6 +616,7 @@ function visualShuffle() {
   // 1. Record Initial Positions (First)
   const firstRects = new Map();
   cards.forEach((card) => {
+    if (card.classList.contains("matched")) return;
     firstRects.set(card, card.getBoundingClientRect());
   });
 
@@ -429,6 +630,7 @@ function visualShuffle() {
 
   // 3. Invert (Calculate delta)
   cards.forEach((card) => {
+    if (card.classList.contains("matched")) return;
     const first = firstRects.get(card);
     const last = card.getBoundingClientRect();
     const deltaX = first.left - last.left;
@@ -444,6 +646,7 @@ function visualShuffle() {
   const baseDelay = 50;
 
   cards.forEach((card, index) => {
+    if (card.classList.contains("matched")) return;
     // Random delay between 0 and 300ms
     const randomDelay = Math.random() * 300;
 
@@ -603,8 +806,19 @@ function disableCards(cardsToDisable) {
 function handleMatchSuccess(chunkIndex) {
   matchesFound++;
 
-  // SYNC STATE: Save matches count
-  gameManager.updateProgress("memory", { pairsFound: matchesFound });
+  // SYNC STATE: Save matches count and indices
+  const state = gameManager.getState();
+  if (!state.memory.matchedIndices) state.memory.matchedIndices = [];
+
+  const idStr = String(chunkIndex);
+  if (!state.memory.matchedIndices.map(String).includes(idStr)) {
+    state.memory.matchedIndices.push(idStr);
+  }
+
+  gameManager.updateProgress("memory", {
+    pairsFound: [...new Set(state.memory.matchedIndices)].length,
+    matchedIndices: state.memory.matchedIndices,
+  });
   gameManager.save();
 
   console.log(`Matched Pair for Chunk ${chunkIndex}!`);

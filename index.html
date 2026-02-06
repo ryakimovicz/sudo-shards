@@ -1145,8 +1145,11 @@
           </div>
         </div>
 
-        <div class="modal-actions">
-          <button id="btn-victory-home" class="btn-primary" data-i18n="btn_back_home" style="width: 100%;">
+        <div class="modal-actions" style="display: flex; gap: 10px;">
+          <button id="btn-victory-share" class="btn-secondary" data-i18n="btn_share_result" style="flex: 1;">
+            Compartir Resultado
+          </button>
+          <button id="btn-victory-home" class="btn-primary" data-i18n="btn_back_home" style="flex: 1;">
             Volver al Inicio
           </button>
         </div>
@@ -1242,6 +1245,60 @@
           </div>
         </div>
 
+      </div>
+
+      <div class="sc-footer">
+        <p class="sc-invite" data-i18n="sc_invite_msg">¡Desafía tu mente en el puzzle diario!</p>
+        <div class="sc-tagline">JIGSUDO.COM 🧩✨</div>
+      </div>
+    </div>
+
+    <div id="victory-social-card" class="social-card-template">
+      <div class="sc-header">
+        <div class="sc-branding">
+          <div id="vsc-logo-container" class="sc-logo-container"></div>
+          <div class="sc-app-info">
+            <h1 class="sc-app-title">JIGSUDO</h1>
+            <p id="vsc-date" class="sc-date">Febrero 2026</p>
+          </div>
+        </div>
+        <div class="sc-user-box">
+          <h2 id="vsc-username" class="sc-username">Usuario</h2>
+          <p id="vsc-rank" class="sc-rank-name">Novato</p>
+        </div>
+      </div>
+
+      <div class="sc-body">
+        <div class="sc-victory-banner">
+          <h2 class="vsc-title" data-i18n="victory_share_title">DESAFÍO COMPLETADO</h2>
+        </div>
+
+        <!-- Session Stats Row (2x2 Grid) -->
+        <div class="sc-stats-row">
+          <div class="sc-stat-item">
+            <span class="sc-stat-val" id="vsc-stat-time">00:00</span>
+            <span class="sc-stat-lbl" data-i18n="victory_stat_time">Tiempo Total</span>
+          </div>
+          <div class="sc-stat-item">
+            <span class="sc-stat-val" id="vsc-stat-streak">0</span>
+            <span class="sc-stat-lbl" data-i18n="victory_stat_streak">Racha Actual</span>
+          </div>
+          <div class="sc-stat-item">
+            <span class="sc-stat-val" id="vsc-stat-errors">0</span>
+            <span class="sc-stat-lbl" data-i18n="victory_stat_errors">Errores</span>
+          </div>
+          <div class="sc-stat-item highlight">
+            <span class="sc-stat-val" id="vsc-stat-score">0.000</span>
+            <span class="sc-stat-lbl" data-i18n="victory_stat_score">Puntaje</span>
+          </div>
+        </div>
+
+        <div class="sc-victory-breakdown">
+          <h3 class="sc-section-title" data-i18n="victory_times_breakdown">Tiempos por nivel</h3>
+          <div id="vsc-stage-list" class="sc-stage-list">
+            <!-- Dynamically filled -->
+          </div>
+        </div>
       </div>
 
       <div class="sc-footer">

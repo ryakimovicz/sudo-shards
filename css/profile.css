@@ -834,10 +834,11 @@ body.dark-mode .light-only {
   left: -9999px;
   top: 0;
   width: 1080px; /* Standard Story Width */
-  height: 1920px; /* Standard Story Height */
+  height: auto; /* Dynamic height to avoid excess space */
+  min-height: 1300px; /* Minimum height to look good on Stories */
   background: var(--bg-paper);
   color: var(--text-main);
-  padding: 60px 60px 220px 60px; /* Shift everything higher to avoid IG bottom UI */
+  padding: 60px 60px 80px 60px; /* Slightly increased bottom padding for balance */
   display: flex;
   flex-direction: column;
   gap: 20px; /* Tighter global gaps */
@@ -962,6 +963,39 @@ body.dark-mode .light-only {
   display: flex;
   flex-direction: column;
   gap: 35px;
+}
+
+/* Victory Social Card Specialized Header */
+.sc-victory-banner {
+  text-align: center;
+  margin-top: -10px;
+  margin-bottom: 25px;
+  padding: 15px;
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(252, 116, 44, 0.1),
+    transparent
+  );
+}
+
+.vsc-title {
+  color: var(--accent-color);
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.sc-victory-breakdown {
+  margin-top: 20px;
+}
+
+.sc-victory-breakdown .sc-stage-list {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
 }
 
 .sc-section-title {
@@ -1092,7 +1126,7 @@ body.dark-mode .dark-only-inline {
   margin-top: 5px; /* Tiny gap with content */
   border-top: 2px solid var(--glass-border);
   padding-top: 12px; /* Move text up, closer to the line */
-  padding-bottom: 60px; /* Maintain safe zone height at the bottom */
+  padding-bottom: 30px; /* Slightly more air for the footer */
   display: flex;
   justify-content: space-between;
   align-items: center;

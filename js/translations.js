@@ -206,9 +206,11 @@ export const translations = {
     victory_stat_streak: "Racha Actual",
     victory_stat_errors: "Errores",
     victory_stat_score: "Puntaje",
-    victory_times_breakdown: "Tiempos por Minijuego",
+    victory_times_breakdown: "Tiempos por nivel",
     btn_back_home: "Volver al Inicio",
     btn_view_results: "Ver Resultado",
+    btn_share_result: "Compartir Resultado",
+    victory_share_title: "DESAFÍO COMPLETADO",
     btn_close: "Cerrar",
 
     stage_names: {
@@ -439,9 +441,11 @@ export const translations = {
     victory_stat_streak: "Current Streak",
     victory_stat_errors: "Errors",
     victory_stat_score: "Score",
-    victory_times_breakdown: "Times per Minigame",
+    victory_times_breakdown: "Times per Level",
     btn_back_home: "Back Home",
     btn_view_results: "View Results",
+    btn_share_result: "Share Result",
+    victory_share_title: "CHALLENGE COMPLETED",
     btn_close: "Close",
 
     stage_names: {

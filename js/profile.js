@@ -897,7 +897,6 @@ async function handleShareStats() {
       allowTaint: true,
       logging: false,
       windowWidth: 1080,
-      windowHeight: 1920,
     });
 
     // 6. Share or Download
@@ -914,10 +913,12 @@ async function handleShareStats() {
       const fileName = `jigsudo-stats-${nameClean}-${dateStr}.png`;
 
       const file = new File([blob], fileName, { type: "image/png" });
+      const shareUrl = "https://jigsudo.com";
       const shareData = {
         title: "Resumen Jigsudo",
-        text: t.share_stats_msg || "¡Mira mi progreso en Jigsudo! 🧩✨",
-        url: "https://jigsudo.com",
+        text:
+          (t.share_stats_msg || "¡Mira mi progreso en Jigsudo! 🧩✨") +
+          `\n\n${shareUrl}`,
         files: [file],
       };
 

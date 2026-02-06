@@ -702,6 +702,9 @@ async function handleShareStats() {
     const { showToast } = await import("./ui.js");
     showToast("Generando imagen... ⏳");
 
+    // Ensure everything is translated for the card (in case it was hidden)
+    updateTexts();
+
     const lang = getCurrentLang();
     const t = translations[lang] || translations["es"];
     const user = getCurrentUser();
@@ -725,8 +728,8 @@ async function handleShareStats() {
 
     if (usernameEl)
       usernameEl.textContent = user
-        ? user.displayName || "Usuario"
-        : "Invitado";
+        ? user.displayName || t.user_default || "Usuario"
+        : t.guest || "Invitado";
 
     const statsStr = localStorage.getItem("jigsudo_user_stats");
     const stats = statsStr
@@ -901,7 +904,16 @@ async function handleShareStats() {
     canvas.toBlob(async (blob) => {
       if (!blob) return;
 
-      const file = new File([blob], "jigsudo-stats.png", { type: "image/png" });
+      const dateStr = new Date().toISOString().split("T")[0];
+      const fallbackName = user
+        ? t.user_default || "Usuario"
+        : t.guest || "Invitado";
+      const nameClean = (user ? user.displayName || fallbackName : fallbackName)
+        .replace(/[^a-z0-9]/gi, "_")
+        .toLowerCase();
+      const fileName = `jigsudo-stats-${nameClean}-${dateStr}.png`;
+
+      const file = new File([blob], fileName, { type: "image/png" });
       const shareData = {
         title: "Resumen Jigsudo",
         text: t.share_stats_msg || "¡Mira mi progreso en Jigsudo! 🧩✨",
@@ -909,17 +921,27 @@ async function handleShareStats() {
         files: [file],
       };
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
+
+      if (
+        isMobile &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
         try {
           await navigator.share(shareData);
         } catch (err) {
           if (err.name !== "AbortError") {
             console.error("Share failed:", err);
-            downloadFallback(canvas);
+            downloadFallback(canvas, fileName);
           }
         }
       } else {
-        downloadFallback(canvas);
+        // Desktop or unsupported: Direct download
+        downloadFallback(canvas, fileName);
       }
     }, "image/png");
   } catch (err) {
@@ -987,9 +1009,9 @@ function renderSocialWeekdayStats(stats) {
   });
 }
 
-function downloadFallback(canvas) {
+function downloadFallback(canvas, fileName = "jigsudo-stats.png") {
   const link = document.createElement("a");
   link.href = canvas.toDataURL("image/png");
-  link.download = "jigsudo-stats.png";
+  link.download = fileName;
   link.click();
 }

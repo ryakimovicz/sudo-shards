@@ -965,12 +965,12 @@ body.dark-mode .light-only {
 }
 
 .sc-section-title {
-  font-size: 2.2rem;
+  font-size: 1.7rem;
   text-transform: uppercase;
   color: var(--accent-color);
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   border-left: 8px solid var(--accent-color);
   padding-left: 20px;
 }
@@ -1089,9 +1089,10 @@ body.dark-mode .dark-only-inline {
 }
 
 .sc-footer {
-  margin-top: 0; /* Tighten space with Saturday panel */
+  margin-top: 5px; /* Tiny gap with content */
   border-top: 2px solid var(--glass-border);
-  padding-top: 15px;
+  padding-top: 12px; /* Move text up, closer to the line */
+  padding-bottom: 60px; /* Maintain safe zone height at the bottom */
   display: flex;
   justify-content: space-between;
   align-items: center;

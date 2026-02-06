@@ -138,6 +138,8 @@ export const translations = {
     link_login: "Inicia Sesión",
     auth_success: "¡Bienvenido!",
     auth_logout: "Sesión cerrada",
+    guest: "Invitado",
+    user_default: "Usuario",
 
     // Auth Modals & Toasts
     modal_change_name_title: "Cambiar Nombre",
@@ -190,9 +192,11 @@ export const translations = {
     stat_best_time: "Tiempo Récord",
     stat_avg_time: "Tiempo Prom.",
     stat_avg_time: "Tiempo Promedio",
+    stat_points: "Puntos",
     stats_details_title: "Tiempos promedio por nivel",
     daily_avg_title: "Promedio Diario",
     stats_title: "Estadísticas",
+    sc_invite_msg: "¡Desafía tu mente en el puzzle diario!",
     no_data: "Sin datos suficientes",
 
     // Victory Summary
@@ -406,6 +410,8 @@ export const translations = {
     link_login: "Log In",
     auth_success: "Welcome!",
     auth_logout: "Logged out",
+    guest: "Guest",
+    user_default: "User",
 
     // Profile
     profile_title_page: "My Profile",
@@ -419,9 +425,11 @@ export const translations = {
     stat_best_time: "Best Time",
     stat_avg_time: "Avg Time",
     stat_avg_time: "Avg Time",
+    stat_points: "Points",
     stats_details_title: "Average Times per Level",
     daily_avg_title: "Daily Average",
     stats_title: "Statistics",
+    sc_invite_msg: "Challenge your mind with the daily puzzle!",
     no_data: "Not Enough Data",
 
     // Victory Summary

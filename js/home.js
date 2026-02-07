@@ -57,32 +57,48 @@ export function initHome() {
 
   // Start Game - Logic moved to end of function to support tabs
 
-  // Profile Dropdown Logic
+  // Profile & Auth Dropdown Logic
   const btnProfile = document.getElementById("btn-profile");
   const profileDropdown = document.getElementById("profile-dropdown");
+  const btnAuth = document.getElementById("btn-auth");
+  const authDropdown = document.getElementById("auth-dropdown");
 
   if (btnProfile && profileDropdown) {
     btnProfile.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent closing immediately
-      profileDropdown.classList.toggle("hidden");
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener("click", (e) => {
-      if (
-        !profileDropdown.classList.contains("hidden") &&
-        !profileDropdown.contains(e.target) &&
-        e.target !== btnProfile
-      ) {
-        profileDropdown.classList.add("hidden");
-      }
-    });
-
-    // Prevent closing when clicking inside the dropdown
-    profileDropdown.addEventListener("click", (e) => {
       e.stopPropagation();
+      profileDropdown.classList.toggle("hidden");
+      if (authDropdown) authDropdown.classList.add("hidden"); // Close other
     });
   }
+
+  if (btnAuth && authDropdown) {
+    btnAuth.addEventListener("click", (e) => {
+      e.stopPropagation();
+      authDropdown.classList.toggle("hidden");
+      if (profileDropdown) profileDropdown.classList.add("hidden"); // Close other
+    });
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener("click", (e) => {
+    if (profileDropdown && !profileDropdown.classList.contains("hidden")) {
+      if (!profileDropdown.contains(e.target) && e.target !== btnProfile) {
+        profileDropdown.classList.add("hidden");
+      }
+    }
+    if (authDropdown && !authDropdown.classList.contains("hidden")) {
+      if (!authDropdown.contains(e.target) && e.target !== btnAuth) {
+        authDropdown.classList.add("hidden");
+      }
+    }
+  });
+
+  // Prevent closing when clicking inside the dropdowns
+  [profileDropdown, authDropdown].forEach((dropdown) => {
+    if (dropdown) {
+      dropdown.addEventListener("click", (e) => e.stopPropagation());
+    }
+  });
 
   // --- Theme Logic (Segmented Control) ---
   const themeInputs = document.querySelectorAll('input[name="theme"]');

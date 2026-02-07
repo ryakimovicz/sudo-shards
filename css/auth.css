@@ -162,12 +162,12 @@ input::-webkit-credentials-auto-fill-button {
   font-size: 0.85rem;
 }
 
-/* Profile Button Authentication State */
-#btn-profile.authenticated {
+/* Auth Button Authentication State */
+#btn-auth.authenticated {
   position: relative;
 }
 
-#btn-profile.authenticated::after {
+#btn-auth.authenticated::after {
   content: "";
   position: absolute;
   bottom: 5px;

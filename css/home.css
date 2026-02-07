@@ -961,6 +961,132 @@ input:checked + .slider-small:before {
   font-size: 1.1rem !important;
 }
 
+/* --- Player Quick Stats (Account Menu) --- */
+.player-quick-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(var(--accent-rgb), 0.03);
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+}
+
+.quick-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-paper);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.stat-value {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* RP Progress Bar */
+.rp-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rp-labels {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: var(--font-mono); /* Use mono for RP numbers */
+}
+
+.rp-separator {
+  margin: 0 4px;
+  opacity: 0.5;
+}
+
+.rp-bar-bg {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dark-mode .rp-bar-bg {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rp-bar-fill {
+  height: 100%;
+  background: var(--accent-color);
+  border-radius: 3px;
+  transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Stats Grid */
+.quick-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quick-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-paper);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.item-icon {
+  font-size: 1.1rem;
+}
+
+.item-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-main);
+}
+
+.item-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
 /* --- New Settings Menu Styles --- */
 
 .dropdown-content {

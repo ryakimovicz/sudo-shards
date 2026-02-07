@@ -27,11 +27,9 @@ export function initProfile() {
   // Listen for Hash Changes
   window.addEventListener("hashchange", handleRouting);
 
-  // Listen for Language Changes to re-render Profile (Rank, Calendar, etc.)
+  // Listen for Language Changes to re-render Profile & Menu Stats (Rank, etc.)
   window.addEventListener("languageChanged", () => {
-    if (window.location.hash === "#profile") {
-      updateProfileData();
-    }
+    updateProfileData();
   });
 
   // Back Button
@@ -402,11 +400,42 @@ export function updateProfileData() {
 
   if (rpCurrentEl) rpCurrentEl.textContent = fmtNumber(currentRP, 3);
   if (rpNextEl) {
-    // If max rank, show infinite or current
     const nextGoal = rankData.nextRank ? rankData.nextRank.minRP : "MAX";
     rpNextEl.textContent =
       typeof nextGoal === "number" ? fmtNumber(nextGoal, 0) : nextGoal;
   }
+
+  // --- Dynamic Stats for Account Dropdown Menu (Quick Stats) ---
+  const mRankIcon = document.getElementById("menu-rank-icon");
+  const mRankName = document.getElementById("menu-rank-name");
+  const mRankLevel = document.getElementById("menu-rank-level");
+  const mRpCurrent = document.getElementById("menu-rp-current");
+  const mRpNext = document.getElementById("menu-rp-next");
+  const mRpProgress = document.getElementById("menu-rp-progress");
+  const mStreak = document.getElementById("menu-stat-streak");
+  const mDailyPoints = document.getElementById("menu-stat-daily");
+
+  if (mRankIcon) mRankIcon.textContent = rankData.rank.icon;
+  if (mRankName) {
+    let lang = getCurrentLang() || "es";
+    if (!translations[lang]) lang = lang.split("-")[0];
+    const nameKey = rankData.rank.nameKey;
+    mRankName.textContent = translations[lang]?.[nameKey] || nameKey;
+  }
+  if (mRankLevel) {
+    const lang = getCurrentLang() || "es";
+    const prefix = translations[lang]?.rank_level_prefix || "Nvl.";
+    mRankLevel.textContent = `${prefix} ${rankData.level}`;
+  }
+  if (mRpCurrent) mRpCurrent.textContent = fmtNumber(currentRP, 3);
+  if (mRpNext) {
+    const nextGoal = rankData.nextRank ? rankData.nextRank.minRP : "MAX";
+    mRpNext.textContent =
+      typeof nextGoal === "number" ? fmtNumber(nextGoal, 0) : nextGoal;
+  }
+  if (mRpProgress) mRpProgress.style.width = `${rankData.progress}%`;
+  if (mStreak) mStreak.textContent = stats.currentStreak || 0;
+  if (mDailyPoints) mDailyPoints.textContent = fmtNumber(stats.dailyRP || 0, 3);
 
   // 3. Render Calendar
   try {

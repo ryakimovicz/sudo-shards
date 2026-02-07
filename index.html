@@ -86,7 +86,7 @@
         </div>
 
         <div class="header-right">
-
+          <!-- Settings Menu -->
           <div class="settings-wrapper" style="position: relative">
             <button
               id="btn-profile"
@@ -96,7 +96,7 @@
             >
               ⚙️
             </button>
-            <!-- Profile Dropdown -->
+            <!-- Settings Dropdown -->
             <div
               id="profile-dropdown"
               class="dropdown-content glass-panel hidden"
@@ -105,57 +105,6 @@
               <h3 class="dropdown-header" data-i18n="settings_title">
                 Configuración
               </h3>
-
-              <!-- SECTION: ACCOUNT -->
-              <div class="settings-section account-section">
-                <h4 class="settings-subhead" data-i18n="settings_account">
-                  Cuenta
-                </h4>
-                <!-- Login State (Toggled by JS) -->
-                <div id="login-wrapper">
-                  <!-- Guest Profile Access -->
-                  <div
-                    class="user-info-row centered"
-                    style="margin-bottom: 12px"
-                  >
-                    <button
-                      id="btn-guest-profile"
-                      class="btn-profile-link"
-                      title="Ver Perfil de Invitado"
-                    >
-                      <span
-                        class="user-avatar-placeholder"
-                        style="background: #e2e8f0; color: #64748b"
-                        >👤</span
-                      >
-                      <strong>Invitado</strong>
-                    </button>
-                  </div>
-
-                  <button
-                    id="btn-login-trigger"
-                    class="btn-secondary full-width"
-                    data-i18n="btn_login_menu"
-                  >
-                    Iniciar Sesión
-                  </button>
-                </div>
-
-                <div id="logged-in-view" class="hidden">
-                  <div class="user-info-row centered">
-                    <button
-                      id="btn-view-profile"
-                      class="btn-profile-link"
-                      title="Ver Perfil"
-                    >
-                      <span class="user-avatar-placeholder">👤</span>
-                      <strong id="user-display-name">Usuario</strong>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="dropdown-divider"></div>
 
               <!-- SECTION: APPEARANCE -->
               <div class="settings-section appearance-section">
@@ -207,7 +156,7 @@
                   </label>
                 </div>
 
-                <!-- Vibration (Mobile Only via JS) -->
+                <!-- Vibration -->
                 <div class="setting-item" id="setting-vibration-container">
                   <span class="setting-label">
                     <span class="icon-label">📳</span>
@@ -228,7 +177,6 @@
                         >Confirmar Borrado</span
                       >
                     </span>
-                    <!-- <small class="setting-desc" data-i18n="setting_confirm_desc">Evita borrar todo por error</small> -->
                   </div>
                   <label class="switch-small">
                     <input type="checkbox" id="confirm-clear-toggle" checked />
@@ -246,14 +194,116 @@
                     <option value="en">English</option>
                   </select>
                 </div>
+              </div>
+
+              <div class="settings-section" style="margin-top: 10px; text-align: center;">
+                <button id="btn-share-app" class="btn-profile-action" data-i18n="btn_share_app" onclick="window.shareApp()">
+                  Compartir App 📢
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Menu -->
+          <div class="auth-wrapper" style="position: relative">
+            <button
+              id="btn-auth"
+              class="btn-icon"
+              aria-label="Cuenta"
+              data-i18n-aria="header_account_label"
+            >
+              👤
+            </button>
+            <div id="auth-dropdown" class="dropdown-content glass-panel hidden">
+              <!-- HEADER -->
+              <h3 class="dropdown-header" data-i18n="menu_account">Cuenta</h3>
+
+              <!-- SECTION: ACCOUNT -->
+              <div class="settings-section account-section">
+                <!-- Login State -->
+                <div id="login-wrapper">
+                  <div
+                    class="user-info-row centered"
+                    style="margin-bottom: 12px"
+                  >
+                    <button
+                      id="btn-guest-profile"
+                      class="btn-profile-link"
+                      title="Ver Perfil de Invitado"
+                    >
+                      <span
+                        class="user-avatar-placeholder"
+                        style="background: #e2e8f0; color: #64748b"
+                        >👤</span
+                      >
+                      <strong>Invitado</strong>
+                    </button>
+                  </div>
+
+                  <button
+                    id="btn-login-trigger"
+                    class="btn-secondary full-width"
+                    data-i18n="btn_login_menu"
+                  >
+                    Iniciar Sesión
+                  </button>
                 </div>
 
+                <div id="logged-in-view" class="hidden">
+                  <div class="user-info-row centered">
+                    <button
+                      id="btn-view-profile"
+                      class="btn-profile-link"
+                      title="Ver Perfil"
+                    >
+                      <span class="user-avatar-placeholder">👤</span>
+                      <strong id="user-display-name">Usuario</strong>
+                    </button>
+                  </div>
+                </div>
 
+                <!-- PLAYER QUICK STATS (NEW) -->
+                <div class="dropdown-divider" style="margin: 12px 0"></div>
+                
+                <div class="player-quick-stats">
+                  <!-- Rank Row -->
+                  <div class="quick-stat-row rank-info">
+                    <span id="menu-rank-icon" class="stat-icon">🌱</span>
+                    <div class="stat-main">
+                      <span id="menu-rank-name" class="stat-label">Novato</span>
+                      <span id="menu-rank-level" class="stat-value">Nvl. 0</span>
+                    </div>
+                  </div>
 
-                <div class="settings-section" style="margin-top: 20px; text-align: center;">
-                  <button id="btn-share-app" class="btn-profile-action" data-i18n="btn_share_app" onclick="window.shareApp()">
-                    Compartir App 📢
-                  </button>
+                  <!-- RP Progress -->
+                  <div class="rp-progress-container">
+                    <div class="rp-labels">
+                      <span id="menu-rp-current">0.000</span>
+                      <span class="rp-separator">/</span>
+                      <span id="menu-rp-next">20</span>
+                    </div>
+                    <div class="rp-bar-bg">
+                      <div id="menu-rp-progress" class="rp-bar-fill" style="width: 0%"></div>
+                    </div>
+                  </div>
+
+                  <!-- Streak & Daily Grid -->
+                  <div class="quick-stats-grid">
+                    <div class="quick-stat-item">
+                      <span class="item-icon">🔥</span>
+                      <div class="item-data">
+                        <span id="menu-stat-streak" class="item-value">0</span>
+                        <span class="item-label" data-i18n="stat_streak_short">Racha</span>
+                      </div>
+                    </div>
+                    <div class="quick-stat-item">
+                      <span class="item-icon">⭐</span>
+                      <div class="item-data">
+                        <span id="menu-stat-daily" class="item-value">0.000</span>
+                        <span class="item-label" data-i18n="stat_daily">Hoy</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

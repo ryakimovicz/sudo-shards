@@ -61,8 +61,9 @@ export const translations = {
     profile_language: "Idioma",
     settings_account: "Cuenta",
     settings_title: "Configuración",
+    menu_account: "Cuenta",
+    header_account_label: "Menú de Cuenta",
     settings_appearance: "Apariencia",
-    settings_gameplay: "Jugabilidad",
     // New Keys
     theme_light: "Claro",
     theme_auto: "Auto",
@@ -210,6 +211,8 @@ export const translations = {
     btn_view_profile: "Ver Perfil",
     stat_days: "Niveles Completados",
     stat_streak: "Racha Actual",
+    stat_streak_short: "Racha",
+    stat_daily: "Hoy",
     stat_max_streak: "Racha Máx.",
     stat_max_score: "Puntaje Máx.",
     stat_best_time: "Tiempo Récord",
@@ -381,6 +384,8 @@ export const translations = {
       "Are you sure you want to clear all numbers from the board?",
     settings_title: "Settings",
     settings_account: "Account",
+    menu_account: "Account",
+    header_account_label: "Account Menu",
     settings_appearance: "Appearance",
     settings_gameplay: "Gameplay",
     // New Keys
@@ -454,6 +459,8 @@ export const translations = {
     // ... existing ...
     stat_days: "Levels Completed",
     stat_streak: "Current Streak",
+    stat_streak_short: "Streak",
+    stat_daily: "Today",
     stat_max_streak: "Max Streak",
     stat_max_score: "Max Score",
     stat_best_time: "Best Time",

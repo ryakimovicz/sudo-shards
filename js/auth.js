@@ -314,8 +314,8 @@ export function getCurrentUser() {
 }
 
 function updateUIForLogin(user) {
-  const profileBtn = document.getElementById("btn-profile");
-  if (profileBtn) profileBtn.classList.add("authenticated");
+  const authBtn = document.getElementById("btn-auth");
+  if (authBtn) authBtn.classList.add("authenticated");
 
   const loginModal = document.getElementById("login-modal");
   if (loginModal) loginModal.classList.add("hidden");
@@ -413,8 +413,8 @@ function updateUIForLogin(user) {
 }
 
 function updateUIForLogout() {
-  const profileBtn = document.getElementById("btn-profile");
-  if (profileBtn) profileBtn.classList.remove("authenticated");
+  const authBtn = document.getElementById("btn-auth");
+  if (authBtn) authBtn.classList.remove("authenticated");
 
   const loginWrapper = document.getElementById("login-wrapper");
   const loggedInView = document.getElementById("logged-in-view");

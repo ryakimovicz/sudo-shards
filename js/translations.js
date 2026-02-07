@@ -145,6 +145,8 @@ export const translations = {
     auth_success: "¡Bienvenido!",
     auth_logout: "Sesión cerrada",
     guest: "Invitado",
+    guest_profile_desc:
+      "Inicia sesión para guardar tu progreso y aparecer en el ranking.",
     user_default: "Usuario",
     aria_show_password: "Mostrar contraseña",
     auth_email_placeholder: "Email",
@@ -441,6 +443,8 @@ export const translations = {
     auth_success: "Welcome!",
     auth_logout: "Logged out",
     guest: "Guest",
+    guest_profile_desc:
+      "Sign in to save your progress and appear in the ranking.",
     user_default: "User",
     aria_show_password: "Show password",
     auth_email_placeholder: "Email",

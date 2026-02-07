@@ -444,6 +444,9 @@ function updateUIForLogout() {
   const guestActions = document.querySelector(".guest-actions");
   if (guestActions) guestActions.classList.remove("hidden");
 
+  const profileActions = document.querySelector(".profile-actions");
+  if (profileActions) profileActions.classList.add("hidden");
+
   import("./profile.js").then((module) => {
     module.updateProfileData();
   });

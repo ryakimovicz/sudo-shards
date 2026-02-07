@@ -153,7 +153,7 @@ export function updateProfileData() {
   const nameEl = document.getElementById("profile-username");
   const emailEl = document.getElementById("profile-email");
 
-  if (user) {
+  if (user && !user.isAnonymous) {
     const displayName = user.displayName || "Usuario";
     const initial = displayName.charAt(0).toUpperCase();
 
@@ -183,7 +183,7 @@ export function updateProfileData() {
   console.log("UpdateProfileData User:", user ? user.uid : "Guest");
 
   if (profileActions) {
-    if (user) {
+    if (user && !user.isAnonymous) {
       profileActions.classList.remove("hidden");
       profileActions.style.display = "";
 
@@ -213,7 +213,7 @@ export function updateProfileData() {
   sensitiveButtons.forEach((id) => {
     const btn = document.getElementById(id);
     if (btn) {
-      if (user) {
+      if (user && !user.isAnonymous) {
         btn.style.display = ""; // Reset
         btn.closest(".profile-actions").classList.remove("hidden"); // Ensure parent is shown if user exists
       } else {

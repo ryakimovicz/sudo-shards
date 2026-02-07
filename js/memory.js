@@ -148,6 +148,13 @@ export function initMemoryGame() {
   initTimer();
 
   // Debug Button matching
+  attachDebugListener();
+}
+
+/**
+ * Attaches the Magic Wand (Debug Tool) event listener.
+ */
+export function attachDebugListener() {
   const debugBtn = document.getElementById("debug-help-btn");
   if (debugBtn) {
     debugBtn.onclick = (e) => {
@@ -235,6 +242,9 @@ export function resumeToStage(stage) {
 
   // 5. Start Global Timer
   initTimer();
+
+  // 6. Attach Debug Tool Listener
+  attachDebugListener();
 }
 
 /**

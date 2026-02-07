@@ -65,19 +65,24 @@ body {
   background-color: var(--bg-paper);
   /* Optional: Subtle paper texture pattern could happen here */
   min-height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden; /* Prevent global scroll by default */
+  /* display: flex;  <-- REMOVED to avoid layout gaps */
+  /* flex-direction: column; <-- REMOVED */
+}
+
+/* Enable scrolling only on Home and Profile */
+body.home-active,
+body.profile-active {
+  overflow-y: auto;
 }
 
 /* App Container */
 #app {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  /* flex: 1; <-- REMOVED */
+  /* display: flex; <-- REMOVED */
+  /* flex-direction: column; <-- REMOVED */
   position: relative;
   width: 100%;
-  height: 100%;
   max-width: 100vw;
 }
 
@@ -356,7 +361,8 @@ body:not(.beta-mode) #debug-help-btn {
   display: none !important;
 }
 
-/* Hide on Home Screen if needed (assuming home adds a class, or we manually hide in JS) */
-body.home-active #debug-help-btn {
+/* Hide on Home or Profile Screen if needed */
+body.home-active #debug-help-btn,
+body.profile-active #debug-help-btn {
   display: none !important;
 }

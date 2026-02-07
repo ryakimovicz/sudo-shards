@@ -124,24 +124,25 @@ body.dark-mode .main-header {
 .menu-container {
   /* Position safely between Header and Footer */
   margin-top: var(--header-height);
-  height: calc(100dvh - var(--header-height) - var(--footer-height));
+  /* height: calc(100dvh - var(--header-height) - var(--footer-height));  <--- REMOVED for page flow */
+  height: auto;
   min-height: 0;
 
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding-top: 2vh; /* Reduced gap from header */
+  padding-top: 10px; /* Reduced gap from header further */
 
   padding-left: 0; /* Horizontal padding removed to move scrollbar to edge */
   padding-right: 0;
-  gap: 20px;
+  gap: 15px; /* Reduced gap between items */
   width: 100%;
   max-width: none; /* Covering full width to put scrollbar at the edge */
   margin-left: 0;
   margin-right: 0;
 
-  overflow-y: auto;
+  /* overflow-y: auto; <--- REMOVED to allow global scroll */
   padding-bottom: 40px;
 }
 
@@ -159,7 +160,7 @@ body.dark-mode .main-header {
   justify-content: center; /* Force centering */
   align-items: center;
   gap: 15px;
-  margin-bottom: 20px; /* Space before tabs */
+  margin-bottom: 10px; /* Space before tabs reduced */
   width: 100%;
 }
 
@@ -595,17 +596,14 @@ body.dark-mode .btn-primary.btn-won:active {
 /* Footer */
 .main-footer {
   text-align: center;
-  padding: 4px; /* Slim footer */
+  padding: 15px 4px; /* Slightly more padding for the new layout */
   font-size: 0.8rem; /* Slightly smaller text */
   color: var(--text-muted);
   width: 100%;
   border-top: 1px solid var(--glass-border);
   background: var(--bg-paper);
-  /* Fixed positioning */
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  /* NO MORE FIXED POSITIONING as per user request */
+  position: relative;
   z-index: 100;
 }
 

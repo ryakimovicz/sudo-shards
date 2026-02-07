@@ -1,16 +1,13 @@
 /* Profile Page Styles v2 */
 #profile-section {
-  display: flex;
-  flex-direction: column;
-  position: fixed; /* Overlay but constrained */
-  top: var(--header-height); /* Below Main Header */
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 29000; /* Below Main Header (30000) */
+  display: block; /* Changed from flex to simplify flow */
+  width: 100%;
+  margin-top: var(--header-height);
   background-color: var(--bg-paper);
-  overflow-y: auto;
-  margin-top: 0;
+  overflow: visible; /* Ensure content doesn't clip */
+  height: auto;
+  min-height: 0;
+  z-index: 10; /* Lowered z-index */
 }
 
 /* Custom Scrollbar */
@@ -46,9 +43,9 @@ body.dark-mode #profile-section::-webkit-scrollbar-thumb:hover {
   max-width: 800px; /* Increased from 600px to fit side-by-side panels */
   margin: 0 auto;
   width: 100%;
-  flex: 1; /* Take remaining space */
-  /* Overflow moved to parent */
-  padding-bottom: 80px; /* Space for footer/safe area */
+  height: auto;
+  overflow: visible;
+  padding-bottom: 160px; /* Even more space to ensure separation from footer */
 }
 
 /* Titles */
@@ -809,6 +806,14 @@ body.dark-mode #btn-profile-logout:hover {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin: 0;
+}
+
+/* Guest Actions (Visible only when logged out) */
+.guest-actions {
+  margin-bottom: 40px; /* Separation from the footer */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Visibility Control */

@@ -190,6 +190,10 @@ export function resumeToStage(stage) {
   if (memorySection) memorySection.classList.remove("hidden");
   document.getElementById("menu-content")?.classList.add("hidden");
 
+  // Hide Footer during Gameplay
+  const footer = document.querySelector(".main-footer");
+  if (footer) footer.classList.add("hidden");
+
   // 3. Setup Board (Empty slots for Jigsaw/Sudoku/etc)
   const state = gameManager.getState();
   if (state.data?.initialPuzzle) {
@@ -261,6 +265,10 @@ export function resetUI() {
   if (sudokuControls) sudokuControls.classList.add("hidden");
   if (peaksStats) peaksStats.classList.add("hidden");
   if (searchTargets) searchTargets.remove();
+
+  // Hide Footer aggressively in any game stage
+  const footer = document.querySelector(".main-footer");
+  if (footer) footer.classList.add("hidden");
 
   // 1.5 AGGRESSIVE BOARD CLEANUP (Ghosting Fix)
   const board = document.getElementById("memory-board");

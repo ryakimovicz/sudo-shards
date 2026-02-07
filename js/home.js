@@ -43,6 +43,10 @@ export function initHome() {
   // Enforce Home State Class for CSS overrides
   document.body.classList.add("home-active");
 
+  // Show Footer on Home
+  const footer = document.querySelector(".main-footer");
+  if (footer) footer.classList.remove("hidden");
+
   // ... (existing constants) ...
 
   // Sidebar elements removed
@@ -504,6 +508,10 @@ export function initHome() {
 
       // Restore Home State
       document.body.classList.add("home-active");
+
+      // Show Footer when returning Home
+      const footer = document.querySelector(".main-footer");
+      if (footer) footer.classList.remove("hidden");
     });
   }
 

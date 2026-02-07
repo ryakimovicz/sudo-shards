@@ -86,11 +86,17 @@ function _showProfileUI() {
   // const appHeader = document.querySelector(".main-header"); // Corrected Selector
 
   if (section) section.classList.remove("hidden");
+  document.body.classList.add("profile-active");
+  document.body.classList.remove("home-active"); // Ensure mutually exclusive if needed
 
   // Hide everything else
   if (menu) menu.classList.add("hidden");
   if (gameSection) gameSection.classList.add("hidden");
   // if (appHeader) appHeader.classList.add("hidden");
+
+  // Show Footer on Profile
+  const footer = document.querySelector(".main-footer");
+  if (footer) footer.classList.remove("hidden");
 
   updateProfileData();
 
@@ -105,11 +111,17 @@ function _hideProfileUI() {
   // const appHeader = document.querySelector(".main-header");
 
   if (section) section.classList.add("hidden");
+  document.body.classList.remove("profile-active");
+  document.body.classList.add("home-active"); // Return to home active if we are hiding profile
 
   // Restore Home (Or Game? Simple state for now: return to Home)
   // Ideally we track previous state, but Home is safe default.
   if (menu) menu.classList.remove("hidden");
   // if (appHeader) appHeader.classList.remove("hidden");
+
+  // Show Footer when returning from Profile (to Home)
+  const footer = document.querySelector(".main-footer");
+  if (footer) footer.classList.remove("hidden");
 
   // Restore Header Button to Stats Icon
   const btnStats = document.getElementById("btn-stats");

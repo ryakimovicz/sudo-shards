@@ -17,6 +17,7 @@ import {
   reauthenticateWithPopup,
   sendPasswordResetEmail,
   sendEmailVerification,
+  verifyBeforeUpdateEmail,
 } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
 import { gameManager } from "./game-manager.js";
 import { translations } from "./translations.js";
@@ -523,6 +524,10 @@ function updateUIForLogin(user) {
   const btnDelete = document.getElementById("btn-profile-delete");
   if (btnDelete) btnDelete.onclick = () => showPasswordModal("delete_account");
 
+  const btnChangeEmail = document.getElementById("btn-profile-change-email");
+  if (btnChangeEmail)
+    btnChangeEmail.onclick = () => showPasswordModal("change_email");
+
   import("./profile.js").then((module) => {
     module.updateProfileData();
   });
@@ -624,6 +629,33 @@ function updateUIForLogout() {
   }
 }
 
+export async function changeUserEmail(currentPassword, newEmail) {
+  const user = auth.currentUser;
+  if (!user) return { success: false, error: "No user logged in." };
+
+  try {
+    const isGoogleUser = user.providerData.some(
+      (p) => p.providerId === "google.com",
+    );
+    if (!isGoogleUser && currentPassword) {
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        currentPassword,
+      );
+      await reauthenticateWithCredential(user, credential);
+    }
+
+    auth.languageCode = getCurrentLang();
+    await verifyBeforeUpdateEmail(user, newEmail);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: translateAuthError(error.code) || error.message,
+    };
+  }
+}
+
 function translateAuthError(code) {
   const t = translations[getCurrentLang()] || translations["es"];
   switch (code) {
@@ -660,6 +692,9 @@ function showPasswordModal(actionType) {
   const btnCancel = document.getElementById("btn-cancel-pwd");
 
   if (!modal) return;
+
+  const emailContainer = document.getElementById("new-email-container");
+  if (emailContainer) emailContainer.classList.add("hidden");
 
   confirmInput.value = "";
   newPassInput.value = "";
@@ -850,6 +885,62 @@ function showPasswordModal(actionType) {
             }
           };
         }
+      }
+    };
+  } else if (actionType === "change_email") {
+    title.textContent = t.btn_change_email;
+    desc.textContent = t.modal_change_pw_desc; // Use same security warning or similar
+    newPassContainer.classList.add("hidden");
+
+    if (textInput) textInput.classList.add("hidden");
+
+    const emailContainer = document.getElementById("new-email-container");
+    const emailInput = document.getElementById("new-email-input");
+    if (emailContainer) emailContainer.classList.remove("hidden");
+    if (emailInput) {
+      emailInput.value = "";
+      emailInput.focus();
+    }
+
+    const currentWrapper = confirmInput.closest(".password-wrapper");
+    if (isGoogleUser) {
+      if (currentWrapper) currentWrapper.classList.add("hidden");
+      else confirmInput.classList.add("hidden");
+    } else {
+      if (currentWrapper) currentWrapper.classList.remove("hidden");
+      else confirmInput.classList.remove("hidden");
+      confirmInput.placeholder = t.placeholder_current_pw;
+      confirmInput.value = "";
+    }
+
+    const newBtnConfirm = btnConfirm.cloneNode(true);
+    btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+    newBtnConfirm.textContent = t.btn_confirm;
+    newBtnConfirm.onclick = async () => {
+      const { showToast } = await import("./ui.js");
+      const currentPass = isGoogleUser ? null : confirmInput.value;
+      const newEmail = emailInput ? emailInput.value.trim() : "";
+
+      if (!isGoogleUser && !currentPass) {
+        showToast(t.toast_pw_enter, 3000, "error");
+        return;
+      }
+      if (!newEmail || !newEmail.includes("@")) {
+        showToast(t.toast_email_invalid, 3000, "error");
+        return;
+      }
+
+      newBtnConfirm.disabled = true;
+      newBtnConfirm.textContent = t.btn_processing || t.btn_saving;
+      const result = await changeUserEmail(currentPass, newEmail);
+      newBtnConfirm.disabled = false;
+      newBtnConfirm.textContent = t.btn_confirm;
+
+      if (result.success) {
+        showToast(t.toast_email_change_sent, 5000, "success");
+        modal.classList.add("hidden");
+      } else {
+        showToast("Error: " + result.error, 4000, "error");
       }
     };
   }

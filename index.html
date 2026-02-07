@@ -721,6 +721,14 @@
             >
               Cambiar Contraseña
             </button>
+ 
+            <button
+              id="btn-profile-change-email"
+              class="btn-secondary full-width"
+              data-i18n="btn_change_email"
+            >
+              Cambiar Email
+            </button>
 
             <button
               id="btn-profile-logout"
@@ -1100,6 +1108,17 @@
           >
             👁️
           </button>
+        </div>
+
+        <!-- New Email Input (Initially Hidden) -->
+        <div id="new-email-container" class="hidden" style="margin-top: 10px">
+          <input
+            type="email"
+            id="new-email-input"
+            class="auth-input"
+            data-i18n-placeholder="placeholder_new_email"
+            placeholder="Nuevo correo electrónico"
+          />
         </div>
 
         <div

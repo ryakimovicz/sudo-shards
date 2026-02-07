@@ -211,6 +211,7 @@ export function updateProfileData() {
   const sensitiveButtons = [
     "btn-profile-change-name",
     "btn-profile-change-pw",
+    "btn-profile-change-email",
     "btn-profile-logout",
     "btn-profile-delete",
   ];
@@ -219,8 +220,12 @@ export function updateProfileData() {
     const btn = document.getElementById(id);
     if (btn) {
       if (user && !user.isAnonymous) {
-        // Special case: Google users don't have a Jigsudo password to change
-        if (id === "btn-profile-change-pw" && isGoogleUser) {
+        // Special case: Google users don't have a Jigsudo password/email to change here
+        if (
+          (id === "btn-profile-change-pw" ||
+            id === "btn-profile-change-email") &&
+          isGoogleUser
+        ) {
           btn.style.display = "none";
           return;
         }

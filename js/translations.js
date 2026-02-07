@@ -217,11 +217,15 @@ export const translations = {
       "Ya enviamos un mail recientemente. Por favor, espera un minuto antes de pedir otro.",
     profile_verify_email_banner: "Tu correo no está verificado.",
     btn_verify_now: "Verificar ahora",
+    btn_change_email: "Cambiar Email",
+    toast_email_change_sent:
+      "Se ha enviado un enlace de confirmación a tu nuevo correo. El cambio se completará cuando hagas clic en él.",
     toast_logout_success: "Sesión cerrada correctamente.",
     toast_logout_error: "Error al cerrar sesión: ",
 
     // Placeholders
     placeholder_current_pw: "Contraseña actual",
+    placeholder_new_email: "Nuevo correo electrónico",
     placeholder_new_pw: "Nueva contraseña (mín 6 caracteres)",
     placeholder_verify_pw: "Repetir nueva contraseña",
 
@@ -596,11 +600,15 @@ export const translations = {
       "An email was already sent recently. Please wait a minute before requesting another.",
     profile_verify_email_banner: "Your email is not verified.",
     btn_verify_now: "Verify now",
+    btn_change_email: "Change Email",
+    toast_email_change_sent:
+      "A confirmation link has been sent to your new email. The change will be complete once you click it.",
     toast_logout_success: "Logged out successfully.",
     toast_logout_error: "Error logging out: ",
 
     // Placeholders
     placeholder_current_pw: "Current password",
+    placeholder_new_email: "New email address",
     placeholder_new_pw: "New password (min 6 chars)",
     placeholder_verify_pw: "Repeat new password",
 

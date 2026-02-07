@@ -73,7 +73,11 @@ export const translations = {
     greeting_prefix: "Hola,",
 
     // Footer
-    footer_rights: "© 2026 Román Yakimovicz",
+    footer_rights_html:
+      '© 2026 <a href="https://github.com/ryakimovicz/jigsudo" target="_blank">Román Yakimovicz</a>',
+    footer_privacy: "Privacidad",
+    footer_terms: "Términos",
+    footer_support: "Soporte",
 
     // Memory Game Help
     memory_help_title: "Cómo jugar",
@@ -254,16 +258,6 @@ export const translations = {
     p_game_code: "El Código",
 
     // Support & Share
-    btn_report_bug: "Reportar Bug 🐛",
-    btn_share_app: "Compartir App 📢",
-    modal_bug_title: "Reportar Bug 🐛",
-    modal_bug_desc:
-      "Describe el problema que encontraste. Si es posible, menciona qué estabas haciendo cuando ocurrió.",
-    modal_bug_placeholder: "Escribe aquí los detalles...",
-    toast_bug_empty: "Por favor describe el problema.",
-    btn_bug_submitting: "Enviando...",
-    btn_bug_submit: "Enviar Reporte",
-    toast_bug_success: "¡Reporte enviado! Gracias. 🐛❤️",
     share_text:
       "¡Desafía tu mente con Jigsudo! 🧩✨ ¿Podrás resolver el puzzle del día?",
     toast_share_success: "¡Enlace copiado al portapapeles! 📋✨",
@@ -333,7 +327,11 @@ export const translations = {
     profile_language: "Language",
 
     // Footer
-    footer_rights: "© 2026 Román Yakimovicz",
+    footer_rights_html:
+      '© 2026 <a href="https://github.com/ryakimovicz/jigsudo" target="_blank">Román Yakimovicz</a>',
+    footer_privacy: "Privacy",
+    footer_terms: "Terms",
+    footer_support: "Support",
 
     // Memory Game Help
     memory_help_title: "How to play",
@@ -533,16 +531,6 @@ export const translations = {
     placeholder_verify_pw: "Repeat new password",
 
     // Support & Share
-    btn_report_bug: "Report Bug 🐛",
-    btn_share_app: "Share App 📢",
-    modal_bug_title: "Report Bug 🐛",
-    modal_bug_desc:
-      "Describe the issue you found. If possible, mention what you were doing when it happened.",
-    modal_bug_placeholder: "Write the details here...",
-    toast_bug_empty: "Please describe the problem.",
-    btn_bug_submitting: "Sending...",
-    btn_bug_submit: "Submit Report",
-    toast_bug_success: "Report sent! Thank you. 🐛❤️",
     share_text:
       "Challenge your mind with Jigsudo! 🧩✨ Can you solve the puzzle of the day?",
     toast_share_success: "Link copied to clipboard! 📋✨",

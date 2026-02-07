@@ -596,30 +596,51 @@ body.dark-mode .btn-primary.btn-won:active {
 /* Footer */
 .main-footer {
   text-align: center;
-  padding: 15px 4px; /* Slightly more padding for the new layout */
-  font-size: 0.8rem; /* Slightly smaller text */
+  padding: 20px 4px;
+  font-size: 0.8rem;
   color: var(--text-muted);
   width: 100%;
   border-top: 1px solid var(--glass-border);
   background: var(--bg-paper);
-  /* NO MORE FIXED POSITIONING as per user request */
   position: relative;
   z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-sep {
+  opacity: 0.3;
+  user-select: none;
+}
+
+.main-footer a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.main-footer a:hover {
+  color: var(--accent-color);
+}
+
+.footer-bottom {
+  opacity: 0.8;
+  font-size: 0.75rem;
 }
 
 .version-tag {
-  color: var(--accent-color);
   font-weight: 700;
-  font-size: 0.65rem; /* Smaller as requested */
-  opacity: 0.8;
-  margin-left: 5px;
-  text-decoration: none; /* It's a link now */
-  cursor: pointer;
-}
-
-.version-tag:hover {
-  text-decoration: underline;
-  opacity: 1;
+  font-size: 0.65rem;
+  opacity: 0.6;
 }
 
 .main-footer a {

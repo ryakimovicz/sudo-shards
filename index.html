@@ -250,12 +250,8 @@
 
 
 
-                <!-- SECTION: SUPPORT -->
-                <div class="settings-section" style="margin-top: 15px; text-align: center;">
-                  <button id="btn-report-bug" class="btn-report-bug" data-i18n="btn_report_bug" onclick="window.openBugReportModal()">
-                    Reportar Bug 🐛
-                  </button>
-                  <button id="btn-share-app" class="btn-report-bug" data-i18n="btn_share_app" onclick="window.shareApp()" style="margin-top: 10px; border-color: var(--accent-color); color: var(--accent-color);">
+                <div class="settings-section" style="margin-top: 20px; text-align: center;">
+                  <button id="btn-share-app" class="btn-profile-action" data-i18n="btn_share_app" onclick="window.shareApp()">
                     Compartir App 📢
                   </button>
                 </div>
@@ -800,10 +796,16 @@
 
       <!-- Footer -->
       <footer class="main-footer">
-        <p>
-          <span data-i18n="footer_rights">© 2026 Román Yakimovicz</span> |
-          <a href="https://github.com/ryakimovicz/" target="_blank">GitHub</a>
-        </p>
+        <div class="footer-links">
+          <a href="#privacy" data-i18n="footer_privacy">Privacidad</a>
+          <span class="footer-sep">|</span>
+          <a href="#terms" data-i18n="footer_terms">Términos</a>
+          <span class="footer-sep">|</span>
+          <a href="https://github.com/ryakimovicz/jigsudo/issues" target="_blank" data-i18n="footer_support">Soporte</a>
+        </div>
+        <div class="footer-bottom">
+          <span data-i18n-html="footer_rights_html">© 2026 Román Yakimovicz</span>
+        </div>
       </footer>
 
       <!-- Sidebar Removed -->
@@ -1156,32 +1158,6 @@
       </div>
     </div>
 
-    <!-- BUG REPORT MODAL -->
-    <div id="report-bug-modal" class="modal-overlay hidden">
-      <div class="modal-content glass-panel">
-        <h3 data-i18n="modal_bug_title">Reportar Bug 🐛</h3>
-        <p class="modal-desc" data-i18n="modal_bug_desc">
-          Describe el problema que encontraste. Si es posible, menciona qué
-          estabas haciendo cuando ocurrió.
-        </p>
-        <textarea
-          id="bug-report-text"
-          class="auth-input"
-          style="
-            min-height: 120px;
-            margin: 15px 0;
-            resize: vertical;
-            font-family: inherit;
-          "
-          data-i18n-placeholder="modal_bug_placeholder"
-          placeholder="Escribe aquí los detalles..."
-        ></textarea>
-        <div class="modal-actions">
-          <button id="btn-cancel-bug" class="btn-secondary" data-i18n="btn_cancel">Cancelar</button>
-          <button id="btn-submit-bug" class="btn-primary" data-i18n="btn_bug_submit">Enviar Reporte</button>
-        </div>
-      </div>
-    </div>
 
     <!-- DEBUG HELP BUTTON (Beta Mode Only) -->
     <button

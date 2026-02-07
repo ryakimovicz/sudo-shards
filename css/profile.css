@@ -192,34 +192,32 @@ body.dark-mode #profile-section::-webkit-scrollbar-thumb:hover {
 }
 
 /* Bug Report Button */
-.btn-report-bug {
+.btn-profile-action {
   background: transparent;
-  border: 2px solid var(--text-muted);
-  color: var(--text-main);
+  border: 2px solid var(--accent-color);
+  color: var(--accent-color);
   padding: 10px 20px;
-  border-radius: 30px;
-  cursor: pointer;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-family: inherit;
   font-weight: 600;
+  cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
+  max-width: 250px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-top: 15px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  justify-content: center;
+  gap: 8px;
 }
 
-.btn-report-bug:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  background: var(--bg-secondary);
+.btn-profile-action:hover {
+  background: var(--accent-color);
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(243, 120, 37, 0.2);
 }
 
-.btn-report-bug:active {
+.btn-profile-action:active {
   transform: translateY(0);
 }
 

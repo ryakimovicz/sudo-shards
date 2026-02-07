@@ -253,81 +253,6 @@ function attachAuthListeners() {
       console.error("Error sharing:", err);
     }
   };
-
-  // --- BUG REPORT LOGIC (Global Export) ---
-  // --- BUG REPORT LOGIC (Global Export) ---
-  window.openBugReportModal = function () {
-    const modal = document.getElementById("report-bug-modal");
-    const dropdown = document.getElementById("profile-dropdown");
-    const bugText = document.getElementById("bug-report-text");
-    const btnCancel = document.getElementById("btn-cancel-bug");
-    const btnSubmit = document.getElementById("btn-submit-bug");
-
-    if (modal) {
-      modal.classList.remove("hidden");
-      if (dropdown) dropdown.classList.add("hidden");
-      if (bugText) {
-        bugText.value = "";
-        setTimeout(() => bugText.focus(), 100);
-      }
-
-      // --- Wire Buttons Lazy-Style (Every time modal opens) ---
-      if (btnCancel) {
-        btnCancel.onclick = () => modal.classList.add("hidden");
-      }
-
-      if (btnSubmit) {
-        btnSubmit.onclick = async () => {
-          const { translations } = await import("./translations.js");
-          const { getCurrentLang } = await import("./i18n.js");
-          const lang = getCurrentLang();
-          const t = translations[lang];
-
-          const desc = bugText ? bugText.value.trim() : "";
-          if (!desc) {
-            alert(t.toast_bug_empty);
-            return;
-          }
-          btnSubmit.disabled = true;
-          btnSubmit.textContent = t.btn_bug_submitting;
-          try {
-            const { submitBugReport } = await import("./db.js");
-            const { getCurrentUser } = await import("./auth.js");
-            const { showToast } = await import("./ui.js");
-            const result = await submitBugReport(desc, getCurrentUser());
-            if (result.success) {
-              showToast(t.toast_bug_success);
-              modal.classList.add("hidden");
-            } else {
-              showToast("Error: " + result.error);
-            }
-          } catch (e) {
-            console.error(e);
-            alert("Error.");
-          } finally {
-            btnSubmit.disabled = false;
-            btnSubmit.textContent = t.btn_bug_submit;
-          }
-        };
-      }
-    } else {
-      console.error("🐛 Modal #report-bug-modal NOT FOUND");
-      alert("Error: No se encuentra la ventana de reporte.");
-    }
-  };
-
-  // --- BUG REPORT LOGIC (Event Delegation) ---
-  // We use delegation to avoid "Element Not Found" issues if the DOM renders late.
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest("#btn-report-bug");
-    if (!btn) return;
-
-    // Prevent default anchor/button behavior
-    e.preventDefault();
-    e.stopPropagation();
-
-    window.openBugReportModal();
-  }); // End Delegation
 }
 
 // Wait for DOM to be ready
@@ -342,18 +267,16 @@ console.log("Main Loaded. Daily Seed:", gameManager.currentSeed);
 // Display Version
 // Display Version
 function displayVersion() {
-  const footerP = document.querySelector(".main-footer p");
-  if (footerP) {
-    // Separator (normal size)
-    footerP.appendChild(document.createTextNode(" | "));
+  const footerBottom = document.querySelector(".footer-bottom");
+  if (footerBottom) {
+    // Separator
+    footerBottom.appendChild(document.createTextNode(" | "));
 
-    // Version Tag (smaller)
-    const versionSpan = document.createElement("a");
-    versionSpan.href = "https://github.com/ryakimovicz/jigsudo/commits/main";
-    versionSpan.target = "_blank";
+    // Version Tag
+    const versionSpan = document.createElement("span");
     versionSpan.className = "version-tag";
     versionSpan.innerText = CONFIG.version;
-    footerP.appendChild(versionSpan);
+    footerBottom.appendChild(versionSpan);
   }
   systemLog(
     `%c JIGSUDO ${CONFIG.version} cargado correctamente`,

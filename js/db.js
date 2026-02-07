@@ -19,27 +19,6 @@ import { gameManager } from "./game-manager.js";
 
 // ... (rest of imports/vars)
 
-export async function submitBugReport(description, user) {
-  try {
-    const { CONFIG } = await import("./config.js");
-    const report = {
-      description: description,
-      userId: user ? user.uid : "anonymous",
-      userEmail: user ? user.email : null,
-      timestamp: serverTimestamp(),
-      userAgent: navigator.userAgent,
-      appVersion: CONFIG.version || "unknown",
-      url: window.location.href,
-    };
-
-    await addDoc(collection(db, "reports"), report);
-    return { success: true };
-  } catch (error) {
-    console.error("Error submitting report:", error);
-    return { success: false, error: error.message };
-  }
-}
-
 // Real-time listener unsubscribe function
 let unsubscribeProgress = null;
 

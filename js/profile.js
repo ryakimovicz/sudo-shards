@@ -129,6 +129,25 @@ function _hideProfileUI() {
 export function updateProfileData() {
   const user = getCurrentUser();
 
+  // If sync is in progress, show it on the share button if exists
+  const shareBtn = document.getElementById("btn-share-stats");
+  if (shareBtn) {
+    if (
+      gameManager.isWiping ||
+      document.body.classList.contains("syncing-account")
+    ) {
+      const lang = getCurrentLang() || "es";
+      shareBtn.textContent =
+        translations[lang]?.btn_syncing || "(Sincronizando...)";
+      shareBtn.disabled = true;
+    } else {
+      const lang = getCurrentLang() || "es";
+      shareBtn.textContent =
+        translations[lang]?.btn_share_stats || "Compartir Estadísticas";
+      shareBtn.disabled = false;
+    }
+  }
+
   // If no user, maybe redirect? For now, show "Guest"
   const avatarEl = document.getElementById("profile-avatar");
   const nameEl = document.getElementById("profile-username");

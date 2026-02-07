@@ -120,10 +120,16 @@ export function initAuth() {
           await gameManager.prepareDaily();
         }
 
-        const isNowPlaying = !document.body.classList.contains("home-active");
-        if (wasPlaying || isNowPlaying) {
+        const isNowPlaying =
+          !document.body.classList.contains("home-active") &&
+          !document.body.classList.contains("profile-active");
+        const isOnProfile =
+          window.location.hash === "#profile" ||
+          document.body.classList.contains("profile-active");
+
+        if ((wasPlaying || isNowPlaying) && !isOnProfile) {
           const state = gameManager.getState();
-          const currentStage = state.progress.currentStage || "memory";
+          const currentStage = state?.progress?.currentStage || "memory";
           console.log(`[Auth] Routing to stage: ${currentStage}`);
           const memoryModule = await import("./memory.js");
           memoryModule.resumeToStage(currentStage);
@@ -338,20 +344,26 @@ function updateUIForLogin(user) {
     nameSpan.textContent = displayName;
   }
 
+  const isProfileActive =
+    document.body.classList.contains("profile-active") ||
+    window.location.hash === "#profile";
   const menu = document.getElementById("menu-content");
   const gameSection = document.getElementById("game-section");
-  if (menu) menu.classList.remove("hidden");
-  if (gameSection) {
-    gameSection.classList.add("hidden");
-    document.body.classList.add("home-active");
-    gameSection.classList.remove(
-      "memory-mode",
-      "jigsaw-mode",
-      "sudoku-mode",
-      "peaks-mode",
-      "search-mode",
-      "code-mode",
-    );
+
+  if (!isProfileActive) {
+    if (menu) menu.classList.remove("hidden");
+    if (gameSection) {
+      gameSection.classList.add("hidden");
+      document.body.classList.add("home-active");
+      gameSection.classList.remove(
+        "memory-mode",
+        "jigsaw-mode",
+        "sudoku-mode",
+        "peaks-mode",
+        "search-mode",
+        "code-mode",
+      );
+    }
   }
 
   const profileEmail = document.getElementById("profile-email-display");
@@ -436,20 +448,26 @@ function updateUIForLogout() {
     module.updateProfileData();
   });
 
+  const isProfileActive =
+    document.body.classList.contains("profile-active") ||
+    window.location.hash === "#profile";
   const menu = document.getElementById("menu-content");
   const gameSection = document.getElementById("game-section");
-  if (menu) menu.classList.remove("hidden");
-  if (gameSection) {
-    gameSection.classList.add("hidden");
-    document.body.classList.add("home-active");
-    gameSection.classList.remove(
-      "memory-mode",
-      "jigsaw-mode",
-      "sudoku-mode",
-      "peaks-mode",
-      "search-mode",
-      "code-mode",
-    );
+
+  if (!isProfileActive) {
+    if (menu) menu.classList.remove("hidden");
+    if (gameSection) {
+      gameSection.classList.add("hidden");
+      document.body.classList.add("home-active");
+      gameSection.classList.remove(
+        "memory-mode",
+        "jigsaw-mode",
+        "sudoku-mode",
+        "peaks-mode",
+        "search-mode",
+        "code-mode",
+      );
+    }
   }
 
   const debugBtn = document.getElementById("debug-help-btn");

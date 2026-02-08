@@ -107,6 +107,18 @@ export class GameManager {
     if (CONFIG.debugMode) {
       console.log("Game Initialized:", this.state);
     }
+
+    // SELF-HEALING: Ensure search targets are populated if variation exists
+    if (
+      this.state.jigsaw.variation &&
+      (!this.state.search.targets || this.state.search.targets.length === 0)
+    ) {
+      console.warn(
+        "[GameManager] Variation exists but search targets empty. Healing...",
+      );
+      this._populateSearchTargets(this.state.jigsaw.variation);
+    }
+
     return true;
   }
 
@@ -237,7 +249,14 @@ export class GameManager {
     }
 
     this.state.jigsaw.variation = newVariation;
+    this._populateSearchTargets(newVariation);
+    this.save();
+  }
 
+  /**
+   * Internal helper to populate search targets based on the current variation and map.
+   */
+  _populateSearchTargets(variationKey) {
     const map = this.state.data.searchTargetsMap;
     let variationData = null;
 
@@ -257,8 +276,40 @@ export class GameManager {
         return { id: idx, path: snake, numbers: numbers };
       });
       this.state.simon.coordinates = variationData.simon || [];
+    } else {
+      // FALLBACK: Local Generation (Async)
+      this.ensureSearchTargets();
     }
-    this.save();
+  }
+
+  /**
+   * Fallback to generate search targets locally if missing from the puzzle data.
+   */
+  async ensureSearchTargets() {
+    if (this.state.search.targets && this.state.search.targets.length > 0)
+      return;
+
+    console.log("[GameManager] Fallback: Generating Search Targets locally...");
+    try {
+      const solution = this.getTargetSolution();
+      const seed = this.currentSeed;
+
+      // Dynamic import to avoid circular dependencies if any
+      const { generateSearchSequences } = await import("./search-gen.js");
+      const sequences = generateSearchSequences(solution, seed);
+
+      if (sequences && sequences.length > 0) {
+        this.state.search.targets = sequences;
+        console.log(
+          `[GameManager] Generated ${sequences.length} targets locally.`,
+        );
+        this.save();
+        // Dispatch event to notify UI if it's already in search mode
+        window.dispatchEvent(new CustomEvent("search-targets-ready"));
+      }
+    } catch (err) {
+      console.error("[GameManager] Local Generation failed:", err);
+    }
   }
 
   // Internal helper to transform a 9x9 matrix based on variation

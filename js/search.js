@@ -13,13 +13,27 @@ let currentCells = []; // Array of DOM Elements
 export function initSearch() {
   console.log("Initializing Search Stage...");
 
-  // Ensure data exists (Generated at Init now)
-  // gameManager.ensureSearchGenerated(); // Removed to avoid freeze during transition
-  const state = gameManager.getState();
-  const searchData = state.search;
+  const searchData = gameManager.getState().search;
 
   if (!searchData || !searchData.targets.length) {
-    console.error("Failed to load search targets.");
+    console.warn("Search targets not ready yet. Waiting...");
+    // Render "Loading" or empty state
+    renderTargets({ targets: [], found: [] });
+
+    // Listen for self-healing completion
+    const onReady = () => {
+      console.log("Search targets ready via event.");
+      const newData = gameManager.getState().search;
+      renderTargets(newData);
+      if (newData.found && newData.found.length > 0) {
+        restoreFoundSequences(newData);
+      }
+      window.removeEventListener("search-targets-ready", onReady);
+    };
+    window.addEventListener("search-targets-ready", onReady);
+
+    // Attach listeners anyway so they are ready
+    attachSearchListeners();
     return;
   }
 

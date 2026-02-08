@@ -438,6 +438,39 @@ export class GameManager {
     // can finish its sync before releasing the lock.
   }
 
+  /**
+   * Surgical Reset: Only wipes progress for the current day/seed.
+   * Preserves global stats, rank, and history.
+   */
+  async resetCurrentGame() {
+    console.warn(`[GameManager] Surgical Reset for seed: ${this.currentSeed}`);
+
+    // 1. Wipe local state for this seed
+    localStorage.removeItem(this.storageKey);
+
+    // 2. Wipe cloud progress (if logged in)
+    try {
+      const { getCurrentUser } = await import("./auth.js");
+      const { saveUserProgress } = await import("./db.js");
+      const user = getCurrentUser();
+
+      if (user && !user.isAnonymous) {
+        console.log("[GameManager] Clearing cloud progress...");
+        // Send a "fresh" state to overwrite remote
+        const freshState = this.createStateFromJSON(
+          await this.fetchDailyPuzzle(),
+        );
+        await saveUserProgress(user.uid, this._serializeState(freshState));
+      }
+    } catch (err) {
+      console.error("[GameManager] Cloud reset failed:", err);
+    }
+
+    // 3. Reload
+    console.log("Reset complete. Reloading...");
+    window.location.reload();
+  }
+
   showConflictModal() {
     this.conflictBlocked = true;
     const overlay = document.createElement("div");

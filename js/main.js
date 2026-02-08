@@ -57,34 +57,41 @@ async function startApp() {
 
   attachAuthListeners();
 
-  // DEBUG TOOL: Reset User Data
-  window.resetDaily = async () => {
-    // Dynamic import to break potential cycles or just cleanliness
-    const { getCurrentUser } = await import("./auth.js");
-    const { wipeUserData } = await import("./db.js");
-    const user = getCurrentUser();
+  // DEBUG TOOLS: Exposed only in Debug Mode
+  if (CONFIG.debugMode) {
+    window.resetToday = () => gameManager.resetCurrentGame();
 
-    if (user) {
+    window.resetAccount = async () => {
+      const { getCurrentUser } = await import("./auth.js");
+      const { wipeUserData } = await import("./db.js");
+      const user = getCurrentUser();
+
       if (
         confirm(
-          "¿Seguro que quieres borrar TU PROGRESO en la nube? Esto no se puede deshacer.",
+          "¿Seguro que quieres borrar TODA TU CUENTA y progreso? Esto no se puede deshacer.",
         )
       ) {
-        console.log("Wiping remote data...");
-        await wipeUserData(user.uid);
+        if (user) {
+          console.log("Wiping remote data...");
+          await wipeUserData(user.uid);
+        }
         console.log("Clearing local storage...");
         localStorage.clear();
         console.log("Reloading...");
         window.location.reload();
       }
-    } else {
-      console.warn("No logged in user to wipe.");
-      console.log("Clearing local storage anyway...");
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
-  console.log("🛠️ Debug: Run 'resetDaily()' in console to wipe progress.");
+    };
+
+    window.magicWand = async () => {
+      const { debugAutoMatch } = await import("./memory.js");
+      debugAutoMatch();
+    };
+
+    console.log("🛠️ Debug Commands Available:");
+    console.log("- resetToday(): Resets only current puzzle progress.");
+    console.log("- resetAccount(): Wipes entire account and local data.");
+    console.log("- magicWand(): Automagically solves the current step.");
+  }
 }
 
 function attachAuthListeners() {
